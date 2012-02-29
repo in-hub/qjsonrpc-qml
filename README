@@ -1,0 +1,24 @@
+The qjson-rpc library is a full Qt4 based implementation of 
+JSON-RPC ( http://json-rpc.org/ ) protocol, licensed under LGPL.
+
+For commercial support please contact Etienne Savard (see AUTHORS file).
+
+The library is tested on linux with Qt 4.7.x
+
+To build on unix run :
+qmake
+make
+
+This includes building of qjson-rpc library,
+client sample in examples/client directory,
+server sample in examples/server directory,
+and unit tests from test. 
+
+The package also contains python implementations
+of json-rpc client and server, which can be used
+for testing ( stored in test/ directory ).
+
+To generate the documentation run
+doxygen qjson-rpc.doxy
+
+Check doc/html/index.html for the generated documentation.
