@@ -16,8 +16,9 @@ void Client::run()
               this, SLOT(notificationReceived(QJsonRpcNotification)));
 
     m_peer->connectToPeer("testservice");
-//    m_peer->callRemoteMethod("agent.testMethod");
+    m_peer->callRemoteMethod("agent.testMethod");
     m_peer->callRemoteMethod("agent.testMethodWithParams", "one", false, 10, QVariant(2.5));
+    m_peer->callRemoteMethod("agent.testMethodWithParamsAndReturnValue", "DogFace");
 }
 
 void Client::responseReceived(const QJsonRpcResponse &response)

@@ -132,7 +132,7 @@ public:
     virtual QString serviceName() const = 0;
 
 private:    // these are just for ServiceManager
-     QJsonValue dispatch(const QByteArray &method, const QJsonArray &args = QJsonArray());
+     QJsonValue dispatch(const QByteArray &method, const QVariantList &args = QVariantList());
      void buildInvokableHash();
      QHash<QByteArray, int> m_invokableMethodHash;
      friend class QJsonRpcPeer;

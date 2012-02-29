@@ -296,7 +296,7 @@ void QJsonRpcService::buildInvokableHash()
     }
 }
 
-QJsonValue QJsonRpcService::dispatch(const QByteArray &method, const QJsonArray &arguments)
+QJsonValue QJsonRpcService::dispatch(const QByteArray &method, const QVariantList &arguments)
 {    
     if (!m_invokableMethodHash.contains(method)) {
         QJsonRpcError error;
@@ -306,8 +306,7 @@ QJsonValue QJsonRpcService::dispatch(const QByteArray &method, const QJsonArray 
     }
 
     int idx = m_invokableMethodHash.value(method);
-    QMetaMethod invokeMethod = metaObject()->method(idx);
-
+    const QMetaMethod invokeMethod = metaObject()->method(idx);
     if (arguments.size() > invokeMethod.parameterTypes().size()) {
         QJsonRpcError error;
         error.setCode(QJsonRpc::InvalidParams);
@@ -319,21 +318,17 @@ QJsonValue QJsonRpcService::dispatch(const QByteArray &method, const QJsonArray 
     QList<QGenericArgument> genericArguments;
     for (int i = 0; i < arguments.size(); i++) {
         if (invokeMethod.parameterTypes().at(i) == "QVariant") {
-            genericArguments << Q_ARG(QVariant, arguments.at(i).toVariant());
+            genericArguments << Q_ARG(QVariant, arguments.at(i));
         } else {
-            // NOTE: hmm I bet I can make this crash...
-            //       the problem is that QJson converts all ints into qulonglongs,
-            //       so a better way to do this is to check the type and make the
-            //       correct conversions. I am being lazy here...
-            genericArguments << QGenericArgument(invokeMethod.parameterTypes().at(i), arguments.at(i).toVariant().data());
+            genericArguments << QGenericArgument(arguments.at(i).typeName(), arguments.at(i).data());
         }
     }
+
 
     // determine return type
     int invokeMethodReturnType = QMetaType::type(invokeMethod.typeName());
     void *invokeMethodReturnValue = QMetaType::construct(invokeMethodReturnType, 0);
     QGenericReturnArgument returnValue(invokeMethod.typeName(), invokeMethodReturnValue);
-
     if (QMetaObject::invokeMethod(this, method.constData(), returnValue,
                                   genericArguments.value(0, QGenericArgument()),
                                   genericArguments.value(1, QGenericArgument()),
@@ -442,10 +437,6 @@ void QJsonRpcPeer::processIncomingData()
         return;
     }
 
-    // QStringList messages = QString(socket->readAll()).split(QRegExp("[ \r\n][ \r\n]*"));
-    // NOTE: I think this is the worst way to parse this information, but it works for now.
-    //       Ideally, in the future, we can rewok the parser to operate on a streaming basis
-
     QByteArray data = socket->readAll();
     while (!data.isEmpty()) {
         QJsonDocument document = QJsonDocument::fromBinaryData(data);
@@ -481,7 +472,13 @@ void QJsonRpcPeer::processIncomingData()
                 }
 
                 QJsonRpcService *service = m_services.value(serviceName);
-                QJsonValue result = service->dispatch(method.toLatin1(), request.params());
+
+
+                QVariantList params;
+                foreach (QJsonValue value, request.params()) {
+                    params.append(value.toVariant());
+                }
+                QJsonValue result = service->dispatch(method.toLatin1(), params);
 
                 QJsonRpcResponse response;
                 response.setId(request.id());

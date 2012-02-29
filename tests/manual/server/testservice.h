@@ -14,7 +14,8 @@ public:
 
 public Q_SLOTS:
     void testMethod();
-    void testMethodWithParams(const QString &first, bool second, int third, const QVariant &fourth);
+    void testMethodWithParams(const QString &first, bool second, double third, const QVariant &fourth);
+    QString testMethodWithParamsAndReturnValue(const QString &name);
 
 };
 
