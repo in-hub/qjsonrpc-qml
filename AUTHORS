@@ -1,8 +1,9 @@
-qjson-rpc: Qt implementation of json-rpc
+qjsonrpc: Qt implementation of json-rpc
 ========================================
 
 Developers:
 -----------
 
-Etienne Savard (esavard@symbiosoft.net)- Project founder
+Etienne Savard (esavard (at) symbiosoft.net)- Project founder
+Matt Broadstone (mbroadst (at) gmail.com) - Lead developer
 
