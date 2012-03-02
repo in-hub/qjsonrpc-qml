@@ -40,10 +40,10 @@
 ****************************************************************************/
 
 #include <QtTest>
-#include "qjsonarray.h"
-#include "qjsonobject.h"
-#include "qjsonvalue.h"
-#include "qjsondocument.h"
+#include "json/qjsonarray.h"
+#include "json/qjsonobject.h"
+#include "json/qjsonvalue.h"
+#include "json/qjsondocument.h"
 
 #define INVALID_UNICODE "\357\277\277" // "\uffff"
 #define UNICODE_DJE "\320\202" // Character from the Serbian Cyrillic alphabet

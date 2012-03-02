@@ -1,8 +1,8 @@
-include(../json/json.pri)
+include(json/json.pri)
 
 TEMPLATE = lib
 TARGET = qjsonrpc
-CONFIG += staticlib 
+CONFIG += staticlib
 
 QT += core \
       network

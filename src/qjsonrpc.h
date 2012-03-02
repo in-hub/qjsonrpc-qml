@@ -8,9 +8,9 @@
 #include <QSharedDataPointer>
 #include <QMetaType>
 
-#include "qjsonvalue.h"
-#include "qjsonobject.h"
-#include "qjsonarray.h"
+#include "json/qjsonvalue.h"
+#include "json/qjsonobject.h"
+#include "json/qjsonarray.h"
 
 // error codes defined by spec
 namespace QJsonRpc {
