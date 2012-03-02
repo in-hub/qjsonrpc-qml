@@ -103,7 +103,7 @@ QJsonRpcMessage QJsonRpcMessage::createNotification(const QString &method, const
     return notification;
 }
 
-QJsonRpcMessage QJsonRpcMessage::createResponse(const QVariant &result)
+QJsonRpcMessage QJsonRpcMessage::createResponse(const QVariant &result) const
 {
     QJsonRpcMessage response;
     response.d->type = QJsonRpcMessage::Response;
@@ -115,7 +115,7 @@ QJsonRpcMessage QJsonRpcMessage::createResponse(const QVariant &result)
     return response;
 }
 
-QJsonRpcMessage QJsonRpcMessage::createErrorResponse(QJsonRpc::ErrorCode code, const QString &message, const QVariant &data)
+QJsonRpcMessage QJsonRpcMessage::createErrorResponse(QJsonRpc::ErrorCode code, const QString &message, const QVariant &data) const
 {
     QJsonRpcMessage response;
 
@@ -257,7 +257,7 @@ void QJsonRpcService::cacheInvokableInfo()
     }
 }
 
-QJsonValue QJsonRpcService::dispatch(const QByteArray &method, const QVariantList &arguments) const
+QVariant QJsonRpcService::dispatch(const QByteArray &method, const QVariantList &arguments) const
 {    
     if (!m_invokableMethodHash.contains(method)) {
         /*
@@ -313,7 +313,7 @@ QJsonValue QJsonRpcService::dispatch(const QByteArray &method, const QVariantLis
         return false;
     }
 
-    return QJsonValue::fromVariant(returnValue);
+    return returnValue;
 }
 
 
@@ -386,6 +386,37 @@ void QJsonRpcPeer::clientDisconnected()
 }
 
 
+void QJsonRpcPeer::sendMessages(const QList<QJsonRpcMessage> &messages)
+{
+    if (!m_client) {
+        qDebug() << "no available client connection, aborting";
+        return;
+    }
+
+    sendMessages(m_client, messages);
+}
+
+void QJsonRpcPeer::sendMessages(QLocalSocket *socket, const QList<QJsonRpcMessage> &messages)
+{
+    QJsonArray array;
+    foreach (QJsonRpcMessage message, messages) {
+        array.append(message.toObject());
+    }
+
+    QJsonDocument doc = QJsonDocument(array);
+    socket->write(doc.toBinaryData());
+}
+
+void QJsonRpcPeer::sendMessage(const QJsonRpcMessage &message)
+{
+    if (!m_client) {
+        qDebug() << "no available client connection, aborting";
+        return;
+    }
+
+    sendMessage(m_client, message);
+}
+
 void QJsonRpcPeer::sendMessage(QLocalSocket *socket, const QJsonRpcMessage &message)
 {
     QJsonDocument doc = QJsonDocument(message.toObject());
@@ -402,40 +433,48 @@ void QJsonRpcPeer::processIncomingData()
     QByteArray data = socket->readAll();
     while (!data.isEmpty()) {
         QJsonDocument document = QJsonDocument::fromBinaryData(data);
-        if (!document.isObject()) {
-            qDebug() << "unable to parse message data: " << data;
-            return;
-        }
-
-        // really inefficient...
         data = data.mid(document.toBinaryData().size());
 
         // process the message
-        QJsonRpcMessage message(document.object());
-        if (message.type() == QJsonRpcMessage::Request) {
-            QStringList serviceBits = message.method().split(".");
-            QString serviceName = serviceBits.takeFirst();
-            QString method = serviceBits.takeFirst();
-            if (serviceName.isEmpty() || !m_services.contains(serviceName)) {
-                QJsonRpcMessage error = message.createErrorResponse(QJsonRpc::MethodNotFound,
-                                                                    QString("service '%1' not found").arg(serviceName));
-                sendMessage(socket, error);
-                return;
+        if (document.isArray()) {
+            // bulk messages
+            for (int i = 0; i < document.array().size(); ++i) {
+                QJsonObject messageObject = document.array().at(i).toObject();
+                if (!messageObject.isEmpty()) {
+                    QJsonRpcMessage message(messageObject);
+                    processMessage(socket, message);
+                }
             }
-
-            QJsonRpcService *service = m_services.value(serviceName);
-            QJsonValue result = service->dispatch(method.toLatin1(), message.params());
-            QJsonRpcMessage response = message.createResponse(result.toVariant());
-            sendMessage(socket, response);
-        } else if (message.type() == QJsonRpcMessage::Response ||
-                   message.type() == QJsonRpcMessage::Notification) {
-            Q_EMIT messageReceived(message);
-        } else {
-            qDebug() << "invalid message received: " << message;
+        } else if (document.isObject()){
+            processMessage(socket, document.object());
         }
     }
 }
 
+void QJsonRpcPeer::processMessage(QLocalSocket *socket, const QJsonRpcMessage &message)
+{
+    if (message.type() == QJsonRpcMessage::Request) {
+        QStringList serviceBits = message.method().split(".");
+        QString serviceName = serviceBits.takeFirst();
+        QString method = serviceBits.takeFirst();
+        if (serviceName.isEmpty() || !m_services.contains(serviceName)) {
+            QJsonRpcMessage error = message.createErrorResponse(QJsonRpc::MethodNotFound,
+                                                                QString("service '%1' not found").arg(serviceName));
+            sendMessage(socket, error);
+            return;
+        }
+
+        QJsonRpcService *service = m_services.value(serviceName);
+        QVariant result = service->dispatch(method.toLatin1(), message.params());
+        QJsonRpcMessage response = message.createResponse(result);
+        sendMessage(socket, response);
+    } else if (message.type() == QJsonRpcMessage::Response ||
+               message.type() == QJsonRpcMessage::Notification) {
+        Q_EMIT messageReceived(message);
+    } else {
+        qDebug() << "invalid message received: " << message;
+    }
+}
 
 void QJsonRpcPeer::callRemoteMethod(const QString &method, const QVariant &param1,
                                     const QVariant &param2, const QVariant &param3,

@@ -20,6 +20,12 @@ void Client::run()
 
 //    m_peer->callRemoteMethod("agent.testMethodWithDefaultParameter", "blah");
 //    m_peer->callRemoteMethod("agent.testMethodWithDefaultParameter", "blah", "halb");
+
+    // test bulk messages
+    QJsonRpcMessage first = QJsonRpcMessage::createRequest("agent.testMethod");
+    QJsonRpcMessage second = QJsonRpcMessage::createRequest("agent.testMethodWithParams", QVariantList() << "one" << false << 10);
+    m_peer->sendMessages(QList<QJsonRpcMessage>() << first << second);
+
 }
 
 void Client::processMessage(const QJsonRpcMessage &message)

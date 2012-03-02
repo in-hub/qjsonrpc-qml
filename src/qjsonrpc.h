@@ -44,11 +44,11 @@ public:
         Error
     };
 
-    static QJsonRpcMessage createRequest(const QString &method, const QVariantList &params);
+    static QJsonRpcMessage createRequest(const QString &method, const QVariantList &params = QVariantList());
     static QJsonRpcMessage createNotification(const QString &method, const QVariantList &params);
-    QJsonRpcMessage createResponse(const QVariant &result);
+    QJsonRpcMessage createResponse(const QVariant &result) const;
     QJsonRpcMessage createErrorResponse(QJsonRpc::ErrorCode code, const QString &message = QString(),
-                                        const QVariant &data = QVariant());
+                                        const QVariant &data = QVariant()) const;
 
     QJsonRpcMessage::Type type() const;
     int id() const;
@@ -84,7 +84,7 @@ public:
     virtual QString serviceName() const = 0;
 
 private:    // these are just for ServiceManager
-     QJsonValue dispatch(const QByteArray &method, const QVariantList &args = QVariantList()) const;
+     QVariant dispatch(const QByteArray &method, const QVariantList &args = QVariantList()) const;
      void cacheInvokableInfo();
      QHash<QByteArray, int> m_invokableMethodHash;
      QHash<int, QList<int> > m_parameterTypeHash;
@@ -103,6 +103,8 @@ public:
     bool listenForPeers(const QString &socket);
     void connectToPeer(const QString &socket);
 
+    void sendMessage(const QJsonRpcMessage &message);
+    void sendMessages(const QList<QJsonRpcMessage> &bulk);
     void callRemoteMethod(const QString &method, const QVariant &arg1 = QVariant(),
                           const QVariant &arg2 = QVariant(), const QVariant &arg3 = QVariant(),
                           const QVariant &arg4 = QVariant(), const QVariant &arg5 = QVariant(),
@@ -119,7 +121,10 @@ private Q_SLOTS:
     void processIncomingData();
 
 private:
+    void processMessage(QLocalSocket *socket, const QJsonRpcMessage &message);
     void sendMessage(QLocalSocket *socket, const QJsonRpcMessage &message);
+    void sendMessages(QLocalSocket *socket, const QList<QJsonRpcMessage> &message);
+
     QHash<QString, QJsonRpcService*> m_services;
 
     QLocalServer *m_server;
