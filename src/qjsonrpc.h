@@ -15,6 +15,7 @@
 // error codes defined by spec
 namespace QJsonRpc {
     enum ErrorCode {
+        NoError         = 0,
         ParseError      = -32700,        	// Invalid JSON was received by the server.
                                             // An error occurred on the server while parsing the JSON text.
         InvalidRequest  = -32600,         	// The JSON sent is not a valid Request object.
@@ -45,7 +46,7 @@ public:
     };
 
     static QJsonRpcMessage createRequest(const QString &method, const QVariantList &params = QVariantList());
-    static QJsonRpcMessage createNotification(const QString &method, const QVariantList &params);
+    static QJsonRpcMessage createNotification(const QString &method, const QVariantList &params = QVariantList());
     QJsonRpcMessage createResponse(const QVariant &result) const;
     QJsonRpcMessage createErrorResponse(QJsonRpc::ErrorCode code, const QString &message = QString(),
                                         const QVariant &data = QVariant()) const;

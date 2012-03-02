@@ -13,8 +13,6 @@ public:
     ~QJsonRpcMessagePrivate();
 
     static QJsonRpcMessage createBasicRequest(const QString &method, const QVariantList &params);
-
-    QString id;
     QJsonRpcMessage::Type type;
     QJsonObject *object;
 

@@ -109,7 +109,7 @@ QJsonRpcMessage QJsonRpcMessage::createResponse(const QVariant &result) const
     response.d->type = QJsonRpcMessage::Response;
     QJsonObject *object = new QJsonObject;
     object->insert("jsonrpc", QLatin1String("2.0"));
-    object->insert("id", d->id);
+    object->insert("id", d->object->value("id"));
     object->insert("result", QJsonValue::fromVariant(result));
     response.d->object = object;
     return response;
@@ -129,7 +129,7 @@ QJsonRpcMessage QJsonRpcMessage::createErrorResponse(QJsonRpc::ErrorCode code, c
     response.d->type = QJsonRpcMessage::Error;
     QJsonObject *object = new QJsonObject;
     object->insert("jsonrpc", QLatin1String("2.0"));
-    object->insert("id", d->id);
+    object->insert("id", d->object->value("id"));
     object->insert("error", error);
     response.d->object = object;
     return response;
