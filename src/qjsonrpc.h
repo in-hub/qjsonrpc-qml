@@ -46,9 +46,9 @@ public:
     };
 
     static QJsonRpcMessage createRequest(const QString &method, const QVariantList &params);
-    static QJsonRpcMessage createError(int code, const QString &message = QString(), const QVariant &data = QVariant());
+    static QJsonRpcMessage createNotification(const QString &method, const QVariantList &params);
     QJsonRpcMessage createResponse(const QVariant &result);
-    QJsonRpcMessage createResponse(const QJsonRpcMessage &error);
+    QJsonRpcMessage createErrorResponse(int code, const QString &message, const QVariant &data);
 
     int type() const;
 
@@ -64,7 +64,10 @@ public:
     QString errorMessage() const;
     QVariant errorData() const;
 
+    QJsonObject toObject() const;
+
 private:
+    friend class QJsonRpcMessagePrivate;
     QSharedDataPointer<QJsonRpcMessagePrivate> d;
 
 };

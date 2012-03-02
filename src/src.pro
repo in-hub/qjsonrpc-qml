@@ -2,8 +2,7 @@ include(../json/json.pri)
 
 TEMPLATE = lib
 TARGET = qjsonrpc
-CONFIG += static shared
-macx: CONFIG += lib_bundle
+CONFIG += staticlib 
 
 QT += core \
       network

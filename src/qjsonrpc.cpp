@@ -21,7 +21,6 @@ QJsonRpcMessagePrivate::~QJsonRpcMessagePrivate()
         delete object;
 }
 
-
 QJsonRpcMessage::QJsonRpcMessage()
     : d(new QJsonRpcMessagePrivate)
 {
@@ -64,29 +63,76 @@ QJsonRpcMessage::QJsonRpcMessage(const QJsonObject &message)
     }
 }
 
+QJsonObject QJsonRpcMessage::toObject() const
+{
+    if (d->object)
+        return QJsonObject(*d->object);
+    return QJsonObject();
+}
+
 int QJsonRpcMessage::type() const
 {
     return d->type;
 }
 
-QJsonRpcMessage QJsonRpcMessage::createRequest(const QString &method, const QVariantList &params)
+QJsonRpcMessage QJsonRpcMessagePrivate::createBasicRequest(const QString &method, const QVariantList &params)
 {
-    return QJsonRpcMessage();
+    QJsonRpcMessage request;
+    QJsonObject *object = new QJsonObject;
+    object->insert("jsonrpc", QLatin1String("2.0"));
+    object->insert("method", method);
+    if (!params.isEmpty())
+        object->insert("params", QJsonArray::fromVariantList(params));
+    request.d->object = object;
+    return request;
 }
 
-QJsonRpcMessage QJsonRpcMessage::createError(int code, const QString &message, const QVariant &data)
+QJsonRpcMessage QJsonRpcMessage::createRequest(const QString &method, const QVariantList &params)
 {
-    return QJsonRpcMessage();
+    QJsonRpcMessage request = QJsonRpcMessagePrivate::createBasicRequest(method, params);
+    request.d->type = QJsonRpcMessage::Request;
+    QJsonRpcMessagePrivate::uniqueRequestCounter++;
+    request.d->object->insert("id", QJsonRpcMessagePrivate::uniqueRequestCounter);
+    return request;
+}
+
+QJsonRpcMessage QJsonRpcMessage::createNotification(const QString &method, const QVariantList &params)
+{
+    QJsonRpcMessage notification = QJsonRpcMessagePrivate::createBasicRequest(method, params);
+    notification.d->type = QJsonRpcMessage::Notification;
+    return notification;
 }
 
 QJsonRpcMessage QJsonRpcMessage::createResponse(const QVariant &result)
 {
-    return QJsonRpcMessage();
+    QJsonRpcMessage response;
+    response.d->type = QJsonRpcMessage::Response;
+    QJsonObject *object = new QJsonObject;
+    object->insert("jsonrpc", QLatin1String("2.0"));
+    object->insert("id", d->id);
+    object->insert("result", QJsonValue::fromVariant(result));
+    response.d->object = object;
+    return response;
 }
 
-QJsonRpcMessage QJsonRpcMessage::createResponse(const QJsonRpcMessage &error)
+QJsonRpcMessage QJsonRpcMessage::createErrorResponse(int code, const QString &message, const QVariant &data)
 {
-    return QJsonRpcMessage();
+    QJsonRpcMessage response;
+
+    QJsonObject error;
+    error.insert("code", code);
+    if (!message.isEmpty())
+        error.insert("message", message);
+    if (data.isValid())
+        error.insert("data", QJsonValue::fromVariant(data));
+
+    response.d->type = QJsonRpcMessage::Error;
+    QJsonObject *object = new QJsonObject;
+    object->insert("jsonrpc", QLatin1String("2.0"));
+    object->insert("id", d->id);
+    object->insert("error", error);
+    response.d->object = object;
+    return response;
 }
 
 QString QJsonRpcMessage::method() const
@@ -725,26 +771,21 @@ void QJsonRpcPeer::callRemoteMethod(const QString &method, const QVariant &param
         return;
     }
 
-    QJsonArray params;
-    if (param1.isValid()) params.append(QJsonValue::fromVariant(param1));
-    if (param2.isValid()) params.append(QJsonValue::fromVariant(param2));
-    if (param3.isValid()) params.append(QJsonValue::fromVariant(param3));
-    if (param4.isValid()) params.append(QJsonValue::fromVariant(param4));
-    if (param5.isValid()) params.append(QJsonValue::fromVariant(param5));
-    if (param6.isValid()) params.append(QJsonValue::fromVariant(param6));
-    if (param7.isValid()) params.append(QJsonValue::fromVariant(param7));
-    if (param8.isValid()) params.append(QJsonValue::fromVariant(param8));
-    if (param9.isValid()) params.append(QJsonValue::fromVariant(param9));
-    if (param10.isValid()) params.append(QJsonValue::fromVariant(param10));
+    QVariantList params;
+    if (param1.isValid()) params.append(param1);
+    if (param2.isValid()) params.append(param2);
+    if (param3.isValid()) params.append(param3);
+    if (param4.isValid()) params.append(param4);
+    if (param5.isValid()) params.append(param5);
+    if (param6.isValid()) params.append(param6);
+    if (param7.isValid()) params.append(param7);
+    if (param8.isValid()) params.append(param8);
+    if (param9.isValid()) params.append(param9);
+    if (param10.isValid()) params.append(param10);
 
-
-    QJsonRpcRequest request;
-    request.setMethod(method);
-    request.setParams(params);
-
-    QJsonDocument doc = QJsonDocument(request.serialize());
-    QByteArray bytes = doc.toBinaryData();
-    m_client->write(bytes);
+    QJsonRpcMessage request = QJsonRpcMessage::createRequest(method, params);
+    QJsonDocument doc = QJsonDocument(request.toObject());
+    m_client->write(doc.toBinaryData());
 }
 
 

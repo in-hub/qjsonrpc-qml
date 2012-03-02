@@ -1,5 +1,5 @@
 load(qttest_p4)
-include(../../shared.pri)
+include(../../../qjsonrpc.pri)
 
 TARGET = tst_qtjson
 QT = core testlib
