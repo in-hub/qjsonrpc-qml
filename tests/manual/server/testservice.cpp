@@ -16,12 +16,12 @@ QString TestService::serviceName() const
 
 void TestService::testMethod()
 {
-    qDebug() << __PRETTY_FUNCTION__ << "called";
+    qDebug() << __PRETTY_FUNCTION__ << "called" << endl;
 }
 
 void TestService::testMethodWithParams(const QString &first, bool second, double third)
 {
-    qDebug() << __PRETTY_FUNCTION__ << "with parameters: " << endl
+    qDebug() << __PRETTY_FUNCTION__ << "called with parameters: " << endl
              << " first: " << first << endl
              << "second: " << second << endl
              << " third: " << third << endl;
@@ -29,7 +29,7 @@ void TestService::testMethodWithParams(const QString &first, bool second, double
 
 void TestService::testMethodWithVariantParams(const QString &first, bool second, double third, const QVariant &fourth)
 {
-    qDebug() << __PRETTY_FUNCTION__ << "with variant parameters: " << endl
+    qDebug() << __PRETTY_FUNCTION__ << "called with variant parameters: " << endl
              << " first: " << first << endl
              << "second: " << second << endl
              << " third: " << third << endl
@@ -38,6 +38,7 @@ void TestService::testMethodWithVariantParams(const QString &first, bool second,
 
 QString TestService::testMethodWithParamsAndReturnValue(const QString &name)
 {
+    qDebug() << __PRETTY_FUNCTION__ << "called" << endl;
     return QString("Hello %1").arg(name);
 }
 

@@ -26,7 +26,6 @@ namespace QJsonRpc {
     };
 }
 
-
 class QJsonRpcMessagePrivate;
 class QJsonRpcMessage
 {
@@ -48,9 +47,11 @@ public:
     static QJsonRpcMessage createRequest(const QString &method, const QVariantList &params);
     static QJsonRpcMessage createNotification(const QString &method, const QVariantList &params);
     QJsonRpcMessage createResponse(const QVariant &result);
-    QJsonRpcMessage createErrorResponse(int code, const QString &message, const QVariant &data);
+    QJsonRpcMessage createErrorResponse(QJsonRpc::ErrorCode code, const QString &message = QString(),
+                                        const QVariant &data = QVariant());
 
-    int type() const;
+    QJsonRpcMessage::Type type() const;
+    int id() const;
 
     // request
     QString method() const;
@@ -72,117 +73,8 @@ private:
 
 };
 
+QDebug operator<<(QDebug, const QJsonRpcMessage &);
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-class QJsonRpcMessageOLD
-{
-public:
-    QJsonRpcMessageOLD();
-    QString jsonrpc() const;
-
-    QString id() const;
-    void setId(const QString &id);
-
-    virtual QJsonObject serialize() const;
-    virtual bool parse(const QJsonObject &data);
-
-private:
-    QString m_id;
-
-};
-
-class QJsonRpcError
-{
-public:
-    QJsonRpcError();
-    int code() const;
-    void setCode(int code);
-
-    QString message() const;
-    void setMessage(const QString &message);
-
-    QJsonValue data() const;
-    void setData(const QJsonValue &data);
-
-public:
-    QJsonObject serialize() const;
-    static bool isError(const QJsonObject &data);
-    bool parse(const QJsonObject &data);
-
-private:
-    int m_code;
-    QString m_message;
-    QJsonValue m_data;
-
-};
-
-class QJsonRpcRequest : public QJsonRpcMessageOLD
-{
-public:
-    QJsonRpcRequest();
-    QString method() const;
-    void setMethod(const QString &method);
-
-    QJsonArray params() const;
-    void setParams(const QJsonArray &params);
-
-public:
-    QJsonObject serialize() const;
-    static bool isRequest(const QJsonObject &data);
-    bool parse(const QJsonObject &data);
-
-private:
-    static int uniqueRequestCounter;
-    QString m_method;
-    QJsonArray m_params;
-
-};
-
-class QJsonRpcNotification : public QJsonRpcRequest
-{
-public:
-    QJsonRpcNotification();
-
-public:
-    QJsonObject serialize() const;
-    static bool isNotification(const QJsonObject &data);
-    bool parse(const QJsonObject &data);
-
-};
-
-class QJsonRpcResponse : public QJsonRpcMessageOLD
-{
-public:
-    QJsonRpcResponse();
-    QJsonValue result() const;
-    void setResult(const QJsonValue &result);
-
-    QJsonRpcError error() const;
-    void setError(const QJsonRpcError &error);
-    bool isError() const;
-
-public:
-    QJsonObject serialize() const;
-    static bool isResponse(const QJsonObject &data);
-    bool parse(const QJsonObject &data);
-
-private:
-    QJsonValue m_result;
-    QJsonRpcError m_error;
-
-};
 
 class QJsonRpcService : public QObject
 {
@@ -192,7 +84,7 @@ public:
     virtual QString serviceName() const = 0;
 
 private:    // these are just for ServiceManager
-     QJsonValue dispatch(const QByteArray &method, const QJsonArray &args = QJsonArray()) const;
+     QJsonValue dispatch(const QByteArray &method, const QVariantList &args = QVariantList()) const;
      void cacheInvokableInfo();
      QHash<QByteArray, int> m_invokableMethodHash;
      QHash<int, QList<int> > m_parameterTypeHash;
@@ -219,8 +111,7 @@ public:
                           const QVariant &arg10 = QVariant());
 
 Q_SIGNALS:
-    void responseReceived(const QJsonRpcResponse &response);
-    void notificationReceived(const QJsonRpcNotification &notification);
+    void messageReceived(const QJsonRpcMessage &message);
 
 private Q_SLOTS:
     void processIncomingConnection();
@@ -228,6 +119,7 @@ private Q_SLOTS:
     void processIncomingData();
 
 private:
+    void sendMessage(QLocalSocket *socket, const QJsonRpcMessage &message);
     QHash<QString, QJsonRpcService*> m_services;
 
     QLocalServer *m_server;
@@ -238,9 +130,6 @@ private:
 
 };
 
-
-Q_DECLARE_METATYPE(QJsonRpcError)
-Q_DECLARE_METATYPE(QJsonRpcResponse)
-Q_DECLARE_METATYPE(QJsonRpcNotification)
+Q_DECLARE_METATYPE(QJsonRpcMessage)
 
 #endif

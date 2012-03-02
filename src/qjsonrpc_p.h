@@ -15,7 +15,7 @@ public:
     static QJsonRpcMessage createBasicRequest(const QString &method, const QVariantList &params);
 
     QString id;
-    int type;
+    QJsonRpcMessage::Type type;
     QJsonObject *object;
 
     static int uniqueRequestCounter;
