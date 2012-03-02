@@ -26,10 +26,67 @@ namespace QJsonRpc {
     };
 }
 
+
+class QJsonRpcMessagePrivate;
 class QJsonRpcMessage
 {
 public:
     QJsonRpcMessage();
+    QJsonRpcMessage(const QJsonObject &message);
+    QJsonRpcMessage(const QJsonRpcMessage &other);
+    QJsonRpcMessage &operator=(const QJsonRpcMessage &other);
+    ~QJsonRpcMessage();
+
+    enum Type {
+        Invalid,
+        Request,
+        Response,
+        Notification,
+        Error
+    };
+
+    static QJsonRpcMessage createRequest(const QString &method, const QVariantList &params);
+    static QJsonRpcMessage createError(int code, const QString &message = QString(), const QVariant &data = QVariant());
+    QJsonRpcMessage createResponse(const QVariant &result);
+    QJsonRpcMessage createResponse(const QJsonRpcMessage &error);
+
+    int type() const;
+
+    // request
+    QString method() const;
+    QVariantList params() const;
+
+    // response
+    QVariant result() const;
+
+    // error
+    int errorCode() const;
+    QString errorMessage() const;
+    QVariant errorData() const;
+
+private:
+    QSharedDataPointer<QJsonRpcMessagePrivate> d;
+
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+class QJsonRpcMessageOLD
+{
+public:
+    QJsonRpcMessageOLD();
     QString jsonrpc() const;
 
     QString id() const;
@@ -68,7 +125,7 @@ private:
 
 };
 
-class QJsonRpcRequest : public QJsonRpcMessage
+class QJsonRpcRequest : public QJsonRpcMessageOLD
 {
 public:
     QJsonRpcRequest();
@@ -102,7 +159,7 @@ public:
 
 };
 
-class QJsonRpcResponse : public QJsonRpcMessage
+class QJsonRpcResponse : public QJsonRpcMessageOLD
 {
 public:
     QJsonRpcResponse();
@@ -132,9 +189,10 @@ public:
     virtual QString serviceName() const = 0;
 
 private:    // these are just for ServiceManager
-     QJsonValue dispatch(const QByteArray &method, const QVariantList &args = QVariantList());
-     void buildInvokableHash();
+     QJsonValue dispatch(const QByteArray &method, const QJsonArray &args = QJsonArray()) const;
+     void cacheInvokableInfo();
      QHash<QByteArray, int> m_invokableMethodHash;
+     QHash<int, QList<int> > m_parameterTypeHash;
      friend class QJsonRpcPeer;
 };
 

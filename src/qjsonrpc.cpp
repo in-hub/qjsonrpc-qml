@@ -2,31 +2,189 @@
 #include <QMetaProperty>
 #include <QMetaMethod>
 #include <QStringList>
+#include <QVarLengthArray>
 
 #include "qjsondocument.h"
+#include "qjsonrpc_p.h"
 #include "qjsonrpc.h"
 
+int QJsonRpcMessagePrivate::uniqueRequestCounter = 0;
+QJsonRpcMessagePrivate::QJsonRpcMessagePrivate()
+    : type(QJsonRpcMessage::Invalid),
+      object(0)
+{
+}
+
+QJsonRpcMessagePrivate::~QJsonRpcMessagePrivate()
+{
+    if (object)
+        delete object;
+}
+
+
 QJsonRpcMessage::QJsonRpcMessage()
+    : d(new QJsonRpcMessagePrivate)
+{
+}
+
+QJsonRpcMessage::QJsonRpcMessage(const QJsonRpcMessage &other)
+    : d(other.d)
+{
+}
+
+QJsonRpcMessage::~QJsonRpcMessage()
+{
+}
+
+QJsonRpcMessage &QJsonRpcMessage::operator=(const QJsonRpcMessage &other)
+{
+    d = other.d;
+    return *this;
+}
+
+QJsonRpcMessage::QJsonRpcMessage(const QJsonObject &message)
+    : d(new QJsonRpcMessagePrivate)
+{
+    if (message.contains("id")) {
+        if (message.contains("result") || message.contains("error")) {
+            d->object = new QJsonObject(message);
+            if (message.contains("error"))
+                d->type = QJsonRpcMessage::Error;
+            else
+                d->type = QJsonRpcMessage::Response;
+        } else if (message.contains("method")) {
+            d->object = new QJsonObject(message);
+            d->type = QJsonRpcMessage::Request;
+        }
+    } else {
+        if (message.contains("method")) {
+            d->object = new QJsonObject(message);
+            d->type = QJsonRpcMessage::Notification;
+        }
+    }
+}
+
+int QJsonRpcMessage::type() const
+{
+    return d->type;
+}
+
+QJsonRpcMessage QJsonRpcMessage::createRequest(const QString &method, const QVariantList &params)
+{
+    return QJsonRpcMessage();
+}
+
+QJsonRpcMessage QJsonRpcMessage::createError(int code, const QString &message, const QVariant &data)
+{
+    return QJsonRpcMessage();
+}
+
+QJsonRpcMessage QJsonRpcMessage::createResponse(const QVariant &result)
+{
+    return QJsonRpcMessage();
+}
+
+QJsonRpcMessage QJsonRpcMessage::createResponse(const QJsonRpcMessage &error)
+{
+    return QJsonRpcMessage();
+}
+
+QString QJsonRpcMessage::method() const
+{
+    if (d->type != QJsonRpcMessage::Request)
+        return QString();
+
+    return d->object->value("method").toString();
+}
+
+QVariantList QJsonRpcMessage::params() const
+{
+    if (d->type != QJsonRpcMessage::Request)
+        return QVariantList();
+
+    return d->object->value("params").toVariant().toList();
+}
+
+QVariant QJsonRpcMessage::result() const
+{
+    if (d->type != QJsonRpcMessage::Response)
+        return QVariant();
+
+    return d->object->value("result").toVariant();
+}
+
+int QJsonRpcMessage::errorCode() const
+{
+    if (d->type != QJsonRpcMessage::Error)
+        return 0;
+
+    QJsonObject error = d->object->value("error").toObject();
+    return error.value("code").toVariant().toInt();
+}
+
+QString QJsonRpcMessage::errorMessage() const
+{
+    if (d->type != QJsonRpcMessage::Error)
+        return 0;
+
+    QJsonObject error = d->object->value("error").toObject();
+    return error.value("message").toString();
+}
+
+QVariant QJsonRpcMessage::errorData() const
+{
+    if (d->type != QJsonRpcMessage::Error)
+        return 0;
+
+    QJsonObject error = d->object->value("error").toObject();
+    return error.value("data").toVariant();
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+QJsonRpcMessageOLD::QJsonRpcMessageOLD()
     : m_id(-1)
 {
 }
 
-QString QJsonRpcMessage::jsonrpc() const
+QString QJsonRpcMessageOLD::jsonrpc() const
 {
     return "2.0";
 }
 
-QString QJsonRpcMessage::id() const
+QString QJsonRpcMessageOLD::id() const
 {
     return m_id;
 }
 
-void QJsonRpcMessage::setId(const QString &id)
+void QJsonRpcMessageOLD::setId(const QString &id)
 {
     m_id = id;
 }
 
-QJsonObject QJsonRpcMessage::serialize() const
+QJsonObject QJsonRpcMessageOLD::serialize() const
 {
     QJsonObject message;
     message.insert("jsonrpc", QLatin1String("2.0"));
@@ -34,7 +192,7 @@ QJsonObject QJsonRpcMessage::serialize() const
     return message;
 }
 
-bool QJsonRpcMessage::parse(const QJsonObject &data)
+bool QJsonRpcMessageOLD::parse(const QJsonObject &data)
 {
     if (!data.contains("id") && !data.contains("jsonrpc")) {
         return false;
@@ -78,7 +236,7 @@ void QJsonRpcRequest::setParams(const QJsonArray &params)
 
 QJsonObject QJsonRpcRequest::serialize() const
 {
-    QJsonObject request(QJsonRpcMessage::serialize());
+    QJsonObject request(QJsonRpcMessageOLD::serialize());
     request.insert("method", m_method);
     request.insert("params", m_params);
     return request;
@@ -93,7 +251,7 @@ bool QJsonRpcRequest::isRequest(const QJsonObject &data)
 
 bool QJsonRpcRequest::parse(const QJsonObject &data)
 {
-    if (!QJsonRpcMessage::parse(data))
+    if (!QJsonRpcMessageOLD::parse(data))
         return false;
 
     if (!QJsonRpcRequest::isRequest(data))
@@ -234,7 +392,7 @@ bool QJsonRpcResponse::isError() const
 
 QJsonObject QJsonRpcResponse::serialize() const
 {
-    QJsonObject response(QJsonRpcMessage::serialize());
+    QJsonObject response(QJsonRpcMessageOLD::serialize());
     if (isError())
         response.insert("error", m_error.serialize());
     else
@@ -251,7 +409,7 @@ bool QJsonRpcResponse::isResponse(const QJsonObject &data)
 
 bool QJsonRpcResponse::parse(const QJsonObject &data)
 {
-    if (!QJsonRpcMessage::parse(data))
+    if (!QJsonRpcMessageOLD::parse(data))
         return false;
 
     if (!QJsonRpcResponse::isResponse(data))
@@ -284,19 +442,30 @@ QJsonRpcService::QJsonRpcService(QObject *parent)
 {
 }
 
-void QJsonRpcService::buildInvokableHash()
+void QJsonRpcService::cacheInvokableInfo()
 {
     const QMetaObject *obj = metaObject();
     int startIdx = QObject::staticMetaObject.methodCount(); // skip QObject slots
     for (int idx = startIdx; idx < obj->methodCount(); ++idx) {
-        if (obj->method(idx).methodType() == QMetaMethod::Slot) {
-            QByteArray signature = obj->method(idx).signature();
+        const QMetaMethod method = obj->method(idx);
+        if (method.methodType() == QMetaMethod::Slot) {
+            QByteArray signature = method.signature();
             m_invokableMethodHash[signature.left(signature.indexOf('('))] = idx;
+
+            QList<int> parameterTypes;
+            parameterTypes << QMetaType::type(method.typeName());
+
+            qDebug() << method.signature() << " parameterTypes: ";
+            foreach(QByteArray parameterType, method.parameterTypes()) {
+                parameterTypes << QMetaType::type(parameterType);
+                qDebug() << "\t" << parameterType;
+            }
+            m_parameterTypeHash[idx] = parameterTypes;
         }
     }
 }
 
-QJsonValue QJsonRpcService::dispatch(const QByteArray &method, const QVariantList &arguments)
+QJsonValue QJsonRpcService::dispatch(const QByteArray &method, const QJsonArray &jsonArguments) const
 {    
     if (!m_invokableMethodHash.contains(method)) {
         QJsonRpcError error;
@@ -306,14 +475,52 @@ QJsonValue QJsonRpcService::dispatch(const QByteArray &method, const QVariantLis
     }
 
     int idx = m_invokableMethodHash.value(method);
-    const QMetaMethod invokeMethod = metaObject()->method(idx);
-    if (arguments.size() > invokeMethod.parameterTypes().size()) {
+    const QList<int> parameterTypes = m_parameterTypeHash.value(idx);
+
+    qDebug() << "jsonArguments.size(): " << jsonArguments.size() << ", parameterTypes.size()-1: " << parameterTypes.size()-1;
+    if (jsonArguments.size() != parameterTypes.size() - 1) {
         QJsonRpcError error;
         error.setCode(QJsonRpc::InvalidParams);
         error.setMessage("invalid parameters");
         return error.serialize();
     }
 
+    // convert json array to qvariantlist
+    QList<QVariant> arguments;
+    foreach (QJsonValue value, jsonArguments)
+        arguments.append(value.toVariant());
+
+    // QList<QVariant> auxArguments;
+    QVarLengthArray<void *, 10> parameters;
+    parameters.reserve(parameterTypes.count());
+
+    // first argument to metacall is the return value
+    void *null = 0;
+    QVariant returnValue(parameterTypes[0], null);
+    parameters.append(const_cast<void *>(returnValue.constData()));
+
+    // compile arguments
+    for (int i = 0; i < parameterTypes.size() - 1; ++i) {
+//        int parameterType = parameterTypes[i + 1];
+        const QVariant &argument = arguments.at(i);
+//        if (argument.userType() == parameterType) {
+            parameters.append(const_cast<void *>(argument.constData()));
+//        } else {
+//        }
+    }
+
+    bool success = false;
+    success = const_cast<QJsonRpcService*>(this)->qt_metacall(QMetaObject::InvokeMetaMethod, idx, parameters.data()) < 0;
+    if (!success) {
+        QJsonRpcError error;
+        error.setCode(QJsonRpc::InvalidParams);
+        error.setMessage(QString("dispatch for method '%1' failed").arg(method.constData()));
+        return error.serialize();
+    }
+
+    return QJsonValue::fromVariant(returnValue);
+
+/*
     // compile generic arguments
     QList<QGenericArgument> genericArguments;
     for (int i = 0; i < arguments.size(); i++) {
@@ -349,12 +556,7 @@ QJsonValue QJsonRpcService::dispatch(const QByteArray &method, const QVariantLis
             return QJsonValue::fromVariant(returnValue);
         }
     }
-
-    // something else went wrong!
-    QJsonRpcError error;
-    error.setCode(QJsonRpc::InvalidParams);
-    error.setMessage(QString("dispatch for method '%1' failed").arg(method.constData()));
-    return error.serialize();
+*/
 }
 
 
@@ -383,7 +585,7 @@ QJsonRpcPeer::~QJsonRpcPeer()
 void QJsonRpcPeer::addService(QJsonRpcService *service)
 {
     m_services.insert(service->serviceName(), service);
-    service->buildInvokableHash();
+    service->cacheInvokableInfo();
 }
 
 bool QJsonRpcPeer::listenForPeers(const QString &socket)
@@ -472,13 +674,7 @@ void QJsonRpcPeer::processIncomingData()
                 }
 
                 QJsonRpcService *service = m_services.value(serviceName);
-
-
-                QVariantList params;
-                foreach (QJsonValue value, request.params()) {
-                    params.append(value.toVariant());
-                }
-                QJsonValue result = service->dispatch(method.toLatin1(), params);
+                QJsonValue result = service->dispatch(method.toLatin1(), request.params());
 
                 QJsonRpcResponse response;
                 response.setId(request.id());

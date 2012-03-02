@@ -1,4 +1,5 @@
-include(../../json/json.pri)
+load(qttest_p4)
+include(../../shared.pri)
 
 TARGET = tst_qtjson
 QT = core testlib

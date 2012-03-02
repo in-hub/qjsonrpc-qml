@@ -1,4 +1,3 @@
 TEMPLATE = subdirs
-SUBDIRS = json \
-          messages \
+SUBDIRS = auto \
           manual
