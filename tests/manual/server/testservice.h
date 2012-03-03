@@ -1,7 +1,7 @@
 #ifndef TESTSERVICE_H
 #define TESTSERVICE_H
 
-#include "qjsonrpc.h"
+#include "qjsonrpcpeer.h"
 
 class TestService : public QJsonRpcService
 {

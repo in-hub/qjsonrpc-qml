@@ -1,6 +1,6 @@
 #include <QCoreApplication>
 
-#include "qjsonrpc.h"
+#include "qjsonrpcpeer.h"
 #include "testservice.h"
 
 int main(int argc, char **argv)

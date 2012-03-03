@@ -1,10 +1,8 @@
-#ifndef QJSONRPC_P_H
-#define QJSONRPC_P_H
+#ifndef QJSONRPCMESSAGE_P_H
+#define QJSONRPCMESSAGE_P_H
 
 #include <QSharedData>
-
-#include "qjsonvalue.h"
-#include "qjsonrpc.h"
+#include "qjsonrpcmessage.h"
 
 class QJsonRpcMessagePrivate : public QSharedData
 {

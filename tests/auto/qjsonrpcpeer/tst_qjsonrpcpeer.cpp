@@ -2,7 +2,7 @@
 #include <QtTest/QtTest>
 
 #include "json/qjsondocument.h"
-#include "qjsonrpc.h"
+#include "qjsonrpcpeer.h"
 
 class TestQJsonRpcPeer: public QObject
 {

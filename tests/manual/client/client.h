@@ -2,7 +2,7 @@
 #define CLIENT_H
 
 #include <QObject>
-#include "qjsonrpc.h"
+#include "qjsonrpcpeer.h"
 
 class Client : public QObject
 {
