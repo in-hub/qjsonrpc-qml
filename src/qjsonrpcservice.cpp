@@ -102,13 +102,6 @@ QJsonRpcServiceSocket::~QJsonRpcServiceSocket()
         m_socket.data()->deleteLater();
 }
 
-QJsonRpcServiceSocket *QJsonRpcServiceSocket::createLocalService(const QString &service)
-{
-    QLocalSocket *localSocket = new QLocalSocket;
-    localSocket->connectToServer(service);
-    return new QJsonRpcServiceSocket(localSocket);
-}
-
 bool QJsonRpcServiceSocket::isValid() const
 {
     return !m_socket.isNull() && m_socket.data()->isValid();

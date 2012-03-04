@@ -29,7 +29,6 @@ class QJsonRpcServiceSocket : public QObject
     Q_OBJECT
 public:
     explicit QJsonRpcServiceSocket(QLocalSocket *localSocket, QObject *parent = 0);
-    static QJsonRpcServiceSocket *createLocalService(const QString &service);
     ~QJsonRpcServiceSocket();
 
     bool isValid() const;
