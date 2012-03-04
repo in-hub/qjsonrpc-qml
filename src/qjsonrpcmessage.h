@@ -41,6 +41,7 @@ public:
     };
 
     static QJsonRpcMessage createRequest(const QString &method, const QVariantList &params = QVariantList());
+    static QJsonRpcMessage createRequest(const QString &method, const QVariant &param);
     static QJsonRpcMessage createNotification(const QString &method, const QVariantList &params = QVariantList());
     QJsonRpcMessage createResponse(const QVariant &result) const;
     QJsonRpcMessage createErrorResponse(QJsonRpc::ErrorCode code, const QString &message = QString(),
@@ -70,5 +71,6 @@ private:
 };
 
 QDebug operator<<(QDebug, const QJsonRpcMessage &);
+Q_DECLARE_METATYPE(QJsonRpcMessage)
 
 #endif

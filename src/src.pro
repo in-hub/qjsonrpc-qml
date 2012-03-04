@@ -8,10 +8,9 @@ QT += core \
       network
 DESTDIR = ../lib
 
-HEADERS += qjsonrpcpeer.h \
+HEADERS += qjsonrpcservice.h \
            qjsonrpcmessage.h \
            qjsonrpcmessage_p.h
-SOURCES += qjsonrpcpeer.cpp \
+SOURCES += qjsonrpcservice.cpp \
            qjsonrpcmessage.cpp \
            main.cpp
-

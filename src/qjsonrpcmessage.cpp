@@ -90,6 +90,11 @@ QJsonRpcMessage QJsonRpcMessage::createRequest(const QString &method, const QVar
     return request;
 }
 
+QJsonRpcMessage QJsonRpcMessage::createRequest(const QString &method, const QVariant &param)
+{
+    return createRequest(method, QVariantList() << param);
+}
+
 QJsonRpcMessage QJsonRpcMessage::createNotification(const QString &method, const QVariantList &params)
 {
     QJsonRpcMessage notification = QJsonRpcMessagePrivate::createBasicRequest(method, params);

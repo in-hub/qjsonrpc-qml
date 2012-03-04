@@ -2,8 +2,9 @@
 #define CLIENT_H
 
 #include <QObject>
-#include "qjsonrpcpeer.h"
+#include "qjsonrpcmessage.h"
 
+class QJsonRpcServiceSocket;
 class Client : public QObject
 {
     Q_OBJECT
@@ -12,10 +13,11 @@ public:
     void run();
 
 private Q_SLOTS:
+    void clientConnected();
     void processMessage(const QJsonRpcMessage &response);
 
 private:
-    QJsonRpcPeer *m_peer;
+    QJsonRpcServiceSocket *m_client;
 
 };
 
