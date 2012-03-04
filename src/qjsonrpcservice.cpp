@@ -89,22 +89,22 @@ QJsonRpcMessage QJsonRpcService::dispatch(const QJsonRpcMessage &request) const
     return request.createResponse(returnValue);
 }
 
-QJsonRpcServiceSocket::QJsonRpcServiceSocket(QLocalSocket *localSocket, QObject *parent)
+QJsonRpcServiceSocket::QJsonRpcServiceSocket(QIODevice *device, QObject *parent)
     : QObject(parent),
-      m_socket(localSocket)
+      m_device(device)
 {
-    connect(m_socket.data(), SIGNAL(readyRead()), this, SLOT(processIncomingData()));
+    connect(m_device.data(), SIGNAL(readyRead()), this, SLOT(processIncomingData()));
 }
 
 QJsonRpcServiceSocket::~QJsonRpcServiceSocket()
 {
-    if (!m_socket.isNull())
-        m_socket.data()->deleteLater();
+    if (!m_device.isNull())
+        m_device.data()->deleteLater();
 }
 
 bool QJsonRpcServiceSocket::isValid() const
 {
-    return !m_socket.isNull() && m_socket.data()->isValid();
+    return !m_device.isNull() && m_device.data()->isOpen();
 }
 
 void QJsonRpcServiceSocket::sendMessage(const QList<QJsonRpcMessage> &messages)
@@ -115,13 +115,13 @@ void QJsonRpcServiceSocket::sendMessage(const QList<QJsonRpcMessage> &messages)
     }
 
     QJsonDocument doc = QJsonDocument(array);
-    m_socket.data()->write(doc.toBinaryData());
+    m_device.data()->write(doc.toBinaryData());
 }
 
 void QJsonRpcServiceSocket::sendMessage(const QJsonRpcMessage &message)
 {
     QJsonDocument doc = QJsonDocument(message.toObject());
-    m_socket.data()->write(doc.toBinaryData());
+    m_device.data()->write(doc.toBinaryData());
 }
 
 void QJsonRpcServiceSocket::invokeRemoteMethod(const QString &method, const QVariant &param1,
@@ -149,7 +149,7 @@ void QJsonRpcServiceSocket::invokeRemoteMethod(const QString &method, const QVar
 
 void QJsonRpcServiceSocket::processIncomingData()
 {
-    QByteArray data = m_socket.data()->readAll();
+    QByteArray data = m_device.data()->readAll();
     while (!data.isEmpty()) {
         QJsonDocument document = QJsonDocument::fromBinaryData(data);
         data = data.mid(document.toBinaryData().size());

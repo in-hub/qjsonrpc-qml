@@ -29,7 +29,7 @@ class Q_JSONRPC_EXPORT QJsonRpcServiceSocket : public QObject
 {
     Q_OBJECT
 public:
-    explicit QJsonRpcServiceSocket(QLocalSocket *localSocket, QObject *parent = 0);
+    explicit QJsonRpcServiceSocket(QIODevice *device, QObject *parent = 0);
     ~QJsonRpcServiceSocket();
 
     bool isValid() const;
@@ -49,7 +49,7 @@ private Q_SLOTS:
     void processIncomingData();
 
 private:
-    QWeakPointer<QLocalSocket> m_socket;
+    QWeakPointer<QIODevice> m_device;
 };
 
 class QLocalServer;
