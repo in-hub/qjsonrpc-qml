@@ -53,6 +53,7 @@
 // We mean it.
 //
 
+#include "qjsonexport.h"
 #include "qjsonobject.h"
 #include "qjsonvalue.h"
 #include "qjsondocument.h"

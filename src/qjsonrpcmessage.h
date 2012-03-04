@@ -3,6 +3,7 @@
 
 #include <QSharedDataPointer>
 
+#include "json/qjsonexport.h"
 #include "json/qjsonvalue.h"
 #include "json/qjsonobject.h"
 #include "json/qjsonarray.h"
@@ -23,7 +24,7 @@ namespace QJsonRpc {
 }
 
 class QJsonRpcMessagePrivate;
-class QJsonRpcMessage
+class Q_JSONRPC_EXPORT QJsonRpcMessage
 {
 public:
     QJsonRpcMessage();
@@ -70,7 +71,7 @@ private:
 
 };
 
-QDebug operator<<(QDebug, const QJsonRpcMessage &);
+Q_JSONRPC_EXPORT QDebug operator<<(QDebug, const QJsonRpcMessage &);
 Q_DECLARE_METATYPE(QJsonRpcMessage)
 
 #endif

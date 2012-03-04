@@ -1,4 +1,5 @@
-include(../../../qjsonrpc.pri)
+DEPTH = ../../..
+include($$DEPTH/qjsonrpc.pri)
 
 TEMPLATE = app
 TARGET = server

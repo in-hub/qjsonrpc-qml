@@ -1,5 +1,6 @@
 load(qttest_p4)
-include(../../../qjsonrpc.pri)
+DEPTH = ../../..
+include($$DEPTH/qjsonrpc.pri)
 
 TARGET = tst_qjsonrpcservice
 QT = core testlib network
