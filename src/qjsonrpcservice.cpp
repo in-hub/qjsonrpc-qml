@@ -89,6 +89,16 @@ QJsonRpcMessage QJsonRpcService::dispatch(const QJsonRpcMessage &request) const
     return request.createResponse(returnValue);
 }
 
+
+QJsonRpcServiceReply::QJsonRpcServiceReply(QObject *parent)
+{
+}
+
+QJsonRpcMessage QJsonRpcServiceReply::response() const
+{
+    return m_response;
+}
+
 QJsonRpcServiceSocket::QJsonRpcServiceSocket(QIODevice *device, QObject *parent)
     : QObject(parent),
       m_device(device)
@@ -107,6 +117,7 @@ bool QJsonRpcServiceSocket::isValid() const
     return !m_device.isNull() && m_device.data()->isOpen();
 }
 
+/*
 void QJsonRpcServiceSocket::sendMessage(const QList<QJsonRpcMessage> &messages)
 {
     QJsonArray array;
@@ -117,14 +128,19 @@ void QJsonRpcServiceSocket::sendMessage(const QList<QJsonRpcMessage> &messages)
     QJsonDocument doc = QJsonDocument(array);
     m_device.data()->write(doc.toBinaryData());
 }
+*/
 
-void QJsonRpcServiceSocket::sendMessage(const QJsonRpcMessage &message)
+QJsonRpcServiceReply *QJsonRpcServiceSocket::sendMessage(const QJsonRpcMessage &message)
 {
     QJsonDocument doc = QJsonDocument(message.toObject());
     m_device.data()->write(doc.toBinaryData());
+
+    QJsonRpcServiceReply *reply = new QJsonRpcServiceReply(this);
+    m_replies.insert(message.id(), reply);
+    return reply;
 }
 
-void QJsonRpcServiceSocket::invokeRemoteMethod(const QString &method, const QVariant &param1,
+QJsonRpcServiceReply *QJsonRpcServiceSocket::invokeRemoteMethod(const QString &method, const QVariant &param1,
                                                const QVariant &param2, const QVariant &param3,
                                                const QVariant &param4, const QVariant &param5,
                                                const QVariant &param6, const QVariant &param7,
@@ -144,7 +160,7 @@ void QJsonRpcServiceSocket::invokeRemoteMethod(const QString &method, const QVar
     if (param10.isValid()) params.append(param10);
 
     QJsonRpcMessage request = QJsonRpcMessage::createRequest(method, params);
-    sendMessage(request);
+    return sendMessage(request);
 }
 
 void QJsonRpcServiceSocket::processIncomingData()
@@ -153,8 +169,9 @@ void QJsonRpcServiceSocket::processIncomingData()
     while (!data.isEmpty()) {
         QJsonDocument document = QJsonDocument::fromBinaryData(data);
         data = data.mid(document.toBinaryData().size());
-
         if (document.isArray()) {
+            qDebug() << "bulk support is current disabled";
+            /*
             for (int i = 0; i < document.array().size(); ++i) {
                 QJsonObject messageObject = document.array().at(i).toObject();
                 if (!messageObject.isEmpty()) {
@@ -162,9 +179,20 @@ void QJsonRpcServiceSocket::processIncomingData()
                     Q_EMIT messageReceived(message);
                 }
             }
+            */
         } else if (document.isObject()){
             QJsonRpcMessage message(document.object());
-            Q_EMIT messageReceived(message);
+            if (message.type() == QJsonRpcMessage::Response) {
+                if (m_replies.contains(message.id())) {
+                    QJsonRpcServiceReply *reply = m_replies.take(message.id());
+                    reply->m_response = message;
+                    reply->finished();
+                } else {
+                    qDebug() << "invalid response receieved: " << message;
+                }
+            } else {
+                Q_EMIT messageReceived(message);
+            }
         }
     }
 }

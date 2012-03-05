@@ -14,7 +14,7 @@ public:
 
 private Q_SLOTS:
     void clientConnected();
-    void processMessage(const QJsonRpcMessage &response);
+    void processResponse();
 
 private:
     QJsonRpcServiceSocket *m_client;

@@ -14,7 +14,7 @@ class Q_JSONRPC_EXPORT QJsonRpcService : public QObject
 {
     Q_OBJECT
 public:
-    QJsonRpcService(QObject *parent = 0);
+    explicit QJsonRpcService(QObject *parent = 0);
     virtual QString serviceName() const = 0;
 
 private:
@@ -23,6 +23,21 @@ private:
      QHash<QByteArray, int> m_invokableMethodHash;
      QHash<int, QList<int> > m_parameterTypeHash;
      friend class QJsonRpcServiceProvider;
+};
+
+class Q_JSONRPC_EXPORT QJsonRpcServiceReply : public QObject
+{
+    Q_OBJECT
+public:
+    explicit QJsonRpcServiceReply(QObject *parent = 0);
+    QJsonRpcMessage response() const;
+
+Q_SIGNALS:
+    void finished();
+
+private:
+    QJsonRpcMessage m_response;
+    friend class QJsonRpcServiceSocket;
 };
 
 class Q_JSONRPC_EXPORT QJsonRpcServiceSocket : public QObject
@@ -34,14 +49,15 @@ public:
 
     bool isValid() const;
 
-    void sendMessage(const QJsonRpcMessage &message);
-    void sendMessage(const QList<QJsonRpcMessage> &bulk);
-    void invokeRemoteMethod(const QString &method, const QVariant &arg1 = QVariant(),
-                            const QVariant &arg2 = QVariant(), const QVariant &arg3 = QVariant(),
-                            const QVariant &arg4 = QVariant(), const QVariant &arg5 = QVariant(),
-                            const QVariant &arg6 = QVariant(), const QVariant &arg7 = QVariant(),
-                            const QVariant &arg8 = QVariant(), const QVariant &arg9 = QVariant(),
-                            const QVariant &arg10 = QVariant());
+    //    void sendMessage(const QList<QJsonRpcMessage> &bulk);
+    QJsonRpcServiceReply *sendMessage(const QJsonRpcMessage &message);
+    QJsonRpcServiceReply *invokeRemoteMethod(const QString &method, const QVariant &arg1 = QVariant(),
+                                             const QVariant &arg2 = QVariant(), const QVariant &arg3 = QVariant(),
+                                             const QVariant &arg4 = QVariant(), const QVariant &arg5 = QVariant(),
+                                             const QVariant &arg6 = QVariant(), const QVariant &arg7 = QVariant(),
+                                             const QVariant &arg8 = QVariant(), const QVariant &arg9 = QVariant(),
+                                             const QVariant &arg10 = QVariant());
+
 Q_SIGNALS:
     void messageReceived(const QJsonRpcMessage &message);
 
@@ -50,6 +66,8 @@ private Q_SLOTS:
 
 private:
     QWeakPointer<QIODevice> m_device;
+    QHash<int, QJsonRpcServiceReply *> m_replies;
+
 };
 
 class QLocalServer;
