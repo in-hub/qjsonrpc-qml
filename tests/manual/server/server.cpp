@@ -1,4 +1,6 @@
 #include <QCoreApplication>
+#include <QDesktopServices>
+#include <QFile>
 
 #include "testservice.h"
 
@@ -6,10 +8,25 @@ int main(int argc, char **argv)
 {
     QCoreApplication app(argc, argv);
 
+    QString serviceName;
+#if defined(Q_OS_WIN)
+    QDir tempDirectory(QDesktopServices::storageLocation(QDesktopServices::TempLocation));
+    serviceName = tempDirectory.absoluteFilePath("testservice");
+#else
+    serviceName = "/tmp/testservice";
+#endif
+
+    if (QFile::exists(serviceName)) {
+      if (!QFile::remove(serviceName)) {
+	qDebug() << "couldn't delete temporary service";
+	return -1;
+      }
+    }
+
     TestService service;
     QJsonRpcServiceProvider server;
     server.addService(&service);
-    if (!server.listen("testservice")) {
+    if (!server.listen(serviceName)) {
         qDebug() << "could not start server, aborting";
         return -1;
     }

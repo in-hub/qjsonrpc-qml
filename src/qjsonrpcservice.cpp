@@ -133,7 +133,8 @@ void QJsonRpcServiceSocket::sendMessage(const QList<QJsonRpcMessage> &messages)
 QJsonRpcServiceReply *QJsonRpcServiceSocket::sendMessage(const QJsonRpcMessage &message)
 {
     QJsonDocument doc = QJsonDocument(message.toObject());
-    m_device.data()->write(doc.toBinaryData());
+    // m_device.data()->write(doc.toBinaryData());
+    m_device.data()->write(doc.toJson());
 
     QJsonRpcServiceReply *reply = new QJsonRpcServiceReply(this);
     m_replies.insert(message.id(), reply);
@@ -167,8 +168,13 @@ void QJsonRpcServiceSocket::processIncomingData()
 {
     QByteArray data = m_device.data()->readAll();
     while (!data.isEmpty()) {
-        QJsonDocument document = QJsonDocument::fromBinaryData(data);
-        data = data.mid(document.toBinaryData().size());
+        // NOTE: sending this stuff in binary breaks compatibility with
+        //       other jsonrpc implementations
+        // QJsonDocument document = QJsonDocument::fromBinaryData(data);
+        // data = data.mid(document.toBinaryData().size());
+
+        QJsonDocument document = QJsonDocument::fromJson(data);
+        data = data.mid(document.toJson().size());
         if (document.isArray()) {
             qDebug() << "bulk support is current disabled";
             /*
@@ -196,12 +202,6 @@ void QJsonRpcServiceSocket::processIncomingData()
         }
     }
 }
-
-
-
-
-
-
 
 QJsonRpcServiceProvider::QJsonRpcServiceProvider(QObject *parent)
     : QObject(parent),
@@ -283,6 +283,8 @@ void QJsonRpcServiceProvider::processMessage(const QJsonRpcMessage &message)
 
         QJsonRpcService *service = m_services.value(serviceName);
         QJsonRpcMessage response = service->dispatch(message);
+
+        QJsonDocument doc(response.toObject());
         serviceSocket->sendMessage(response);
     } else if (message.type() == QJsonRpcMessage::Response ||
                message.type() == QJsonRpcMessage::Notification) {

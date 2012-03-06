@@ -12,7 +12,7 @@ void Client::run()
 {
     QLocalSocket *socket = new QLocalSocket(this);
     connect(socket, SIGNAL(connected()), this, SLOT(clientConnected()));
-    socket->connectToServer("testService");
+    socket->connectToServer("/tmp/testService");
 }
 
 void Client::clientConnected()
