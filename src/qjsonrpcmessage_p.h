@@ -2,6 +2,7 @@
 #define QJSONRPCMESSAGE_P_H
 
 #include <QSharedData>
+#include <QSharedPointer>
 #include "qjsonrpcmessage.h"
 
 class QJsonRpcMessagePrivate : public QSharedData

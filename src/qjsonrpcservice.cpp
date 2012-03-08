@@ -91,6 +91,7 @@ QJsonRpcMessage QJsonRpcService::dispatch(const QJsonRpcMessage &request) const
 
 
 QJsonRpcServiceReply::QJsonRpcServiceReply(QObject *parent)
+    : QObject(parent)
 {
 }
 

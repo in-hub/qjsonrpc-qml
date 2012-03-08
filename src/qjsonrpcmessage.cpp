@@ -11,8 +11,6 @@ QJsonRpcMessagePrivate::QJsonRpcMessagePrivate()
 
 QJsonRpcMessagePrivate::~QJsonRpcMessagePrivate()
 {
-    if (object)
-        delete object;
 }
 
 QJsonRpcMessage::QJsonRpcMessage()
@@ -136,14 +134,14 @@ QJsonRpcMessage QJsonRpcMessage::createErrorResponse(QJsonRpc::ErrorCode code, c
 
 int QJsonRpcMessage::id() const
 {
-    if (d->type == QJsonRpcMessage::Notification)
+    if (d->type == QJsonRpcMessage::Notification || !d->object)
         return -1;
     return d->object->value("id").toVariant().toInt();
 }
 
 QString QJsonRpcMessage::method() const
 {
-    if (d->type != QJsonRpcMessage::Request)
+    if (d->type != QJsonRpcMessage::Request || !d->object)
         return QString();
 
     return d->object->value("method").toString();
@@ -151,7 +149,7 @@ QString QJsonRpcMessage::method() const
 
 QVariantList QJsonRpcMessage::params() const
 {
-    if (d->type != QJsonRpcMessage::Request)
+    if (d->type != QJsonRpcMessage::Request || !d->object)
         return QVariantList();
 
     return d->object->value("params").toVariant().toList();
@@ -159,7 +157,7 @@ QVariantList QJsonRpcMessage::params() const
 
 QVariant QJsonRpcMessage::result() const
 {
-    if (d->type != QJsonRpcMessage::Response)
+    if (d->type != QJsonRpcMessage::Response || !d->object)
         return QVariant();
 
     return d->object->value("result").toVariant();
@@ -167,7 +165,7 @@ QVariant QJsonRpcMessage::result() const
 
 int QJsonRpcMessage::errorCode() const
 {
-    if (d->type != QJsonRpcMessage::Error)
+    if (d->type != QJsonRpcMessage::Error || !d->object)
         return 0;
 
     QJsonObject error = d->object->value("error").toObject();
@@ -176,7 +174,7 @@ int QJsonRpcMessage::errorCode() const
 
 QString QJsonRpcMessage::errorMessage() const
 {
-    if (d->type != QJsonRpcMessage::Error)
+    if (d->type != QJsonRpcMessage::Error || !d->object)
         return 0;
 
     QJsonObject error = d->object->value("error").toObject();
@@ -185,7 +183,7 @@ QString QJsonRpcMessage::errorMessage() const
 
 QVariant QJsonRpcMessage::errorData() const
 {
-    if (d->type != QJsonRpcMessage::Error)
+    if (d->type != QJsonRpcMessage::Error || !d->object)
         return 0;
 
     QJsonObject error = d->object->value("error").toObject();
