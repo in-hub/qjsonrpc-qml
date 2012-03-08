@@ -9,7 +9,7 @@
 QJsonRpcServiceSocketPrototype::QJsonRpcServiceSocketPrototype(QObject *parent)
     : QObject(parent),
       m_socket(0)
-{
+{    
 }
 
 QJsonRpcServiceSocketPrototype::~QJsonRpcServiceSocketPrototype()
@@ -24,13 +24,7 @@ void QJsonRpcServiceSocketPrototype::connectToLocalService(const QString &servic
     }
 
     QLocalSocket *localSocket = new QLocalSocket(this);
-    QEventLoop waitForConnected;
-    connect(localSocket, SIGNAL(connected()), &waitForConnected, SLOT(quit()));
-    QTimer::singleShot(3000, &waitForConnected, SLOT(quit()));
-    localSocket->connectToServer(service);
-    waitForConnected.exec();
-
-    if (localSocket->state() != QLocalSocket::ConnectedState) {
+    if (localSocket->waitForConnected()) {
         context()->throwError("could not connect to local sevice: " + service);
         localSocket->deleteLater();
         return;
@@ -60,30 +54,16 @@ QVariant QJsonRpcServiceSocketPrototype::invokeRemoteMethod(const QString &metho
     QJsonRpcMessage request = QJsonRpcMessage::createRequest(method, params);
     QJsonRpcServiceReply *reply = m_socket->sendMessage(request);
 
-    QEventLoop blockForReply;
-    connect(reply, SIGNAL(finished()), &blockForReply, SLOT(quit()));
-    QTimer::singleShot(3000, &blockForReply, SLOT(quit()));
-    blockForReply.exec();
+    QEventLoop loop;
+    connect(m_socket, SIGNAL(messageReceived(QJsonRpcMessage)), &loop, SLOT(quit()));
+    connect(reply, SIGNAL(finished()), &loop, SLOT(quit()));
+    loop.exec();
 
-    qDebug() << "response: " << reply->response();
     if (reply->response().type() == QJsonRpcMessage::Invalid) {
         context()->throwError("request timed out");
         return QVariant();
     }
 
+    qDebug() << "response: " << reply->response();
     return reply->response().result();
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
