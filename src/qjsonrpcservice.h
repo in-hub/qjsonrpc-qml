@@ -7,7 +7,6 @@
 #include <QWeakPointer>
 #include <QLocalSocket>
 
-
 #include "qjsonrpcmessage.h"
 
 class Q_JSONRPC_EXPORT QJsonRpcService : public QObject
@@ -40,6 +39,7 @@ private:
     friend class QJsonRpcServiceSocket;
 };
 
+class QJsonRpcServiceSocketPrivate;
 class Q_JSONRPC_EXPORT QJsonRpcServiceSocket : public QObject
 {
     Q_OBJECT
@@ -65,12 +65,11 @@ private Q_SLOTS:
     void processIncomingData();
 
 private:
-    QWeakPointer<QIODevice> m_device;
-    QHash<int, QJsonRpcServiceReply *> m_replies;
+    Q_DECLARE_PRIVATE(QJsonRpcServiceSocket)
 
 };
 
-class QLocalServer;
+class QJsonRpcServiceProviderPrivate;
 class Q_JSONRPC_EXPORT QJsonRpcServiceProvider : public QObject
 {
     Q_OBJECT
@@ -90,10 +89,7 @@ private Q_SLOTS:
     void clientDisconnected();
 
 private:
-    QLocalServer *m_server;
-    QList<QJsonRpcServiceSocket *> m_clients;
-    QHash<QLocalSocket *, QJsonRpcServiceSocket *> m_serviceSocketLookup;
-    QHash<QString, QJsonRpcService *> m_services;
+    Q_DECLARE_PRIVATE(QJsonRpcServiceProvider)
 
 };
 
