@@ -64,6 +64,8 @@ public:
     QVariant errorData() const;
 
     QJsonObject toObject() const;
+    bool operator==(const QJsonRpcMessage &message) const;
+    inline bool operator!=(const QJsonRpcMessage &message) const { return !(operator==(message)); }
 
 private:
     friend class QJsonRpcMessagePrivate;

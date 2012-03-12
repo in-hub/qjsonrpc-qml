@@ -33,6 +33,31 @@ QJsonRpcMessage &QJsonRpcMessage::operator=(const QJsonRpcMessage &other)
     return *this;
 }
 
+bool QJsonRpcMessage::operator==(const QJsonRpcMessage &message) const
+{
+    if (message.d == d)
+        return true;
+
+    if (message.type() == type()) {
+        if (message.type() == QJsonRpcMessage::Error) {
+            return (message.errorCode() == errorCode() &&
+                    message.errorMessage() == errorMessage() &&
+                    message.errorData() == errorData());
+        } else {
+            if (message.type() == QJsonRpcMessage::Notification) {
+                return (message.method() == method() &&
+                        message.params() == params());
+            } else {
+                return (message.id() == id() &&
+                        message.method() == method() &&
+                        message.params() == params());
+            }
+        }
+    }
+
+    return false;
+}
+
 QJsonRpcMessage::QJsonRpcMessage(const QJsonObject &message)
     : d(new QJsonRpcMessagePrivate)
 {
@@ -149,7 +174,9 @@ QString QJsonRpcMessage::method() const
 
 QVariantList QJsonRpcMessage::params() const
 {
-    if (d->type != QJsonRpcMessage::Request || !d->object)
+    if (d->type == QJsonRpcMessage::Response || d->type == QJsonRpcMessage::Error)
+        return QVariantList();
+    if (!d->object)
         return QVariantList();
 
     return d->object->value("params").toVariant().toList();

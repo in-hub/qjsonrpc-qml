@@ -13,6 +13,7 @@ private slots:
     void testNotificationNoId();
     void testMessageTypes();
     void testPositionalParameters();
+    void testEquivalence();
 };
 
 void TestQJsonRpcMessage::testInvalidData()
@@ -53,6 +54,9 @@ void TestQJsonRpcMessage::testMessageTypes()
     QCOMPARE(notification.type(), QJsonRpcMessage::Notification);
 }
 
+
+
+
 // this is from the spec, I don't think it proves much..
 void TestQJsonRpcMessage::testPositionalParameters()
 {
@@ -63,7 +67,37 @@ void TestQJsonRpcMessage::testPositionalParameters()
     QVERIFY2(firstObject.value("params").toArray() != secondObject.value("params").toArray(), "params should maintain order");
 }
 
+void TestQJsonRpcMessage::testEquivalence()
+{
 
+    // request (same as error)
+    QJsonRpcMessage firstRequest = QJsonRpcMessage::createRequest("testRequest");
+    QJsonRpcMessage secondRequest(firstRequest);
+    QJsonRpcMessage thirdRequest = QJsonRpcMessage::createRequest("testRequest", QVariantList() << "with" << "parameters");
+    QJsonRpcMessage fourthRequest = thirdRequest;
+    QCOMPARE(firstRequest, secondRequest);
+    QVERIFY(secondRequest != thirdRequest);
+    QCOMPARE(thirdRequest, fourthRequest);
+
+    // notification (no id)
+    QJsonRpcMessage firstNotification = QJsonRpcMessage::createNotification("testNotification");
+    QJsonRpcMessage secondNotification = QJsonRpcMessage::createNotification("testNotification");
+    QJsonRpcMessage thirdNotification = QJsonRpcMessage::createNotification("testNotification", QVariantList() << "first");
+    QJsonRpcMessage fourthNotification = QJsonRpcMessage::createNotification("testNotification", QVariantList() << "first");
+    QCOMPARE(firstNotification, secondNotification);
+    QVERIFY(firstNotification != thirdNotification);
+    QCOMPARE(thirdNotification, fourthNotification);
+
+    QJsonRpcMessage invalid;
+    QVERIFY(firstRequest != invalid);
+    QVERIFY(secondRequest != invalid);
+    QVERIFY(thirdRequest != invalid);
+    QVERIFY(fourthRequest != invalid);
+    QVERIFY(firstNotification != invalid);
+    QVERIFY(secondNotification != invalid);
+    QVERIFY(thirdNotification != invalid);
+    QVERIFY(fourthNotification != invalid);
+}
 
 QTEST_MAIN(TestQJsonRpcMessage)
 #include "tst_qjsonrpcmessage.moc"

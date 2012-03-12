@@ -21,18 +21,21 @@ private Q_SLOTS:
     void cleanup();
 
     // Local Server
-    void testLocalServiceProviderNoParameter();
-    void testLocalServiceProviderSingleParameter();
-    void testLocalServiceProviderMultiparameter();
-    void testLocalServiceProviderInvalidArgs();
-    void testLocalServiceProviderMethodNotFound();
+    void testLocalNoParameter();
+    void testLocalSingleParameter();
+    void testLocalMultiparameter();
+    void testLocalInvalidArgs();
+    void testLocalMethodNotFound();
+    void testLocalNotifyConnectedClients();
 
     // TCP Server
-    void testTcpServiceProviderNoParameter();
-    void testTcpServiceProviderSingleParameter();
-    void testTcpServiceProviderMultiparameter();
-    void testTcpServiceProviderInvalidArgs();
-    void testTcpServiceProviderMethodNotFound();
+    void testTcpNoParameter();
+    void testTcpSingleParameter();
+    void testTcpMultiparameter();
+    void testTcpInvalidArgs();
+    void testTcpMethodNotFound();
+//    void testTcpNotifyConnectedClients();
+
 
 };
 
@@ -89,7 +92,7 @@ void TestQJsonRpcServiceProvider::cleanup()
 {
 }
 
-void TestQJsonRpcServiceProvider::testLocalServiceProviderNoParameter()
+void TestQJsonRpcServiceProvider::testLocalNoParameter()
 {
     // Initialize the service provider.
     QEventLoop loop;
@@ -119,7 +122,7 @@ void TestQJsonRpcServiceProvider::testLocalServiceProviderNoParameter()
     QCOMPARE(request.id(), response.id());
 }
 
-void TestQJsonRpcServiceProvider::testLocalServiceProviderSingleParameter()
+void TestQJsonRpcServiceProvider::testLocalSingleParameter()
 {
     // Initialize the service provider.
     QEventLoop loop;
@@ -150,7 +153,7 @@ void TestQJsonRpcServiceProvider::testLocalServiceProviderSingleParameter()
     QVERIFY(response.result() == QString("single"));
 }
 
-void TestQJsonRpcServiceProvider::testLocalServiceProviderMultiparameter()
+void TestQJsonRpcServiceProvider::testLocalMultiparameter()
 {
     // Initialize the service provider.
     QEventLoop loop;
@@ -184,7 +187,7 @@ void TestQJsonRpcServiceProvider::testLocalServiceProviderMultiparameter()
     QVERIFY(response.result() == QString("abc"));
 }
 
-void TestQJsonRpcServiceProvider::testLocalServiceProviderInvalidArgs()
+void TestQJsonRpcServiceProvider::testLocalInvalidArgs()
 {
     // Initialize the service provider.
     QEventLoop loop;
@@ -218,7 +221,7 @@ void TestQJsonRpcServiceProvider::testLocalServiceProviderInvalidArgs()
     }
 }
 
-void TestQJsonRpcServiceProvider::testLocalServiceProviderMethodNotFound()
+void TestQJsonRpcServiceProvider::testLocalMethodNotFound()
 {
     // Initialize the service provider.
     QEventLoop loop;
@@ -251,8 +254,76 @@ void TestQJsonRpcServiceProvider::testLocalServiceProviderMethodNotFound()
     }
 }
 
+class ServiceProviderNotificationHelper : public QObject
+{
+    Q_OBJECT
+public:
+    ServiceProviderNotificationHelper(const QJsonRpcMessage &message, QJsonRpcServiceProvider *provider)
+        : m_provider(provider),
+          m_notification(message) {}
 
-void TestQJsonRpcServiceProvider::testTcpServiceProviderNoParameter()
+public Q_SLOTS:
+    void activate() {
+        m_provider->notifyConnectedClients(m_notification);
+    }
+
+private:
+    QJsonRpcServiceProvider *m_provider;
+    QJsonRpcMessage m_notification;
+
+};
+
+void TestQJsonRpcServiceProvider::testLocalNotifyConnectedClients()
+{
+    // Initialize the service provider.
+    QEventLoop firstLoop;
+    TestService service;
+    QLocalServer localServer;
+    QVERIFY(localServer.listen("test"));
+    QJsonRpcServiceProvider serviceProvider(&localServer);
+    serviceProvider.addService(&service);
+
+    // first client
+    QLocalSocket first;
+    first.connectToServer("test");
+    QVERIFY(first.waitForConnected());
+    QJsonRpcServiceSocket firstClient(&first, this);
+    QSignalSpy firstSpyMessageReceived(&firstClient,
+                                  SIGNAL(messageReceived(QJsonRpcMessage)));
+
+    // send notification
+    QJsonRpcMessage notification = QJsonRpcMessage::createNotification("testNotification");
+    connect(&firstClient, SIGNAL(messageReceived(QJsonRpcMessage)), &firstLoop, SLOT(quit()));
+    ServiceProviderNotificationHelper helper(notification, &serviceProvider);
+    QTimer::singleShot(100, &helper, SLOT(activate()));
+    firstLoop.exec();
+
+    QVERIFY(!firstSpyMessageReceived.isEmpty());
+
+    QVariant firstMessage = firstSpyMessageReceived.takeFirst().at(0);
+    QJsonRpcMessage firstNotification = firstMessage.value<QJsonRpcMessage>();
+    QCOMPARE(firstNotification, notification);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+void TestQJsonRpcServiceProvider::testTcpNoParameter()
 {
     // Initialize the service provider.
     QEventLoop loop;
@@ -283,7 +354,7 @@ void TestQJsonRpcServiceProvider::testTcpServiceProviderNoParameter()
     QCOMPARE(request.id(), response.id());
 }
 
-void TestQJsonRpcServiceProvider::testTcpServiceProviderSingleParameter()
+void TestQJsonRpcServiceProvider::testTcpSingleParameter()
 {
     // Initialize the service provider.
     QEventLoop loop;
@@ -314,7 +385,7 @@ void TestQJsonRpcServiceProvider::testTcpServiceProviderSingleParameter()
     QVERIFY(response.result() == QString("single"));
 }
 
-void TestQJsonRpcServiceProvider::testTcpServiceProviderMultiparameter()
+void TestQJsonRpcServiceProvider::testTcpMultiparameter()
 {
     // Initialize the service provider.
     QEventLoop loop;
@@ -348,7 +419,7 @@ void TestQJsonRpcServiceProvider::testTcpServiceProviderMultiparameter()
     QVERIFY(response.result() == QString("abc"));
 }
 
-void TestQJsonRpcServiceProvider::testTcpServiceProviderInvalidArgs()
+void TestQJsonRpcServiceProvider::testTcpInvalidArgs()
 {
     // Initialize the service provider.
     QEventLoop loop;
@@ -382,7 +453,7 @@ void TestQJsonRpcServiceProvider::testTcpServiceProviderInvalidArgs()
     }
 }
 
-void TestQJsonRpcServiceProvider::testTcpServiceProviderMethodNotFound()
+void TestQJsonRpcServiceProvider::testTcpMethodNotFound()
 {
     // Initialize the service provider.
     QEventLoop loop;

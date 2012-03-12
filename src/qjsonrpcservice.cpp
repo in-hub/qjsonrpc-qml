@@ -77,6 +77,7 @@ QJsonRpcMessage QJsonRpcService::dispatch(const QJsonRpcMessage &request) const
 //        if (argument.userType() == parameterType) {
             parameters.append(const_cast<void *>(argument.constData()));
 //        } else {
+
 //        }
     }
 
