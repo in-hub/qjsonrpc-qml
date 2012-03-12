@@ -20,8 +20,6 @@ public:
 class QJsonRpcServiceProviderPrivate
 {
 public:
-    QJsonRpcServiceProviderPrivate() {}
-
     QJsonRpcServiceProvider::Type type;
     QWeakPointer<QTcpServer> tcpServer;
     QWeakPointer<QLocalServer> localServer;

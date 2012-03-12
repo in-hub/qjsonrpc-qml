@@ -82,6 +82,7 @@ public:
     Type type() const;
 
     void addService(QJsonRpcService *service);
+    bool isListening() const;
 
 public Q_SLOTS:
     void notifyConnectedClients(const QJsonRpcMessage &message);
