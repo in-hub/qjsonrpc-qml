@@ -26,6 +26,7 @@ private Q_SLOTS:
     void testLocalMultiparameter();
     void testLocalInvalidArgs();
     void testLocalMethodNotFound();
+    void testLocalInvalidRequest();
     void testLocalNotifyConnectedClients();
     void testLocalNumberParameters();
 
@@ -35,6 +36,7 @@ private Q_SLOTS:
     void testTcpMultiparameter();
     void testTcpInvalidArgs();
     void testTcpMethodNotFound();
+    void testTcpInvalidRequest();
     void testTcpNotifyConnectedClients();
 
 };
@@ -259,6 +261,42 @@ void TestQJsonRpcServiceProvider::testLocalMethodNotFound()
         QJsonRpcMessage error = message.value<QJsonRpcMessage>();
         QCOMPARE(request.id(), error.id());
         QVERIFY(error.errorCode() == QJsonRpc::MethodNotFound);
+    }
+}
+
+void TestQJsonRpcServiceProvider::testLocalInvalidRequest()
+{
+   // Initialize the service provider.
+    QEventLoop loop;
+    TestService service;
+    QLocalServer localServer;
+    QVERIFY(localServer.listen("test"));
+    QJsonRpcServiceProvider serviceProvider(&localServer);
+    serviceProvider.addService(&service);
+
+    // Connect to the socket.
+    QLocalSocket socket;
+    socket.connectToServer("test");
+    QVERIFY(socket.waitForConnected());
+    QJsonRpcServiceSocket serviceSocket(&socket, this);
+    QSignalSpy spyMessageReceived(&serviceSocket,
+                                  SIGNAL(messageReceived(QJsonRpcMessage)));
+
+    const char *invalid = "{\"jsonrpc\": \"2.0\", \"id\": 666}";
+
+    QJsonDocument doc = QJsonDocument::fromJson(invalid);
+    QJsonRpcMessage request(doc.object());
+    QJsonRpcServiceReply *reply = serviceSocket.sendMessage(request);
+    connect(&serviceSocket, SIGNAL(messageReceived(QJsonRpcMessage)), &loop, SLOT(quit()));
+    connect(reply, SIGNAL(finished()), &loop, SLOT(quit()));
+    loop.exec();
+
+    QCOMPARE(spyMessageReceived.count(), 1);
+    if (spyMessageReceived.count() == 1) {
+        QVariant message = spyMessageReceived.takeFirst().at(0);
+        QJsonRpcMessage error = message.value<QJsonRpcMessage>();
+        QCOMPARE(request.id(), error.id());
+        QVERIFY(error.errorCode() == QJsonRpc::InvalidRequest);
     }
 }
 
@@ -545,6 +583,42 @@ void TestQJsonRpcServiceProvider::testTcpMethodNotFound()
         QJsonRpcMessage error = message.value<QJsonRpcMessage>();
         QCOMPARE(request.id(), error.id());
         QVERIFY(error.errorCode() == QJsonRpc::MethodNotFound);
+    }
+}
+
+void TestQJsonRpcServiceProvider::testTcpInvalidRequest()
+{
+    // Initialize the service provider.
+    QEventLoop loop;
+    TestService service;
+    QTcpServer tcpServer;
+    QVERIFY(tcpServer.listen(QHostAddress::LocalHost, 5555));
+    QJsonRpcServiceProvider serviceProvider(&tcpServer);
+    serviceProvider.addService(&service);
+
+    // Connect to the socket.
+    QTcpSocket socket;
+    socket.connectToHost(QHostAddress::LocalHost, 5555);
+    QVERIFY(socket.waitForConnected());
+    QJsonRpcServiceSocket serviceSocket(&socket, this);
+    QSignalSpy spyMessageReceived(&serviceSocket,
+                                  SIGNAL(messageReceived(QJsonRpcMessage)));
+
+    const char *invalid = "{\"jsonrpc\": \"2.0\", \"id\": 666}";
+
+    QJsonDocument doc = QJsonDocument::fromJson(invalid);
+    QJsonRpcMessage request(doc.object());
+    QJsonRpcServiceReply *reply = serviceSocket.sendMessage(request);
+    connect(&serviceSocket, SIGNAL(messageReceived(QJsonRpcMessage)), &loop, SLOT(quit()));
+    connect(reply, SIGNAL(finished()), &loop, SLOT(quit()));
+    loop.exec();
+
+    QCOMPARE(spyMessageReceived.count(), 1);
+    if (spyMessageReceived.count() == 1) {
+        QVariant message = spyMessageReceived.takeFirst().at(0);
+        QJsonRpcMessage error = message.value<QJsonRpcMessage>();
+        QCOMPARE(request.id(), error.id());
+        QVERIFY(error.errorCode() == QJsonRpc::InvalidRequest);
     }
 }
 
