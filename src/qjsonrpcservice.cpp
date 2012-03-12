@@ -72,13 +72,12 @@ QJsonRpcMessage QJsonRpcService::dispatch(const QJsonRpcMessage &request) const
 
     // compile arguments
     for (int i = 0; i < parameterTypes.size() - 1; ++i) {
-//        int parameterType = parameterTypes[i + 1];
+        int parameterType = parameterTypes[i + 1];
         const QVariant &argument = arguments.at(i);
-//        if (argument.userType() == parameterType) {
-            parameters.append(const_cast<void *>(argument.constData()));
-//        } else {
+        if (argument.userType() != parameterType)
+            const_cast<QVariant*>(&argument)->convert(static_cast<QVariant::Type>(parameterType));
+        parameters.append(const_cast<void *>(argument.constData()));
 
-//        }
     }
 
     bool success = false;

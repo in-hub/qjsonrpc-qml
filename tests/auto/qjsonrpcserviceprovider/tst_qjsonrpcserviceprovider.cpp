@@ -27,6 +27,7 @@ private Q_SLOTS:
     void testLocalInvalidArgs();
     void testLocalMethodNotFound();
     void testLocalNotifyConnectedClients();
+    void testLocalNumberParameters();
 
     // TCP Server
     void testTcpNoParameter();
@@ -34,8 +35,7 @@ private Q_SLOTS:
     void testTcpMultiparameter();
     void testTcpInvalidArgs();
     void testTcpMethodNotFound();
-//    void testTcpNotifyConnectedClients();
-
+    void testTcpNotifyConnectedClients();
 
 };
 
@@ -73,6 +73,14 @@ public Q_SLOTS:
     {
         return first + second + third;
     }
+
+    void numberParameters(int intParam, double doubleParam, float floatParam)
+    {
+        Q_UNUSED(intParam)
+        Q_UNUSED(doubleParam)
+        Q_UNUSED(floatParam)
+    }
+
 };
 
 void TestQJsonRpcServiceProvider::initTestCase()
@@ -308,6 +316,60 @@ void TestQJsonRpcServiceProvider::testLocalNotifyConnectedClients()
 
 
 
+class TestNumberParamsService : public QJsonRpcService
+{
+    Q_OBJECT
+public:
+    TestNumberParamsService(QObject *parent = 0)
+        : QJsonRpcService(parent), m_called(0) {}
+
+    QString serviceName() const
+    {
+        return QString("service");
+    }
+
+    int callCount() const
+    {
+        return m_called;
+    }
+
+public Q_SLOTS:
+    void numberParameters(int intParam, double doubleParam)
+    {
+        if (intParam == 10 && doubleParam == 3.14159)
+            m_called++;
+    }
+
+private:
+    int m_called;
+
+};
+
+void TestQJsonRpcServiceProvider::testLocalNumberParameters()
+{
+    // Initialize the service provider.
+    QEventLoop loop;
+    TestNumberParamsService service;
+    QLocalServer localServer;
+    QVERIFY(localServer.listen("test"));
+    QJsonRpcServiceProvider serviceProvider(&localServer);
+    serviceProvider.addService(&service);
+
+    // Connect to the socket.
+    QLocalSocket socket;
+    socket.connectToServer("test");
+    QVERIFY(socket.waitForConnected());
+    QJsonRpcServiceSocket serviceSocket(&socket, this);
+    QJsonRpcMessage request = QJsonRpcMessage::createRequest("service.numberParameters", QVariantList() << 10 << 3.14159);
+    QJsonRpcServiceReply *reply = serviceSocket.sendMessage(request);
+    connect(&serviceSocket, SIGNAL(messageReceived(QJsonRpcMessage)), &loop, SLOT(quit()));
+    connect(reply, SIGNAL(finished()), &loop, SLOT(quit()));
+    loop.exec();
+
+    QCOMPARE(service.callCount(), 1);
+}
+
+
 
 
 
@@ -485,6 +547,39 @@ void TestQJsonRpcServiceProvider::testTcpMethodNotFound()
         QVERIFY(error.errorCode() == QJsonRpc::MethodNotFound);
     }
 }
+
+void TestQJsonRpcServiceProvider::testTcpNotifyConnectedClients()
+{
+    // Initialize the service provider.
+    QEventLoop firstLoop;
+    TestService service;
+    QTcpServer tcpServer;
+    QVERIFY(tcpServer.listen(QHostAddress::LocalHost, 5555));
+    QJsonRpcServiceProvider serviceProvider(&tcpServer);
+    serviceProvider.addService(&service);
+
+    // first client
+    QTcpSocket first;
+    first.connectToHost(QHostAddress::LocalHost, 5555);
+    QVERIFY(first.waitForConnected());
+    QJsonRpcServiceSocket firstClient(&first, this);
+    QSignalSpy firstSpyMessageReceived(&firstClient,
+                                  SIGNAL(messageReceived(QJsonRpcMessage)));
+
+    // send notification
+    QJsonRpcMessage notification = QJsonRpcMessage::createNotification("testNotification");
+    connect(&firstClient, SIGNAL(messageReceived(QJsonRpcMessage)), &firstLoop, SLOT(quit()));
+    ServiceProviderNotificationHelper helper(notification, &serviceProvider);
+    QTimer::singleShot(100, &helper, SLOT(activate()));
+    firstLoop.exec();
+
+    QVERIFY(!firstSpyMessageReceived.isEmpty());
+
+    QVariant firstMessage = firstSpyMessageReceived.takeFirst().at(0);
+    QJsonRpcMessage firstNotification = firstMessage.value<QJsonRpcMessage>();
+    QCOMPARE(firstNotification, notification);
+}
+
 
 QTEST_MAIN(TestQJsonRpcServiceProvider)
 #include "tst_qjsonrpcserviceprovider.moc"
