@@ -333,7 +333,7 @@ void QJsonRpcServiceProvider::processMessage(const QJsonRpcMessage &message)
                message.type() == QJsonRpcMessage::Notification) {
         // the server only accepts requests, and notifies connected clients
         // these are unhandled
-    } else {
+    } else {   // type == Request
         QJsonRpcMessage error = message.createErrorResponse(QJsonRpc::InvalidRequest,
                                                             QString("invalid request"));
         serviceSocket->sendMessage(error);

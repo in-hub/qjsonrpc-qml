@@ -9,7 +9,8 @@ class TestQJsonRpcMessage: public QObject
     Q_OBJECT  
 private slots:
     void testInvalidData();
-    void testInvalidDataResponse();
+    void testInvalidDataResponseWithId();
+    void testInvalidDataResponseWithoutId();
     void testResponseSameId();
     void testNotificationNoId();
     void testMessageTypes();
@@ -24,18 +25,30 @@ void TestQJsonRpcMessage::testInvalidData()
     QCOMPARE(message.type(), QJsonRpcMessage::Invalid);
 }
 
-void TestQJsonRpcMessage::testInvalidDataResponse()
+void TestQJsonRpcMessage::testInvalidDataResponseWithId()
 {
+    // invalid with id
     const char *invalid = "{\"jsonrpc\": \"2.0\", \"params\": [], \"id\": 666}";
-
     QJsonDocument doc = QJsonDocument::fromJson(invalid);
     QJsonRpcMessage request(doc.object());
-    // request = request.createErrorResponse(QJsonRpc::NoError, QString());
     QJsonRpcMessage error    = request.createErrorResponse(QJsonRpc::NoError, QString());
     QJsonRpcMessage response = request.createResponse(QString());
     QCOMPARE(request.type(), QJsonRpcMessage::Invalid);
-    QCOMPARE(response.type(), QJsonRpcMessage::Invalid);
-    
+    QCOMPARE(response.id(), request.id());
+    QCOMPARE(error.type(), QJsonRpcMessage::Error);
+}
+
+void TestQJsonRpcMessage::testInvalidDataResponseWithoutId()
+{
+    // invalid without id
+    const char *invalid = "{\"jsonrpc\": \"2.0\", \"params\": []}";
+    QJsonDocument doc = QJsonDocument::fromJson(invalid);
+    QJsonRpcMessage request(doc.object());
+    QJsonRpcMessage error    = request.createErrorResponse(QJsonRpc::NoError, QString());
+    QJsonRpcMessage response = request.createResponse(QString());
+    QCOMPARE(request.type(), QJsonRpcMessage::Invalid);
+    QCOMPARE(response.type(), QJsonRpcMessage::Invalid);    
+    QCOMPARE(error.id(), 0);
 }
 
 void TestQJsonRpcMessage::testResponseSameId()

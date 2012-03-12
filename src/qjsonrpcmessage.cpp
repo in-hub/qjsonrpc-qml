@@ -61,20 +61,18 @@ bool QJsonRpcMessage::operator==(const QJsonRpcMessage &message) const
 QJsonRpcMessage::QJsonRpcMessage(const QJsonObject &message)
     : d(new QJsonRpcMessagePrivate)
 {
+    d->object = new QJsonObject(message);
     if (message.contains("id")) {
         if (message.contains("result") || message.contains("error")) {
-            d->object = new QJsonObject(message);
             if (message.contains("error"))
                 d->type = QJsonRpcMessage::Error;
             else
                 d->type = QJsonRpcMessage::Response;
         } else if (message.contains("method")) {
-            d->object = new QJsonObject(message);
             d->type = QJsonRpcMessage::Request;
         }
     } else {
         if (message.contains("method")) {
-            d->object = new QJsonObject(message);
             d->type = QJsonRpcMessage::Notification;
         }
     }
@@ -129,22 +127,22 @@ QJsonRpcMessage QJsonRpcMessage::createResponse(const QVariant &result) const
 {
 
     QJsonRpcMessage response;
-    if (!d->object)
-        return response;
+    if (d->object->contains("id")) {
+        QJsonObject *object = new QJsonObject;
+        object->insert("jsonrpc", QLatin1String("2.0"));
+        object->insert("id", d->object->value("id"));
+        object->insert("result", QJsonValue::fromVariant(result));
+        
+        response.d->type = QJsonRpcMessage::Response;
+        response.d->object = object;
+    }
 
-    response.d->type = QJsonRpcMessage::Response;
-    QJsonObject *object = new QJsonObject;
-    object->insert("jsonrpc", QLatin1String("2.0"));
-    object->insert("id", d->object->value("id"));
-    object->insert("result", QJsonValue::fromVariant(result));
-    response.d->object = object;
     return response;
 }
 
 QJsonRpcMessage QJsonRpcMessage::createErrorResponse(QJsonRpc::ErrorCode code, const QString &message, const QVariant &data) const
 {
     QJsonRpcMessage response;
-
     QJsonObject error;
     error.insert("code", code);
     if (!message.isEmpty())
@@ -155,10 +153,11 @@ QJsonRpcMessage QJsonRpcMessage::createErrorResponse(QJsonRpc::ErrorCode code, c
     response.d->type = QJsonRpcMessage::Error;
     QJsonObject *object = new QJsonObject;
     object->insert("jsonrpc", QLatin1String("2.0"));
-    if (!d->object)
-        object->insert("id", -1);
-    else
+
+    if (d->object->contains("id"))
         object->insert("id", d->object->value("id"));        
+    else
+        object->insert("id", 0);
     object->insert("error", error);
     response.d->object = object;
     return response;
