@@ -9,6 +9,7 @@ class TestQJsonRpcMessage: public QObject
     Q_OBJECT  
 private slots:
     void testInvalidData();
+    void testInvalidDataResponse();
     void testResponseSameId();
     void testNotificationNoId();
     void testMessageTypes();
@@ -21,6 +22,20 @@ void TestQJsonRpcMessage::testInvalidData()
     QJsonObject invalidData;
     QJsonRpcMessage message(invalidData);
     QCOMPARE(message.type(), QJsonRpcMessage::Invalid);
+}
+
+void TestQJsonRpcMessage::testInvalidDataResponse()
+{
+    const char *invalid = "{\"jsonrpc\": \"2.0\", \"params\": [], \"id\": 666}";
+
+    QJsonDocument doc = QJsonDocument::fromJson(invalid);
+    QJsonRpcMessage request(doc.object());
+    // request = request.createErrorResponse(QJsonRpc::NoError, QString());
+    QJsonRpcMessage error    = request.createErrorResponse(QJsonRpc::NoError, QString());
+    QJsonRpcMessage response = request.createResponse(QString());
+    QCOMPARE(request.type(), QJsonRpcMessage::Invalid);
+    QCOMPARE(response.type(), QJsonRpcMessage::Invalid);
+    
 }
 
 void TestQJsonRpcMessage::testResponseSameId()
