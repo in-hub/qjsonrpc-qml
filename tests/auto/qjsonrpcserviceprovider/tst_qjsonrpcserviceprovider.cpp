@@ -9,7 +9,7 @@
 #include "qjsonrpcservice.h"
 #include "qjsonrpcmessage.h"
 
-class TestQJsonRpcService: public QObject
+class TestQJsonRpcServiceProvider: public QObject
 {
     Q_OBJECT  
 private Q_SLOTS:
@@ -17,10 +17,6 @@ private Q_SLOTS:
     void cleanupTestCase();
     void init();
     void cleanup();
-    void testSocketNoParameters();
-    void testSocketMultiparamter();
-    void testSocketNotification();
-    void testSocketResponse();
     void testServiceProviderNoParameter();
     void testServiceProviderSingleParameter();
     void testServiceProviderMultiparameter();
@@ -64,126 +60,24 @@ public Q_SLOTS:
     }
 };
 
-void TestQJsonRpcService::initTestCase()
+void TestQJsonRpcServiceProvider::initTestCase()
 {
     qRegisterMetaType<QJsonRpcMessage>("QJsonRpcMessage");
 }
 
-void TestQJsonRpcService::cleanupTestCase()
+void TestQJsonRpcServiceProvider::cleanupTestCase()
 {
 }
 
-void TestQJsonRpcService::init()
+void TestQJsonRpcServiceProvider::init()
 {
 }
 
-void TestQJsonRpcService::cleanup()
+void TestQJsonRpcServiceProvider::cleanup()
 {
 }
 
-void TestQJsonRpcService::testSocketNoParameters()
-{
-    QBuffer buffer;
-    buffer.open(QIODevice::ReadWrite);
-    QJsonRpcServiceSocket serviceSocket(&buffer, this);
-    QSignalSpy spyMessageReceived(&serviceSocket,
-                                  SIGNAL(messageReceived(QJsonRpcMessage)));
-    QVERIFY(serviceSocket.isValid());
-
-    QJsonRpcMessage request = QJsonRpcMessage::createRequest(QString("test.noParam"));
-
-    QJsonRpcServiceReply *reply;
-    reply = serviceSocket.sendMessage(request);
-
-    QJsonDocument document = QJsonDocument::fromJson(buffer.data());
-    QVERIFY(!document.isEmpty());
-    QJsonRpcMessage bufferMessage(document.object());
-
-    QCOMPARE(request.id(), bufferMessage.id());
-    QCOMPARE(request.type(), bufferMessage.type());
-    QCOMPARE(request.method(), bufferMessage.method());
-    QCOMPARE(request.params(), bufferMessage.params());
-    QCOMPARE(spyMessageReceived.count(), 0);
-}
-
-void TestQJsonRpcService::testSocketMultiparamter()
-{
-    QBuffer buffer;
-    buffer.open(QIODevice::ReadWrite);
-    QJsonRpcServiceSocket serviceSocket(&buffer, this);
-    QSignalSpy spyMessageReceived(&serviceSocket,
-                                  SIGNAL(messageReceived(QJsonRpcMessage)));
-    QVERIFY(serviceSocket.isValid());
-
-    QJsonRpcMessage request = QJsonRpcMessage::createRequest(QString("test.multiParam"),
-                                                             QVariantList() << false << true);
-
-    QJsonRpcServiceReply *reply;
-    reply = serviceSocket.sendMessage(request);
-
-    QJsonDocument document = QJsonDocument::fromJson(buffer.data());
-    QVERIFY(!document.isEmpty());
-    QJsonRpcMessage bufferMessage(document.object());
-
-    QCOMPARE(request.id(), bufferMessage.id());
-    QCOMPARE(request.type(), bufferMessage.type());
-    QCOMPARE(request.method(), bufferMessage.method());
-    QCOMPARE(request.params(), bufferMessage.params());
-    QCOMPARE(spyMessageReceived.count(), 0);
-}
-
-void TestQJsonRpcService::testSocketNotification()
-{
-    QBuffer buffer;
-    buffer.open(QIODevice::ReadWrite);
-    QJsonRpcServiceSocket serviceSocket(&buffer, this);
-    QSignalSpy spyMessageReceived(&serviceSocket,
-                                  SIGNAL(messageReceived(QJsonRpcMessage)));
-    QVERIFY(serviceSocket.isValid());
-
-    QJsonRpcMessage notification = QJsonRpcMessage::createNotification("test.notify");
-
-    QJsonRpcServiceReply *reply;
-    reply = serviceSocket.sendMessage(notification);
-
-    QJsonDocument document = QJsonDocument::fromJson(buffer.data());
-    QVERIFY(!document.isEmpty());
-    QJsonRpcMessage bufferMessage(document.object());
-
-    QCOMPARE(notification.id(), bufferMessage.id());
-    QCOMPARE(notification.type(), bufferMessage.type());
-    QCOMPARE(notification.method(), bufferMessage.method());
-    QCOMPARE(notification.params(), bufferMessage.params());
-    QCOMPARE(spyMessageReceived.count(), 0);
-}
-
-void TestQJsonRpcService::testSocketResponse()
-{
-    QBuffer buffer;
-    buffer.open(QIODevice::ReadWrite);
-    QJsonRpcServiceSocket serviceSocket(&buffer, this);
-    QSignalSpy spyMessageReceived(&serviceSocket,
-                                  SIGNAL(messageReceived(QJsonRpcMessage)));
-    QVERIFY(serviceSocket.isValid());
-
-    QJsonRpcMessage response = QJsonRpcMessage::createRequest(QString("test.response"));
-    response = response.createResponse(QVariant());
-
-    QJsonRpcServiceReply *reply;
-    reply = serviceSocket.sendMessage(response);
-
-    QJsonDocument document = QJsonDocument::fromJson(buffer.data());
-    QVERIFY(!document.isEmpty());
-    QJsonRpcMessage bufferMessage(document.object());
-
-    QCOMPARE(response.id(), bufferMessage.id());
-    QCOMPARE(response.type(), bufferMessage.type());
-    QCOMPARE(response.method(), bufferMessage.method());
-    QCOMPARE(response.params(), bufferMessage.params());
-    QCOMPARE(spyMessageReceived.count(), 0);
-}
-
-void TestQJsonRpcService::testServiceProviderNoParameter()
+void TestQJsonRpcServiceProvider::testServiceProviderNoParameter()
 {
     // Initialize the service provider.
     QEventLoop loop;
@@ -212,7 +106,7 @@ void TestQJsonRpcService::testServiceProviderNoParameter()
     QCOMPARE(request.id(), response.id());
 }
 
-void TestQJsonRpcService::testServiceProviderSingleParameter()
+void TestQJsonRpcServiceProvider::testServiceProviderSingleParameter()
 {
     // Initialize the service provider.
     QEventLoop loop;
@@ -242,7 +136,7 @@ void TestQJsonRpcService::testServiceProviderSingleParameter()
     QVERIFY(response.result() == QString("single"));
 }
 
-void TestQJsonRpcService::testServiceProviderMultiparameter()
+void TestQJsonRpcServiceProvider::testServiceProviderMultiparameter()
 {
     // Initialize the service provider.
     QEventLoop loop;
@@ -275,7 +169,7 @@ void TestQJsonRpcService::testServiceProviderMultiparameter()
     QVERIFY(response.result() == QString("abc"));
 }
 
-void TestQJsonRpcService::testServiceProviderInvalidArgs()
+void TestQJsonRpcServiceProvider::testServiceProviderInvalidArgs()
 {
     // Initialize the service provider.
     QEventLoop loop;
@@ -308,7 +202,7 @@ void TestQJsonRpcService::testServiceProviderInvalidArgs()
     }
 }
 
-void TestQJsonRpcService::testServiceProviderMethodNotFound()
+void TestQJsonRpcServiceProvider::testServiceProviderMethodNotFound()
 {
     // Initialize the service provider.
     QEventLoop loop;
@@ -340,5 +234,5 @@ void TestQJsonRpcService::testServiceProviderMethodNotFound()
     }
 }
 
-QTEST_MAIN(TestQJsonRpcService)
-#include "tst_qjsonrpcservice.moc"
+QTEST_MAIN(TestQJsonRpcServiceProvider)
+#include "tst_qjsonrpcserviceprovider.moc"
