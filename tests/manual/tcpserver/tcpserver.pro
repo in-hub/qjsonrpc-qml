@@ -2,12 +2,11 @@ DEPTH = ../../..
 include($$DEPTH/qjsonrpc.pri)
 
 TEMPLATE = app
-TARGET = client
+TARGET = server
 INCLUDEPATH += .
 CONFIG += console
 CONFIG -= app_bundle
 
-HEADERS = client.h
-SOURCES = client.cpp \
-          main.cpp
-
+HEADERS = testservice.h
+SOURCES = testservice.cpp \
+          tcpserver.cpp

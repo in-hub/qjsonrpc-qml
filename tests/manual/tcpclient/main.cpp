@@ -1,11 +1,11 @@
 #include <QCoreApplication>
 
-#include "client.h"
+#include "tcpclient.h"
 
 int main(int argc, char **argv)
 {
     QCoreApplication app(argc, argv);
-    Client client;
+    TcpClient client;
     client.run();
     return app.exec();
 }

@@ -1,4 +1,6 @@
 TEMPLATE = subdirs
-SUBDIRS += server \
-           client \
+SUBDIRS += localserver \
+           localclient \
+           tcpserver \
+           tcpclient \
            console

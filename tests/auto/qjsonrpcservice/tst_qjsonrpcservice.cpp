@@ -1,3 +1,6 @@
+#include <QLocalServer>
+#include <QLocalSocket>
+
 #include <QtCore/QEventLoop>
 #include <QtCore/QVariant>
 #include <QtTest/QtTest>
@@ -185,9 +188,10 @@ void TestQJsonRpcService::testServiceProviderNoParameter()
     // Initialize the service provider.
     QEventLoop loop;
     TestService service;
-    QJsonRpcServiceProvider serviceProvider;
+    QLocalServer localServer;
+    QVERIFY(localServer.listen("test"));
+    QJsonRpcServiceProvider serviceProvider(&localServer);
     serviceProvider.addService(&service);
-    QVERIFY(serviceProvider.listen("test"));
 
     // Connect to the socket.
     QLocalSocket socket;
@@ -213,9 +217,10 @@ void TestQJsonRpcService::testServiceProviderSingleParameter()
     // Initialize the service provider.
     QEventLoop loop;
     TestService service;
-    QJsonRpcServiceProvider serviceProvider;
+    QLocalServer localServer;
+    QVERIFY(localServer.listen("test"));
+    QJsonRpcServiceProvider serviceProvider(&localServer);
     serviceProvider.addService(&service);
-    QVERIFY(serviceProvider.listen("test"));
 
     // Connect to the socket.
     QLocalSocket socket;
@@ -242,9 +247,10 @@ void TestQJsonRpcService::testServiceProviderMultiparameter()
     // Initialize the service provider.
     QEventLoop loop;
     TestService service;
-    QJsonRpcServiceProvider serviceProvider;
+    QLocalServer localServer;
+    QVERIFY(localServer.listen("test"));
+    QJsonRpcServiceProvider serviceProvider(&localServer);
     serviceProvider.addService(&service);
-    QVERIFY(serviceProvider.listen("test"));
 
     // Connect to the socket.
     QLocalSocket socket;
@@ -274,9 +280,10 @@ void TestQJsonRpcService::testServiceProviderInvalidArgs()
     // Initialize the service provider.
     QEventLoop loop;
     TestService service;
-    QJsonRpcServiceProvider serviceProvider;
+    QLocalServer localServer;
+    QVERIFY(localServer.listen("test"));
+    QJsonRpcServiceProvider serviceProvider(&localServer);
     serviceProvider.addService(&service);
-    QVERIFY(serviceProvider.listen("test"));
 
     // Connect to the socket.
     QLocalSocket socket;
@@ -306,9 +313,10 @@ void TestQJsonRpcService::testServiceProviderMethodNotFound()
     // Initialize the service provider.
     QEventLoop loop;
     TestService service;
-    QJsonRpcServiceProvider serviceProvider;
+    QLocalServer localServer;
+    QVERIFY(localServer.listen("test"));
+    QJsonRpcServiceProvider serviceProvider(&localServer);
     serviceProvider.addService(&service);
-    QVERIFY(serviceProvider.listen("test"));
 
     // Connect to the socket.
     QLocalSocket socket;

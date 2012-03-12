@@ -9,4 +9,4 @@ CONFIG -= app_bundle
 
 HEADERS = testservice.h
 SOURCES = testservice.cpp \
-          server.cpp
+          localserver.cpp

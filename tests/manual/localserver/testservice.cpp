@@ -1,3 +1,4 @@
+#include <QDebug>
 #include "testservice.h"
 
 TestService::TestService(QObject *parent)

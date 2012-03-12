@@ -1,28 +1,26 @@
+#include <QHostAddress>
+#include <QTcpSocket>
+
 #include "qjsonrpcservice.h"
 #include "json/qjsonvalue.h"
-#include "client.h"
+#include "tcpclient.h"
 
-Client::Client(QObject *parent)
+TcpClient::TcpClient(QObject *parent)
     : QObject(parent),
       m_client(0)
 {
 }
 
-void Client::run()
+void TcpClient::run()
 {
-    QLocalSocket *socket = new QLocalSocket(this);
-    connect(socket, SIGNAL(connected()), this, SLOT(clientConnected()));
-    socket->connectToServer("/tmp/testService");
-}
-
-void Client::clientConnected()
-{
-    QLocalSocket *socket = static_cast<QLocalSocket *>(sender());
-    if (!socket) {
-        qDebug() << "unexpected connection message";
+    QTcpSocket *socket = new QTcpSocket(this);
+    socket->connectToHost(QHostAddress::LocalHost, 5555);
+    if (!socket->waitForConnected()) {
+        qDebug() << "could not connect to server: " << socket->errorString();
         return;
     }
 
+    // run tests
     m_client = new QJsonRpcServiceSocket(socket, this);
     QJsonRpcServiceReply *reply = m_client->invokeRemoteMethod("agent.testMethod");
     connect(reply, SIGNAL(finished()), this, SLOT(processResponse()));
@@ -35,19 +33,9 @@ void Client::clientConnected()
 
     reply = m_client->invokeRemoteMethod("agent.testMethodWithParamsAndReturnValue", "matt");
     connect(reply, SIGNAL(finished()), this, SLOT(processResponse()));
-
-    // test bulk messages
-    /*
-    QJsonRpcMessage first = QJsonRpcMessage::createRequest("agent.testMethodWithParamsAndReturnValue", "testSendMessage");
-    m_client->sendMessage(first);
-
-    QJsonRpcMessage second = QJsonRpcMessage::createRequest("agent.testMethodWithParamsAndReturnValue", "testSendMessages1");
-    QJsonRpcMessage third = QJsonRpcMessage::createRequest("agent.testMethodWithParamsAndReturnValue", "testSendMessages2");
-    m_client->sendMessage(QList<QJsonRpcMessage>() << second << third);
-    */
 }
 
-void Client::processResponse()
+void TcpClient::processResponse()
 {
     QJsonRpcServiceReply *reply = static_cast<QJsonRpcServiceReply *>(sender());
     if (!reply) {

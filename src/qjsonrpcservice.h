@@ -2,11 +2,6 @@
 #define QJSONRPCSERVICE_H
 
 #include <QObject>
-#include <QHash>
-#include <QHostAddress>
-#include <QWeakPointer>
-#include <QLocalSocket>
-
 #include "qjsonrpcmessage.h"
 
 class Q_JSONRPC_EXPORT QJsonRpcService : public QObject
@@ -65,20 +60,28 @@ private Q_SLOTS:
     void processIncomingData();
 
 private:
-    Q_DECLARE_PRIVATE(QJsonRpcServiceSocket)
+    QJsonRpcServiceSocketPrivate *d;
 
 };
 
+class QTcpServer;
+class QLocalServer;
 class QJsonRpcServiceProviderPrivate;
 class Q_JSONRPC_EXPORT QJsonRpcServiceProvider : public QObject
 {
     Q_OBJECT
 public:
-    QJsonRpcServiceProvider(QObject *parent = 0);
+    explicit QJsonRpcServiceProvider(QTcpServer *server, QObject *parent = 0);
+    explicit QJsonRpcServiceProvider(QLocalServer *server, QObject *parent = 0);
     ~QJsonRpcServiceProvider();
 
+    enum Type {
+        LocalServer,
+        TcpServer
+    };
+    Type type() const;
+
     void addService(QJsonRpcService *service);
-    bool listen(const QString &name);
 
 public Q_SLOTS:
     void notifyConnectedClients(const QJsonRpcMessage &message);
@@ -89,7 +92,7 @@ private Q_SLOTS:
     void clientDisconnected();
 
 private:
-    Q_DECLARE_PRIVATE(QJsonRpcServiceProvider)
+    QJsonRpcServiceProviderPrivate *d;
 
 };
 

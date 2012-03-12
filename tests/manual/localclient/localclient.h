@@ -5,15 +5,14 @@
 #include "qjsonrpcmessage.h"
 
 class QJsonRpcServiceSocket;
-class Client : public QObject
+class LocalClient : public QObject
 {
     Q_OBJECT
 public:
-    Client(QObject *parent = 0);
+    LocalClient(QObject *parent = 0);
     void run();
 
 private Q_SLOTS:
-    void clientConnected();
     void processResponse();
 
 private:
