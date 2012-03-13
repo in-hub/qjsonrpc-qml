@@ -253,7 +253,7 @@ void QJsonRpcServiceProvider::processMessage(const QJsonRpcMessage &message)
     }
 
     if (message.type() == QJsonRpcMessage::Request) {
-        QString serviceName = message.method().split(".").first();
+        QString serviceName = message.method().section(".", 0, -2);
         if (serviceName.isEmpty() || !d->services.contains(serviceName)) {
             QJsonRpcMessage error = message.createErrorResponse(QJsonRpc::MethodNotFound,
                                                                 QString("service '%1' not found").arg(serviceName));
