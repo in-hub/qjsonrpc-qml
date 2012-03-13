@@ -2,6 +2,8 @@
 #define QJSONRPCSERVICE_H
 
 #include <QObject>
+#include <QHostAddress>
+
 #include "qjsonrpcmessage.h"
 
 class Q_JSONRPC_EXPORT QJsonRpcService : public QObject
@@ -64,38 +66,71 @@ private:
 
 };
 
-class QTcpServer;
-class QLocalServer;
 class QJsonRpcServiceProviderPrivate;
 class Q_JSONRPC_EXPORT QJsonRpcServiceProvider : public QObject
 {
     Q_OBJECT
 public:
-    explicit QJsonRpcServiceProvider(QTcpServer *server, QObject *parent = 0);
-    explicit QJsonRpcServiceProvider(QLocalServer *server, QObject *parent = 0);
     ~QJsonRpcServiceProvider();
-
-    enum Type {
-        LocalServer,
-        TcpServer
-    };
-    Type type() const;
-
     void addService(QJsonRpcService *service);
-    bool isListening() const;
+    virtual QString errorString() const = 0;
 
 public Q_SLOTS:
     void notifyConnectedClients(const QJsonRpcMessage &message);
 
 private Q_SLOTS:
-    void processIncomingConnection();
     void processMessage(const QJsonRpcMessage &message);
+    virtual void processIncomingConnection() = 0;
+    virtual void clientDisconnected() = 0;
+
+protected:
+    explicit QJsonRpcServiceProvider(QJsonRpcServiceProviderPrivate *dd, QObject *parent);
+    Q_DECLARE_PRIVATE(QJsonRpcServiceProvider)
+    QScopedPointer<QJsonRpcServiceProviderPrivate> d_ptr;
+
+};
+
+class QJsonRpcLocalServiceProviderPrivate;
+class QJsonRpcLocalServiceProvider : public QJsonRpcServiceProvider
+{
+    Q_OBJECT
+public:
+    explicit QJsonRpcLocalServiceProvider(QObject *parent = 0);
+    ~QJsonRpcLocalServiceProvider();
+
+    QString errorString() const;
+    bool listen(const QString &service);
+
+private Q_SLOTS:
+    void processIncomingConnection();
     void clientDisconnected();
 
 private:
-    QJsonRpcServiceProviderPrivate *d;
+    Q_DECLARE_PRIVATE(QJsonRpcLocalServiceProvider)
 
 };
+
+class QJsonRpcTcpServiceProviderPrivate;
+class QJsonRpcTcpServiceProvider : public QJsonRpcServiceProvider
+{
+    Q_OBJECT
+public:
+    explicit QJsonRpcTcpServiceProvider(QObject *parent = 0);
+    ~QJsonRpcTcpServiceProvider();
+
+    QString errorString() const;
+    bool listen(const QHostAddress &address, quint16 port);
+
+private Q_SLOTS:
+    void processIncomingConnection();
+    void clientDisconnected();
+
+private:
+    Q_DECLARE_PRIVATE(QJsonRpcTcpServiceProvider)
+
+};
+
+
 
 #endif
 

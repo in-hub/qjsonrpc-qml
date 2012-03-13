@@ -20,15 +20,26 @@ public:
 class QJsonRpcServiceProviderPrivate
 {
 public:
-    QJsonRpcServiceProvider::Type type;
-    QWeakPointer<QTcpServer> tcpServer;
-    QWeakPointer<QLocalServer> localServer;
-    QHash<QLocalSocket *, QJsonRpcServiceSocket *> localServiceSocketLookup;
-    QHash<QTcpSocket *, QJsonRpcServiceSocket *> tcpServiceSocketLookup;
-
     QList<QJsonRpcServiceSocket *> clients;
     QHash<QString, QJsonRpcService *> services;
+};
 
+class QLocalServer;
+class QJsonRpcLocalServiceProviderPrivate : public QJsonRpcServiceProviderPrivate
+{
+public:
+    QJsonRpcLocalServiceProviderPrivate() : server(0) {}
+    QLocalServer *server;
+    QHash<QLocalSocket *, QJsonRpcServiceSocket *> serviceSocketLookup;
+};
+
+class QTcpServer;
+class QJsonRpcTcpServiceProviderPrivate : public QJsonRpcServiceProviderPrivate
+{
+public:
+    QJsonRpcTcpServiceProviderPrivate() : server(0) {}
+    QTcpServer *server;
+    QHash<QTcpSocket *, QJsonRpcServiceSocket *> serviceSocketLookup;
 };
 
 #endif

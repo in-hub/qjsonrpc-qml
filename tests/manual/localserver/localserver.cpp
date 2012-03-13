@@ -8,8 +8,6 @@
 int main(int argc, char **argv)
 {
     QCoreApplication app(argc, argv);
-
-    // setup local server
     QString serviceName;
 #if defined(Q_OS_WIN)
     QDir tempDirectory(QDesktopServices::storageLocation(QDesktopServices::TempLocation));
@@ -25,14 +23,13 @@ int main(int argc, char **argv)
         }
     }
 
-    QLocalServer localServer;
-    if (!localServer.listen(serviceName)) {
-        qDebug() << "could not start server, aborting";
+    TestService service;
+    QJsonRpcLocalServiceProvider rpcServer;
+    rpcServer.addService(&service);
+    if (!rpcServer.listen(serviceName)) {
+        qDebug() << "could not start server: " << rpcServer.errorString();
         return -1;
     }
 
-    TestService service;
-    QJsonRpcServiceProvider rpcServer(&localServer);
-    rpcServer.addService(&service);
     return app.exec();
 }
