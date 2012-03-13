@@ -6,11 +6,9 @@
 class TestService : public QJsonRpcService
 {
     Q_OBJECT
+    Q_CLASSINFO("serviceName", "agent")
 public:
     TestService(QObject *parent = 0);
-    ~TestService();
-
-    QString serviceName() const;
 
 public Q_SLOTS:
     void testMethod();

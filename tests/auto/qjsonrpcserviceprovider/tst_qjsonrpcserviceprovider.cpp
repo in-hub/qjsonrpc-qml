@@ -42,31 +42,14 @@ private Q_SLOTS:
 class TestService : public QJsonRpcService
 {
     Q_OBJECT
+    Q_CLASSINFO("serviceName", "service")
 public:
     TestService(QObject *parent = 0)
-        : QJsonRpcService(parent)
-    {
-    }
-
-    ~TestService()
-    {
-    }
-
-    QString serviceName() const
-    {
-        return QString("service");
-    }
+        : QJsonRpcService(parent) {}
 
 public Q_SLOTS:
-    void noParam() const
-    {
-    }
-
-    QString singleParam(const QString &string) const
-    {
-        return string;
-    }
-
+    void noParam() const {}
+    QString singleParam(const QString &string) const { return string; }
     QString multipleParam(const QString &first,
                           const QString &second,
                           const QString &third) const
@@ -346,19 +329,12 @@ void TestQJsonRpcServiceProvider::testLocalNotifyConnectedClients()
 class TestNumberParamsService : public QJsonRpcService
 {
     Q_OBJECT
+    Q_CLASSINFO("serviceName", "service")
 public:
     TestNumberParamsService(QObject *parent = 0)
         : QJsonRpcService(parent), m_called(0) {}
 
-    QString serviceName() const
-    {
-        return QString("service");
-    }
-
-    int callCount() const
-    {
-        return m_called;
-    }
+    int callCount() const { return m_called; }
 
 public Q_SLOTS:
     void numberParameters(int intParam, double doubleParam)

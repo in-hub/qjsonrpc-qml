@@ -11,7 +11,6 @@ class Q_JSONRPC_EXPORT QJsonRpcService : public QObject
     Q_OBJECT
 public:
     explicit QJsonRpcService(QObject *parent = 0);
-    virtual QString serviceName() const = 0;
 
 private:
      QJsonRpcMessage dispatch(const QJsonRpcMessage &request) const;

@@ -231,8 +231,17 @@ QJsonRpcServiceProvider::~QJsonRpcServiceProvider()
 void QJsonRpcServiceProvider::addService(QJsonRpcService *service)
 {
     Q_D(QJsonRpcServiceProvider);
-    service->cacheInvokableInfo();
-    d->services.insert(service->serviceName(), service);
+    const QMetaObject *mo = service->metaObject();
+    for (int i = 0; i < mo->classInfoCount(); i++) {
+        const QMetaClassInfo mci = mo->classInfo(i);
+        if (mci.name() == QLatin1String("serviceName")) {
+            service->cacheInvokableInfo();
+            d->services.insert(mci.value(), service);
+            return;
+        }
+    }
+
+    qDebug() << Q_FUNC_INFO << "service added without serviceName classinfo, aborting";
 }
 
 void QJsonRpcServiceProvider::notifyConnectedClients(const QJsonRpcMessage &message)

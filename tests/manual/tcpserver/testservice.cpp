@@ -6,15 +6,6 @@ TestService::TestService(QObject *parent)
 {
 }
 
-TestService::~TestService()
-{
-}
-
-QString TestService::serviceName() const
-{
-    return "agent";
-}
-
 void TestService::testMethod()
 {
     qDebug() << Q_FUNC_INFO << "called" << endl;
