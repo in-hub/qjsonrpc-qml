@@ -176,15 +176,18 @@ void QJsonRpcServiceSocket::processIncomingData()
         return;
     }
 
-    QByteArray data = d->device.data()->readAll();
-    while (!data.isEmpty()) {
+    d->buffer.append(d->device.data()->readAll());
+    while (!d->buffer.isEmpty()) {
         // NOTE: sending this stuff in binary breaks compatibility with
         //       other jsonrpc implementations
         // QJsonDocument document = QJsonDocument::fromBinaryData(data);
         // data = data.mid(document.toBinaryData().size());
 
-        QJsonDocument document = QJsonDocument::fromJson(data);
-        data = data.mid(document.toJson().size());
+        QJsonDocument document = QJsonDocument::fromJson(d->buffer);
+        if (document.isEmpty())
+            break;
+
+        d->buffer = d->buffer.mid(document.toJson().size());
         if (document.isArray()) {
             qDebug() << "bulk support is current disabled";
             /*

@@ -13,6 +13,7 @@ class QJsonRpcServiceSocketPrivate
 {
 public:
     QWeakPointer<QIODevice> device;
+    QByteArray buffer;
     QHash<int, QJsonRpcServiceReply *> replies;
 
 };

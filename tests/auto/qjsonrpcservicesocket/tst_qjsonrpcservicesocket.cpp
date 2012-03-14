@@ -21,7 +21,6 @@ private Q_SLOTS:
     void testSocketMultiparamter();
     void testSocketNotification();
     void testSocketResponse();
-
 };
 
 void TestQJsonRpcServiceSocket::initTestCase()

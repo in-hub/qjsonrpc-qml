@@ -27,6 +27,7 @@ private Q_SLOTS:
     void testLocalInvalidRequest();
     void testLocalNotifyConnectedClients();
     void testLocalNumberParameters();
+    void testLocalHugeResponse();
 
     // TCP Server
     void testTcpNoParameter();
@@ -36,6 +37,8 @@ private Q_SLOTS:
     void testTcpMethodNotFound();
     void testTcpInvalidRequest();
     void testTcpNotifyConnectedClients();
+    void testTcpNumberParameters();
+    void testTcpHugeResponse();
 
 };
 
@@ -371,7 +374,51 @@ void TestQJsonRpcServiceProvider::testLocalNumberParameters()
     QCOMPARE(service.callCount(), 1);
 }
 
+class TestHugeResponseService : public QJsonRpcService
+{
+    Q_OBJECT
+    Q_CLASSINFO("serviceName", "service")
+public:
+    TestHugeResponseService(QObject *parent = 0)
+        : QJsonRpcService(parent) {}
 
+public Q_SLOTS:
+    QVariantMap hugeResponse()
+    {
+        QVariantMap result;
+        for (int i = 0; i < 1000; i++) {
+            QString key = QString("testKeyForHugeResponse%1").arg(i);
+            result[key] = "some sample data to make the response larger";
+        }
+        return result;
+    }
+};
+
+void TestQJsonRpcServiceProvider::testLocalHugeResponse()
+{
+    // Initialize the service provider.
+    QEventLoop loop;
+    TestHugeResponseService service;
+    QJsonRpcLocalServiceProvider serviceProvider;
+    serviceProvider.addService(&service);
+    QVERIFY(serviceProvider.listen("test"));
+
+    // Connect to the socket.
+    QLocalSocket socket;
+    socket.connectToServer("test");
+    QVERIFY(socket.waitForConnected());
+    QJsonRpcServiceSocket serviceSocket(&socket, this);
+    QSignalSpy spyMessageReceived(&serviceSocket,
+                                  SIGNAL(messageReceived(QJsonRpcMessage)));
+
+    QJsonRpcMessage request = QJsonRpcMessage::createRequest("service.hugeResponse");
+    QJsonRpcServiceReply *reply = serviceSocket.sendMessage(request);
+    connect(&serviceSocket, SIGNAL(messageReceived(QJsonRpcMessage)), &loop, SLOT(quit()));
+    connect(reply, SIGNAL(finished()), &loop, SLOT(quit()));
+    loop.exec();
+
+    QCOMPARE(spyMessageReceived.count(), 0);
+}
 
 
 
@@ -610,6 +657,58 @@ void TestQJsonRpcServiceProvider::testTcpNotifyConnectedClients()
     QJsonRpcMessage firstNotification = firstMessage.value<QJsonRpcMessage>();
     QCOMPARE(firstNotification, notification);
 }
+
+void TestQJsonRpcServiceProvider::testTcpNumberParameters()
+{
+    // Initialize the service provider.
+    QEventLoop loop;
+    TestNumberParamsService service;
+    QJsonRpcTcpServiceProvider serviceProvider;
+    serviceProvider.addService(&service);
+    QVERIFY(serviceProvider.listen(QHostAddress::LocalHost, 5555));
+
+    // Connect to the socket.
+    QTcpSocket socket;
+    socket.connectToHost(QHostAddress::LocalHost, 5555);
+    QVERIFY(socket.waitForConnected());
+    QJsonRpcServiceSocket serviceSocket(&socket, this);
+    QJsonRpcMessage request = QJsonRpcMessage::createRequest("service.numberParameters", QVariantList() << 10 << 3.14159);
+    QJsonRpcServiceReply *reply = serviceSocket.sendMessage(request);
+    connect(&serviceSocket, SIGNAL(messageReceived(QJsonRpcMessage)), &loop, SLOT(quit()));
+    connect(reply, SIGNAL(finished()), &loop, SLOT(quit()));
+    loop.exec();
+
+    QCOMPARE(service.callCount(), 1);
+}
+
+void TestQJsonRpcServiceProvider::testTcpHugeResponse()
+{
+    // Initialize the service provider.
+    QEventLoop loop;
+    TestHugeResponseService service;
+    QJsonRpcTcpServiceProvider serviceProvider;
+    serviceProvider.addService(&service);
+    QVERIFY(serviceProvider.listen(QHostAddress::LocalHost, 5555));
+
+    // Connect to the socket.
+    QTcpSocket socket;
+    socket.connectToHost(QHostAddress::LocalHost, 5555);
+    QVERIFY(socket.waitForConnected());
+    QJsonRpcServiceSocket serviceSocket(&socket, this);
+    QSignalSpy spyMessageReceived(&serviceSocket,
+                                  SIGNAL(messageReceived(QJsonRpcMessage)));
+
+    QJsonRpcMessage request = QJsonRpcMessage::createRequest("service.hugeResponse");
+    QJsonRpcServiceReply *reply = serviceSocket.sendMessage(request);
+    connect(&serviceSocket, SIGNAL(messageReceived(QJsonRpcMessage)), &loop, SLOT(quit()));
+    connect(reply, SIGNAL(finished()), &loop, SLOT(quit()));
+    loop.exec();
+
+    QCOMPARE(spyMessageReceived.count(), 0);
+}
+
+
+
 
 
 QTEST_MAIN(TestQJsonRpcServiceProvider)
