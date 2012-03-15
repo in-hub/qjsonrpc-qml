@@ -1,5 +1,4 @@
 #include <QDebug>
-
 #include "qjsonrpcmessage_p.h"
 
 int QJsonRpcMessagePrivate::uniqueRequestCounter = 0;
@@ -130,7 +129,6 @@ QJsonRpcMessage QJsonRpcMessage::createNotification(const QString &method, const
 
 QJsonRpcMessage QJsonRpcMessage::createResponse(const QVariant &result) const
 {
-
     QJsonRpcMessage response;
     if (d->object->contains("id")) {
         QJsonObject *object = new QJsonObject;

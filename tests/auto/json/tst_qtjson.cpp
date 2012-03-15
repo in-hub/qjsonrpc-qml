@@ -115,6 +115,10 @@ private Q_SLOTS:
     void testCompaction();
     void testDebugStream();
     void testCompactionError();
+
+    void assignObjects();
+    void assignArrays();
+
 private:
     QString testDataDir;
 };
@@ -1756,6 +1760,36 @@ void TestQtJson::testCompactionError()
         QByteArray hash = QCryptographicHash::hash(doc.toBinaryData(), QCryptographicHash::Md5).toHex();
         schemaObject.insert("_Version", QString::fromLatin1(hash.constData(), hash.size()));
     }
+}
+
+void TestQtJson::assignObjects()
+{
+    const char *json =
+            "[ { \"Key\": 1 }, { \"Key\": 2 } ]";
+
+    QJsonDocument doc = QJsonDocument::fromJson(json);
+    QJsonArray array = doc.array();
+
+    QJsonObject object = array.at(0).toObject();
+    QCOMPARE(object.value("Key").toDouble(), 1.);
+
+    object = array.at(1).toObject();
+    QCOMPARE(object.value("Key").toDouble(), 2.);
+}
+
+void TestQtJson::assignArrays()
+{
+    const char *json =
+            "[ [ 1 ], [ 2 ] ]";
+
+    QJsonDocument doc = QJsonDocument::fromJson(json);
+    QJsonArray array = doc.array();
+
+    QJsonArray inner = array.at(0).toArray()  ;
+    QCOMPARE(inner.at(0).toDouble(), 1.);
+
+    inner= array.at(1).toArray();
+    QCOMPARE(inner.at(0).toDouble(), 2.);
 }
 
 QTEST_MAIN(TestQtJson)
