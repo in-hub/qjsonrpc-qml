@@ -85,6 +85,11 @@ QJsonObject QJsonRpcMessage::toObject() const
     return QJsonObject();
 }
 
+bool QJsonRpcMessage::isValid() const
+{
+    return d->type != QJsonRpcMessage::Invalid;
+}
+
 QJsonRpcMessage::Type QJsonRpcMessage::type() const
 {
     return d->type;

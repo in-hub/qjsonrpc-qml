@@ -49,6 +49,7 @@ public:
                                         const QVariant &data = QVariant()) const;
 
     QJsonRpcMessage::Type type() const;
+    bool isValid() const;
     int id() const;
 
     // request

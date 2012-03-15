@@ -122,6 +122,7 @@ bool QJsonRpcServiceSocket::isValid() const
     return d->device && d->device.data()->isOpen();
 }
 
+
 /*
 void QJsonRpcServiceSocket::sendMessage(const QList<QJsonRpcMessage> &messages)
 {
@@ -201,7 +202,10 @@ void QJsonRpcServiceSocket::processIncomingData()
             */
         } else if (document.isObject()){
             QJsonRpcMessage message(document.object());
-            if (message.type() == QJsonRpcMessage::Response) {
+            Q_EMIT messageReceived(message);
+
+            if (message.type() == QJsonRpcMessage::Response ||
+                message.type() == QJsonRpcMessage::Error) {
                 if (d->replies.contains(message.id())) {
                     QJsonRpcServiceReply *reply = d->replies.take(message.id());
                     reply->m_response = message;
@@ -209,8 +213,6 @@ void QJsonRpcServiceSocket::processIncomingData()
                 } else {
                     qDebug() << "invalid response receieved: " << message;
                 }
-            } else {
-                Q_EMIT messageReceived(message);
             }
         }
     }

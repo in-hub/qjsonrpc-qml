@@ -110,8 +110,8 @@ void TestQJsonRpcServiceProvider::testLocalNoParameter()
     loop.exec();
 
     QJsonRpcMessage response = reply->response();
-    QCOMPARE(spyMessageReceived.count(), 0);
-    QVERIFY(response.errorCode() == 0);
+    QCOMPARE(spyMessageReceived.count(), 1);
+    QVERIFY(response.errorCode() == QJsonRpc::NoError);
     QCOMPARE(request.id(), response.id());
 }
 
@@ -139,10 +139,10 @@ void TestQJsonRpcServiceProvider::testLocalSingleParameter()
     loop.exec();
 
     QJsonRpcMessage response = reply->response();
-    QCOMPARE(spyMessageReceived.count(), 0);
-    QVERIFY(response.errorCode() == 0);
+    QCOMPARE(spyMessageReceived.count(), 1);
+    QVERIFY(response.errorCode() == QJsonRpc::NoError);
     QCOMPARE(request.id(), response.id());
-    QVERIFY(response.result() == QString("single"));
+    QCOMPARE(response.result().toString(), QLatin1String("single"));
 }
 
 void TestQJsonRpcServiceProvider::testLocalMultiparameter()
@@ -172,10 +172,10 @@ void TestQJsonRpcServiceProvider::testLocalMultiparameter()
     loop.exec();
 
     QJsonRpcMessage response = reply->response();
-    QCOMPARE(spyMessageReceived.count(), 0);
-    QVERIFY(response.errorCode() == 0);
+    QCOMPARE(spyMessageReceived.count(), 1);
+    QVERIFY(response.errorCode() == QJsonRpc::NoError);
     QCOMPARE(request.id(), response.id());
-    QVERIFY(response.result() == QString("abc"));
+    QCOMPARE(response.result().toString(), QLatin1String("abc"));
 }
 
 void TestQJsonRpcServiceProvider::testLocalInvalidArgs()
@@ -203,12 +203,10 @@ void TestQJsonRpcServiceProvider::testLocalInvalidArgs()
     loop.exec();
 
     QCOMPARE(spyMessageReceived.count(), 1);
-    if (spyMessageReceived.count() == 1) {
-        QVariant message = spyMessageReceived.takeFirst().at(0);
-        QJsonRpcMessage error = message.value<QJsonRpcMessage>();
-        QCOMPARE(request.id(), error.id());
-        QVERIFY(error.errorCode() == QJsonRpc::InvalidParams);
-    }
+    QVariant message = spyMessageReceived.takeFirst().at(0);
+    QJsonRpcMessage error = message.value<QJsonRpcMessage>();
+    QCOMPARE(request.id(), error.id());
+    QVERIFY(error.errorCode() == QJsonRpc::InvalidParams);
 }
 
 void TestQJsonRpcServiceProvider::testLocalMethodNotFound()
@@ -235,12 +233,11 @@ void TestQJsonRpcServiceProvider::testLocalMethodNotFound()
     loop.exec();
 
     QCOMPARE(spyMessageReceived.count(), 1);
-    if (spyMessageReceived.count() == 1) {
-        QVariant message = spyMessageReceived.takeFirst().at(0);
-        QJsonRpcMessage error = message.value<QJsonRpcMessage>();
-        QCOMPARE(request.id(), error.id());
-        QVERIFY(error.errorCode() == QJsonRpc::MethodNotFound);
-    }
+    QVERIFY(reply->response().isValid());
+    QVariant message = spyMessageReceived.takeFirst().at(0);
+    QJsonRpcMessage error = message.value<QJsonRpcMessage>();
+    QCOMPARE(request.id(), error.id());
+    QVERIFY(error.errorCode() == QJsonRpc::MethodNotFound);
 }
 
 void TestQJsonRpcServiceProvider::testLocalInvalidRequest()
@@ -270,12 +267,10 @@ void TestQJsonRpcServiceProvider::testLocalInvalidRequest()
     loop.exec();
 
     QCOMPARE(spyMessageReceived.count(), 1);
-    if (spyMessageReceived.count() == 1) {
-        QVariant message = spyMessageReceived.takeFirst().at(0);
-        QJsonRpcMessage error = message.value<QJsonRpcMessage>();
-        QCOMPARE(request.id(), error.id());
-        QVERIFY(error.errorCode() == QJsonRpc::InvalidRequest);
-    }
+    QVariant message = spyMessageReceived.takeFirst().at(0);
+    QJsonRpcMessage error = message.value<QJsonRpcMessage>();
+    QCOMPARE(request.id(), error.id());
+    QVERIFY(error.errorCode() == QJsonRpc::InvalidRequest);
 }
 
 class ServiceProviderNotificationHelper : public QObject
@@ -321,8 +316,7 @@ void TestQJsonRpcServiceProvider::testLocalNotifyConnectedClients()
     QTimer::singleShot(100, &helper, SLOT(activate()));
     firstLoop.exec();
 
-    QVERIFY(!firstSpyMessageReceived.isEmpty());
-
+    QCOMPARE(firstSpyMessageReceived.count(), 1);
     QVariant firstMessage = firstSpyMessageReceived.takeFirst().at(0);
     QJsonRpcMessage firstNotification = firstMessage.value<QJsonRpcMessage>();
     QCOMPARE(firstNotification, notification);
@@ -417,7 +411,8 @@ void TestQJsonRpcServiceProvider::testLocalHugeResponse()
     connect(reply, SIGNAL(finished()), &loop, SLOT(quit()));
     loop.exec();
 
-    QCOMPARE(spyMessageReceived.count(), 0);
+    QCOMPARE(spyMessageReceived.count(), 1);
+    QVERIFY(reply->response().isValid());
 }
 
 
@@ -459,8 +454,8 @@ void TestQJsonRpcServiceProvider::testTcpNoParameter()
     loop.exec();
 
     QJsonRpcMessage response = reply->response();
-    QCOMPARE(spyMessageReceived.count(), 0);
-    QVERIFY(response.errorCode() == 0);
+    QCOMPARE(spyMessageReceived.count(), 1);
+    QVERIFY(response.errorCode() == QJsonRpc::NoError);
     QCOMPARE(request.id(), response.id());
 }
 
@@ -488,8 +483,8 @@ void TestQJsonRpcServiceProvider::testTcpSingleParameter()
     loop.exec();
 
     QJsonRpcMessage response = reply->response();
-    QCOMPARE(spyMessageReceived.count(), 0);
-    QVERIFY(response.errorCode() == 0);
+    QCOMPARE(spyMessageReceived.count(), 1);
+    QVERIFY(response.errorCode() == QJsonRpc::NoError);
     QCOMPARE(request.id(), response.id());
     QVERIFY(response.result() == QString("single"));
 }
@@ -521,8 +516,8 @@ void TestQJsonRpcServiceProvider::testTcpMultiparameter()
     loop.exec();
 
     QJsonRpcMessage response = reply->response();
-    QCOMPARE(spyMessageReceived.count(), 0);
-    QVERIFY(response.errorCode() == 0);
+    QCOMPARE(spyMessageReceived.count(), 1);
+    QVERIFY(response.errorCode() == QJsonRpc::NoError);
     QCOMPARE(request.id(), response.id());
     QVERIFY(response.result() == QString("abc"));
 }
@@ -552,12 +547,10 @@ void TestQJsonRpcServiceProvider::testTcpInvalidArgs()
     loop.exec();
 
     QCOMPARE(spyMessageReceived.count(), 1);
-    if (spyMessageReceived.count() == 1) {
-        QVariant message = spyMessageReceived.takeFirst().at(0);
-        QJsonRpcMessage error = message.value<QJsonRpcMessage>();
-        QCOMPARE(request.id(), error.id());
-        QVERIFY(error.errorCode() == QJsonRpc::InvalidParams);
-    }
+    QVariant message = spyMessageReceived.takeFirst().at(0);
+    QJsonRpcMessage error = message.value<QJsonRpcMessage>();
+    QCOMPARE(request.id(), error.id());
+    QVERIFY(error.errorCode() == QJsonRpc::InvalidParams);
 }
 
 void TestQJsonRpcServiceProvider::testTcpMethodNotFound()
@@ -584,12 +577,10 @@ void TestQJsonRpcServiceProvider::testTcpMethodNotFound()
     loop.exec();
 
     QCOMPARE(spyMessageReceived.count(), 1);
-    if (spyMessageReceived.count() == 1) {
-        QVariant message = spyMessageReceived.takeFirst().at(0);
-        QJsonRpcMessage error = message.value<QJsonRpcMessage>();
-        QCOMPARE(request.id(), error.id());
-        QVERIFY(error.errorCode() == QJsonRpc::MethodNotFound);
-    }
+    QVariant message = spyMessageReceived.takeFirst().at(0);
+    QJsonRpcMessage error = message.value<QJsonRpcMessage>();
+    QCOMPARE(request.id(), error.id());
+    QVERIFY(error.errorCode() == QJsonRpc::MethodNotFound);
 }
 
 void TestQJsonRpcServiceProvider::testTcpInvalidRequest()
@@ -619,12 +610,10 @@ void TestQJsonRpcServiceProvider::testTcpInvalidRequest()
     loop.exec();
 
     QCOMPARE(spyMessageReceived.count(), 1);
-    if (spyMessageReceived.count() == 1) {
-        QVariant message = spyMessageReceived.takeFirst().at(0);
-        QJsonRpcMessage error = message.value<QJsonRpcMessage>();
-        QCOMPARE(request.id(), error.id());
-        QVERIFY(error.errorCode() == QJsonRpc::InvalidRequest);
-    }
+    QVariant message = spyMessageReceived.takeFirst().at(0);
+    QJsonRpcMessage error = message.value<QJsonRpcMessage>();
+    QCOMPARE(request.id(), error.id());
+    QVERIFY(error.errorCode() == QJsonRpc::InvalidRequest);
 }
 
 void TestQJsonRpcServiceProvider::testTcpNotifyConnectedClients()
@@ -651,8 +640,7 @@ void TestQJsonRpcServiceProvider::testTcpNotifyConnectedClients()
     QTimer::singleShot(100, &helper, SLOT(activate()));
     firstLoop.exec();
 
-    QVERIFY(!firstSpyMessageReceived.isEmpty());
-
+    QCOMPARE(firstSpyMessageReceived.count(), 1);
     QVariant firstMessage = firstSpyMessageReceived.takeFirst().at(0);
     QJsonRpcMessage firstNotification = firstMessage.value<QJsonRpcMessage>();
     QCOMPARE(firstNotification, notification);
@@ -704,12 +692,8 @@ void TestQJsonRpcServiceProvider::testTcpHugeResponse()
     connect(reply, SIGNAL(finished()), &loop, SLOT(quit()));
     loop.exec();
 
-    QCOMPARE(spyMessageReceived.count(), 0);
+    QCOMPARE(spyMessageReceived.count(), 1);
 }
-
-
-
-
 
 QTEST_MAIN(TestQJsonRpcServiceProvider)
 #include "tst_qjsonrpcserviceprovider.moc"
