@@ -21,7 +21,8 @@ void QJsonRpcService::cacheInvokableInfo()
     int startIdx = QObject::staticMetaObject.methodCount(); // skip QObject slots
     for (int idx = startIdx; idx < obj->methodCount(); ++idx) {
         const QMetaMethod method = obj->method(idx);
-        if (method.methodType() == QMetaMethod::Slot) {
+        if (method.methodType() == QMetaMethod::Slot &&
+            method.access() == QMetaMethod::Public) {
             QByteArray signature = method.signature();
             m_invokableMethodHash[signature.left(signature.indexOf('('))] = idx;
 
