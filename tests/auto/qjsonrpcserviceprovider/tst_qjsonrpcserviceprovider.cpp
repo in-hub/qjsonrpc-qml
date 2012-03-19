@@ -28,6 +28,7 @@ private Q_SLOTS:
     void testLocalNotifyConnectedClients();
     void testLocalNumberParameters();
     void testLocalHugeResponse();
+    void testLocalComplexMethod();
 
     // TCP Server
     void testTcpNoParameter();
@@ -415,7 +416,46 @@ void TestQJsonRpcServiceProvider::testLocalHugeResponse()
     QVERIFY(reply->response().isValid());
 }
 
+class TestComplexMethodService : public QJsonRpcService
+{
+    Q_OBJECT
+    Q_CLASSINFO("serviceName", "service.complex.prefix.for")
+public:
+    TestComplexMethodService(QObject *parent = 0)
+        : QJsonRpcService(parent) {}
 
+public Q_SLOTS:
+    void testMethod() {}
+};
+
+void TestQJsonRpcServiceProvider::testLocalComplexMethod()
+{
+    // Initialize the service provider.
+    QEventLoop loop;
+    TestComplexMethodService service;
+    QJsonRpcLocalServiceProvider serviceProvider;
+    serviceProvider.addService(&service);
+    QVERIFY(serviceProvider.listen("test"));
+
+    // Connect to the socket.
+    QLocalSocket socket;
+    socket.connectToServer("test");
+    QVERIFY(socket.waitForConnected());
+    QJsonRpcServiceSocket serviceSocket(&socket, this);
+    QSignalSpy spyMessageReceived(&serviceSocket,
+	  			  SIGNAL(messageReceived(QJsonRpcMessage)));
+
+    QJsonRpcMessage request = QJsonRpcMessage::createRequest("service.complex.prefix.for.testMethod");
+    QJsonRpcServiceReply *reply = serviceSocket.sendMessage(request);
+    connect(&serviceSocket, SIGNAL(messageReceived(QJsonRpcMessage)), &loop, SLOT(quit()));
+    connect(reply, SIGNAL(finished()), &loop, SLOT(quit()));
+    loop.exec();
+
+    QJsonRpcMessage response = reply->response();
+    QCOMPARE(spyMessageReceived.count(), 1);
+    QVERIFY(response.errorCode() == QJsonRpc::NoError);
+    QCOMPARE(request.id(), response.id());
+}
 
 
 

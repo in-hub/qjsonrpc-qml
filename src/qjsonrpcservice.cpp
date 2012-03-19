@@ -44,7 +44,7 @@ QJsonRpcMessage QJsonRpcService::dispatch(const QJsonRpcMessage &request) const
         return error;
     }
 
-    QByteArray method = request.method().section(".", 1).toLatin1();
+    QByteArray method = request.method().section(".", -1).toLatin1();
     QVariantList arguments = request.params();
     if (!m_invokableMethodHash.contains(method)) {
         QJsonRpcMessage error =
