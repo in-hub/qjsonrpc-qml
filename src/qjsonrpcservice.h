@@ -15,7 +15,7 @@ public:
 private:
      QJsonRpcMessage dispatch(const QJsonRpcMessage &request) const;
      void cacheInvokableInfo();
-     QHash<QByteArray, int> m_invokableMethodHash;
+     QMultiHash<QByteArray, int> m_invokableMethodHash;
      QHash<int, QList<int> > m_parameterTypeHash;
      friend class QJsonRpcServiceProvider;
 };

@@ -29,6 +29,7 @@ private Q_SLOTS:
     void testLocalNumberParameters();
     void testLocalHugeResponse();
     void testLocalComplexMethod();
+    void testLocalDefaultParameters();
 
     // TCP Server
     void testTcpNoParameter();
@@ -456,6 +457,65 @@ void TestQJsonRpcServiceProvider::testLocalComplexMethod()
     QVERIFY(response.errorCode() == QJsonRpc::NoError);
     QCOMPARE(request.id(), response.id());
 }
+
+class TestDefaultParametersService : public QJsonRpcService
+{
+    Q_OBJECT
+    Q_CLASSINFO("serviceName", "service")
+public:
+    TestDefaultParametersService(QObject *parent = 0)
+        : QJsonRpcService(parent) {}
+
+public Q_SLOTS:
+    QString testMethod(const QString &name = QString()) {
+        if (name.isEmpty())
+            return "empty string";
+        return QString("hello %1").arg(name);
+    }
+
+    QString testMethod2(const QString &name = QString(), int year = 2012)
+    {
+        return QString("%1%2").arg(name).arg(year);
+    }
+};
+
+void TestQJsonRpcServiceProvider::testLocalDefaultParameters()
+{
+    // Initialize the service provider.
+    QEventLoop loop;
+    TestDefaultParametersService service;
+    QJsonRpcLocalServiceProvider serviceProvider;
+    serviceProvider.addService(&service);
+    QVERIFY(serviceProvider.listen("test"));
+
+    // Connect to the socket.
+    QLocalSocket socket;
+    socket.connectToServer("test");
+    QVERIFY(socket.waitForConnected());
+    QJsonRpcServiceSocket serviceSocket(&socket, this);
+
+    // test without name
+    QJsonRpcMessage noNameRequest = QJsonRpcMessage::createRequest("service.testMethod");
+    QJsonRpcServiceReply *noNameReply = serviceSocket.sendMessage(noNameRequest);
+    connect(noNameReply, SIGNAL(finished()), &loop, SLOT(quit()));
+    loop.exec();
+    QCOMPARE(noNameReply->response().result().toString(), QLatin1String("empty string"));
+
+    // test with name
+    QJsonRpcMessage nameRequest = QJsonRpcMessage::createRequest("service.testMethod", QLatin1String("matt"));
+    QJsonRpcServiceReply *nameReply = serviceSocket.sendMessage(nameRequest);
+    connect(nameReply, SIGNAL(finished()), &loop, SLOT(quit()));
+    loop.exec();
+    QCOMPARE(nameReply->response().result().toString(), QLatin1String("hello matt"));
+
+    // test multiparameter
+    QJsonRpcMessage konyRequest = QJsonRpcMessage::createRequest("service.testMethod2", QLatin1String("KONY"));
+    QJsonRpcServiceReply *konyReply = serviceSocket.sendMessage(konyRequest);
+    connect(konyReply, SIGNAL(finished()), &loop, SLOT(quit()));
+    loop.exec();
+    QCOMPARE(konyReply->response().result().toString(), QLatin1String("KONY2012"));
+}
+
 
 
 

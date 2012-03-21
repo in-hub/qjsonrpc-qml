@@ -24,7 +24,8 @@ void QJsonRpcService::cacheInvokableInfo()
         if (method.methodType() == QMetaMethod::Slot &&
             method.access() == QMetaMethod::Public) {
             QByteArray signature = method.signature();
-            m_invokableMethodHash[signature.left(signature.indexOf('('))] = idx;
+            QByteArray methodName = signature.left(signature.indexOf('('));
+            m_invokableMethodHash.insert(methodName, idx);
 
             QList<int> parameterTypes;
             parameterTypes << QMetaType::type(method.typeName());
@@ -53,10 +54,18 @@ QJsonRpcMessage QJsonRpcService::dispatch(const QJsonRpcMessage &request) const
         return error;
     }
 
-    int idx = m_invokableMethodHash.value(method);
-    const QList<int> parameterTypes = m_parameterTypeHash.value(idx);
+    int idx = -1;
+    QList<int> parameterTypes;
+    QList<int> indexes = m_invokableMethodHash.values(method);
+    foreach (int methodIndex, indexes) {
+        parameterTypes = m_parameterTypeHash.value(methodIndex);
+        if (arguments.size() == parameterTypes.size() - 1) {
+            idx = methodIndex;
+            break;
+        }
+    }
 
-    if (arguments.size() != parameterTypes.size() - 1) {
+    if (idx == -1) {
         QJsonRpcMessage error =
             request.createErrorResponse(QJsonRpc::InvalidParams, "invalid parameters");
         return error;
