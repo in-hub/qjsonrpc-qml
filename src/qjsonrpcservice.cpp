@@ -252,6 +252,7 @@ void QJsonRpcServiceProvider::addService(QJsonRpcService *service)
         if (mci.name() == QLatin1String("serviceName")) {
             service->cacheInvokableInfo();
             d->services.insert(mci.value(), service);
+            service->setParent(this);
             return;
         }
     }
