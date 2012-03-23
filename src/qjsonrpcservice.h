@@ -6,17 +6,22 @@
 
 #include "qjsonrpcmessage.h"
 
+class QJsonRpcServiceProvider;
 class Q_JSONRPC_EXPORT QJsonRpcService : public QObject
 {
     Q_OBJECT
 public:
     explicit QJsonRpcService(QObject *parent = 0);
 
+protected:
+    QJsonRpcServiceProvider *serviceProvider();
+
 private:
      QJsonRpcMessage dispatch(const QJsonRpcMessage &request) const;
      void cacheInvokableInfo();
      QMultiHash<QByteArray, int> m_invokableMethodHash;
      QHash<int, QList<int> > m_parameterTypeHash;
+     QJsonRpcServiceProvider *m_serviceProvider;
      friend class QJsonRpcServiceProvider;
 };
 
