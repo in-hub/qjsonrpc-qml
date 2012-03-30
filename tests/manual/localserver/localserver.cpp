@@ -2,6 +2,7 @@
 #include <QDesktopServices>
 #include <QLocalServer>
 #include <QFile>
+#include <QDir>
 
 #include "testservice.h"
 
