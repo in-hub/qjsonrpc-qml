@@ -53,6 +53,7 @@ void TestQJsonRpcServiceSocket::testSocketNoParameters()
 
     QJsonRpcServiceReply *reply;
     reply = serviceSocket.sendMessage(request);
+    Q_UNUSED(reply);
 
     QJsonDocument document = QJsonDocument::fromJson(buffer.data());
     QVERIFY(!document.isEmpty());
@@ -79,6 +80,7 @@ void TestQJsonRpcServiceSocket::testSocketMultiparamter()
 
     QJsonRpcServiceReply *reply;
     reply = serviceSocket.sendMessage(request);
+    Q_UNUSED(reply);
 
     QJsonDocument document = QJsonDocument::fromJson(buffer.data());
     QVERIFY(!document.isEmpty());
@@ -104,6 +106,7 @@ void TestQJsonRpcServiceSocket::testSocketNotification()
 
     QJsonRpcServiceReply *reply;
     reply = serviceSocket.sendMessage(notification);
+    Q_UNUSED(reply);
 
     QJsonDocument document = QJsonDocument::fromJson(buffer.data());
     QVERIFY(!document.isEmpty());
@@ -130,6 +133,7 @@ void TestQJsonRpcServiceSocket::testSocketResponse()
 
     QJsonRpcServiceReply *reply;
     reply = serviceSocket.sendMessage(response);
+    Q_UNUSED(reply);
 
     QJsonDocument document = QJsonDocument::fromJson(buffer.data());
     QVERIFY(!document.isEmpty());
