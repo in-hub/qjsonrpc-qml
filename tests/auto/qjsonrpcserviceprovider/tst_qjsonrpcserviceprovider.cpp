@@ -471,7 +471,7 @@ void TestQJsonRpcServiceProvider::testLocalComplexMethod()
     QVERIFY(socket.waitForConnected());
     QJsonRpcServiceSocket serviceSocket(&socket, this);
     QSignalSpy spyMessageReceived(&serviceSocket,
-                  SIGNAL(messageReceived(QJsonRpcMessage)));
+                                  SIGNAL(messageReceived(QJsonRpcMessage)));
 
     QJsonRpcMessage request = QJsonRpcMessage::createRequest("service.complex.prefix.for.testMethod");
     QJsonRpcServiceReply *reply = serviceSocket.sendMessage(request);
@@ -560,7 +560,6 @@ void TestQJsonRpcServiceProvider::testTcpNoParameter()
 {
     // Initialize the service provider.
     QEventLoop loop;
-    TestService service;
     QJsonRpcTcpServiceProvider serviceProvider;
     serviceProvider.addService(new TestService);
     QVERIFY(serviceProvider.listen(QHostAddress::LocalHost, 5555));
@@ -824,7 +823,6 @@ void TestQJsonRpcServiceProvider::testTcpHugeResponse()
 {
     // Initialize the service provider.
     QEventLoop loop;
-    TestHugeResponseService service;
     QJsonRpcTcpServiceProvider serviceProvider;
     serviceProvider.addService(new TestHugeResponseService);
     QVERIFY(serviceProvider.listen(QHostAddress::LocalHost, 5555));
