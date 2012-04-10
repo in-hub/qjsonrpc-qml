@@ -17,12 +17,13 @@ protected:
     QJsonRpcServiceProvider *serviceProvider();
 
 private:
-     QJsonRpcMessage dispatch(const QJsonRpcMessage &request) const;
-     void cacheInvokableInfo();
-     QMultiHash<QByteArray, int> m_invokableMethodHash;
-     QHash<int, QList<int> > m_parameterTypeHash;
-     QJsonRpcServiceProvider *m_serviceProvider;
-     friend class QJsonRpcServiceProvider;
+    QJsonRpcMessage dispatch(const QJsonRpcMessage &request) const;
+    void cacheInvokableInfo();
+    QMultiHash<QByteArray, int> m_invokableMethodHash;
+    QHash<int, QList<int> > m_parameterTypeHash;
+    QJsonRpcServiceProvider *m_serviceProvider;
+    friend class QJsonRpcServiceProvider;
+
 };
 
 class Q_JSONRPC_EXPORT QJsonRpcServiceReply : public QObject
@@ -66,7 +67,8 @@ private Q_SLOTS:
     void processIncomingData();
 
 private:
-    QJsonRpcServiceSocketPrivate *d;
+    Q_DECLARE_PRIVATE(QJsonRpcServiceSocket)
+    QScopedPointer<QJsonRpcServiceSocketPrivate> d_ptr;
 
 };
 
@@ -81,6 +83,8 @@ public:
 
 public Q_SLOTS:
     void notifyConnectedClients(const QJsonRpcMessage &message);
+    void notifyConnectedClients(const QString &method, const QVariantList &args);
+    void notifyConnectedClients(const QString &method, const QVariant &args);
 
 private Q_SLOTS:
     void processMessage(const QJsonRpcMessage &message);
@@ -133,8 +137,6 @@ private:
     Q_DECLARE_PRIVATE(QJsonRpcTcpServiceProvider)
 
 };
-
-
 
 #endif
 
