@@ -126,6 +126,11 @@ QJsonRpcMessage QJsonRpcMessage::createNotification(const QString &method, const
     return notification;
 }
 
+QJsonRpcMessage QJsonRpcMessage::createNotification(const QString &method, const QVariant &param)
+{
+    return createNotification(method, QVariantList() << param);
+}
+
 QJsonRpcMessage QJsonRpcMessage::createResponse(const QVariant &result) const
 {
     QJsonRpcMessage response;

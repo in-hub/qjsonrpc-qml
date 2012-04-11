@@ -16,6 +16,7 @@ public:
 
 protected:
     QJsonRpcServiceProvider *serviceProvider();
+    QJsonRpcServicePeer *servicePeer();
 
 private:
     QJsonRpcMessage dispatch(const QJsonRpcMessage &request) const;

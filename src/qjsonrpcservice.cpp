@@ -38,6 +38,16 @@ void QJsonRpcService::cacheInvokableInfo()
     }
 }
 
+QJsonRpcServiceProvider *QJsonRpcService::serviceProvider()
+{
+    return m_serviceProvider;
+}
+
+QJsonRpcServicePeer *QJsonRpcService::servicePeer()
+{
+    return m_servicePeer;
+}
+
 QJsonRpcMessage QJsonRpcService::dispatch(const QJsonRpcMessage &request) const
 {
     if (!request.type() == QJsonRpcMessage::Request) {
