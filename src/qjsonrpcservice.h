@@ -6,6 +6,7 @@
 
 #include "qjsonrpcmessage.h"
 
+class QJsonRpcServicePeer;
 class QJsonRpcServiceProvider;
 class Q_JSONRPC_EXPORT QJsonRpcService : public QObject
 {
@@ -22,8 +23,10 @@ private:
     QMultiHash<QByteArray, int> m_invokableMethodHash;
     QHash<int, QList<int> > m_parameterTypeHash;
     QJsonRpcServiceProvider *m_serviceProvider;
-    friend class QJsonRpcServiceProvider;
+    QJsonRpcServicePeer *m_servicePeer;
 
+    friend class QJsonRpcServiceProvider;
+    friend class QJsonRpcServicePeer;
 };
 
 class Q_JSONRPC_EXPORT QJsonRpcServiceReply : public QObject
@@ -83,8 +86,7 @@ public:
 
 public Q_SLOTS:
     void notifyConnectedClients(const QJsonRpcMessage &message);
-    void notifyConnectedClients(const QString &method, const QVariantList &args);
-    void notifyConnectedClients(const QString &method, const QVariant &args);
+    void notifyConnectedClients(const QString &method, const QVariantList &params = QVariantList());
 
 private Q_SLOTS:
     void processMessage(const QJsonRpcMessage &message);
@@ -135,6 +137,27 @@ private Q_SLOTS:
 
 private:
     Q_DECLARE_PRIVATE(QJsonRpcTcpServiceProvider)
+
+};
+
+class QJsonRpcLocalServicePeer : public QJsonRpcLocalServiceProvider
+{
+    Q_OBJECT
+public:
+    QJsonRpcLocalServicePeer(QObject *parent = 0);
+    ~QJsonRpcLocalServicePeer();
+
+    bool connectToPeer(const QString &peer);
+    QJsonRpcServiceReply *sendMessage(const QJsonRpcMessage &message);
+    QJsonRpcServiceReply *invokeRemoteMethod(const QString &method, const QVariant &param1 = QVariant(),
+                                             const QVariant &param2 = QVariant(), const QVariant &param3 = QVariant(),
+                                             const QVariant &param4 = QVariant(), const QVariant &param5 = QVariant(),
+                                             const QVariant &param6 = QVariant(), const QVariant &param7 = QVariant(),
+                                             const QVariant &param8 = QVariant(), const QVariant &param9 = QVariant(),
+                                             const QVariant &param10 = QVariant());
+
+private:
+    QJsonRpcServiceSocket *m_peerSocket;
 
 };
 

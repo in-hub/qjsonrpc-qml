@@ -120,14 +120,12 @@ QJsonRpcServiceSocket::QJsonRpcServiceSocket(QIODevice *device, QObject *parent)
 {
     Q_D(QJsonRpcServiceSocket);
     connect(device, SIGNAL(readyRead()), this, SLOT(processIncomingData()));
+    device->setParent(this);
     d->device = device;
 }
 
 QJsonRpcServiceSocket::~QJsonRpcServiceSocket()
 {
-    Q_D(QJsonRpcServiceSocket);
-    if (d->device)
-        d->device.data()->deleteLater();
 }
 
 bool QJsonRpcServiceSocket::isValid() const
@@ -269,24 +267,17 @@ void QJsonRpcServiceProvider::addService(QJsonRpcService *service)
     qDebug() << Q_FUNC_INFO << "service added without serviceName classinfo, aborting";
 }
 
-void QJsonRpcServiceProvider::notifyConnectedClients(const QString &method, const QVariantList &args)
+void QJsonRpcServiceProvider::notifyConnectedClients(const QString &method, const QVariantList &params)
 {
-    QJsonRpcMessage notification = QJsonRpcMessage::createNotification(method, args);
-    notifyConnectedClients(notification);
-}
-
-void QJsonRpcServiceProvider::notifyConnectedClients(const QString &method, const QVariant &args)
-{
-    QJsonRpcMessage notification = QJsonRpcMessage::createNotification(method, QVariantList() << args);
+    QJsonRpcMessage notification = QJsonRpcMessage::createNotification(method, params);
     notifyConnectedClients(notification);
 }
 
 void QJsonRpcServiceProvider::notifyConnectedClients(const QJsonRpcMessage &message)
 {
     Q_D(QJsonRpcServiceProvider);
-    for (int i = 0; i < d->clients.size(); ++i) {
+    for (int i = 0; i < d->clients.size(); ++i)
         d->clients[i]->sendMessage(message);
-    }
 }
 
 void QJsonRpcServiceProvider::processMessage(const QJsonRpcMessage &message)
@@ -302,20 +293,24 @@ void QJsonRpcServiceProvider::processMessage(const QJsonRpcMessage &message)
         case QJsonRpcMessage::Request:
         case QJsonRpcMessage::Notification: {
             QString serviceName = message.method().section(".", 0, -2);
-            if (serviceName.isEmpty() || !d->services.contains(serviceName) &&
-                message.type() == QJsonRpcMessage::Request) {
-                QJsonRpcMessage error = message.createErrorResponse(QJsonRpc::MethodNotFound,
-                                                                    QString("service '%1' not found").arg(serviceName));
-                serviceSocket->sendMessage(error);
-                break;
+            if (serviceName.isEmpty() || !d->services.contains(serviceName)) {
+                if (message.type() == QJsonRpcMessage::Request) {
+                    QJsonRpcMessage error = message.createErrorResponse(QJsonRpc::MethodNotFound,
+                                                                        QString("service '%1' not found").arg(serviceName));
+                    serviceSocket->sendMessage(error);
+                }
+            } else {
+                QJsonRpcService *service = d->services.value(serviceName);
+                QJsonRpcMessage response = service->dispatch(message);
+                if (message.type() == QJsonRpcMessage::Request)
+                    serviceSocket->sendMessage(response);
             }
-
-            QJsonRpcService *service = d->services.value(serviceName);
-            QJsonRpcMessage response = service->dispatch(message);
-            if (message.type() == QJsonRpcMessage::Request)
-                serviceSocket->sendMessage(response);
-            break;
         }
+        break;
+
+        case QJsonRpcMessage::Response:
+            // we don't handle responses in the provider
+            break;
 
         default: {
             QJsonRpcMessage error = message.createErrorResponse(QJsonRpc::InvalidRequest,
@@ -434,3 +429,70 @@ QString QJsonRpcTcpServiceProvider::errorString() const
     Q_D(const QJsonRpcTcpServiceProvider);
     return d->server->errorString();
 }
+
+
+
+
+
+
+
+QJsonRpcLocalServicePeer::QJsonRpcLocalServicePeer(QObject *parent)
+    : QJsonRpcLocalServiceProvider(parent),
+      m_peerSocket(0)
+{
+}
+
+QJsonRpcLocalServicePeer::~QJsonRpcLocalServicePeer()
+{
+}
+
+bool QJsonRpcLocalServicePeer::connectToPeer(const QString &peer)
+{
+    QLocalSocket *localSocket = new QLocalSocket(this);
+    localSocket->connectToServer(peer);
+    if (!localSocket->waitForConnected()) {
+        localSocket->deleteLater();
+        qDebug() << "could not connect to peer: " << peer;
+        return false;
+    }
+
+    m_peerSocket = new QJsonRpcServiceSocket(localSocket, this);
+    connect(m_peerSocket, SIGNAL(messageReceived(QJsonRpcMessage)), this, SLOT(processMessage(QJsonRpcMessage)));
+    return true;
+}
+
+QJsonRpcServiceReply *QJsonRpcLocalServicePeer::sendMessage(const QJsonRpcMessage &message)
+{
+    if (!m_peerSocket ||
+        m_peerSocket && !m_peerSocket->isValid()) {
+        qDebug() << "no valid open connection";
+        return 0;
+    }
+
+    return m_peerSocket->sendMessage(message);
+}
+
+QJsonRpcServiceReply *QJsonRpcLocalServicePeer::invokeRemoteMethod(const QString &method, const QVariant &param1,
+                                                                   const QVariant &param2, const QVariant &param3,
+                                                                   const QVariant &param4, const QVariant &param5,
+                                                                   const QVariant &param6, const QVariant &param7,
+                                                                   const QVariant &param8, const QVariant &param9,
+                                                                   const QVariant &param10)
+{
+    QVariantList params;
+    if (param1.isValid()) params.append(param1);
+    if (param2.isValid()) params.append(param2);
+    if (param3.isValid()) params.append(param3);
+    if (param4.isValid()) params.append(param4);
+    if (param5.isValid()) params.append(param5);
+    if (param6.isValid()) params.append(param6);
+    if (param7.isValid()) params.append(param7);
+    if (param8.isValid()) params.append(param8);
+    if (param9.isValid()) params.append(param9);
+    if (param10.isValid()) params.append(param10);
+
+    QJsonRpcMessage request = QJsonRpcMessage::createRequest(method, params);
+    return sendMessage(request);
+}
+
+

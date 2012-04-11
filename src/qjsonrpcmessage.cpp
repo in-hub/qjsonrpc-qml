@@ -97,12 +97,11 @@ QJsonRpcMessage::Type QJsonRpcMessage::type() const
 QJsonRpcMessage QJsonRpcMessagePrivate::createBasicRequest(const QString &method, const QVariantList &params)
 {
     QJsonRpcMessage request;
-    QJsonObject *object = new QJsonObject;
-    object->insert("jsonrpc", QLatin1String("2.0"));
-    object->insert("method", method);
+    request.d->object = new QJsonObject;
+    request.d->object->insert("jsonrpc", QLatin1String("2.0"));
+    request.d->object->insert("method", method);
     if (!params.isEmpty())
-        object->insert("params", QJsonArray::fromVariantList(params));
-    request.d->object = object;
+        request.d->object->insert("params", QJsonArray::fromVariantList(params));
     return request;
 }
 
@@ -175,7 +174,7 @@ int QJsonRpcMessage::id() const
 
 QString QJsonRpcMessage::method() const
 {
-    if (d->type != QJsonRpcMessage::Request || !d->object)
+    if (d->type == QJsonRpcMessage::Response || !d->object)
         return QString();
 
     return d->object->value("method").toString();
@@ -249,7 +248,8 @@ QDebug operator<<(QDebug dbg, const QJsonRpcMessage &msg)
         dbg.nospace() << ", id=" << msg.id();
     }
 
-    if (msg.type() == QJsonRpcMessage::Request) {
+    if (msg.type() == QJsonRpcMessage::Request ||
+        msg.type() == QJsonRpcMessage::Notification) {
         dbg.nospace() << ", method=" << msg.method()
                       << ", params=" << msg.params();
     } else if (msg.type() == QJsonRpcMessage::Response) {

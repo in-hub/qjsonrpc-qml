@@ -16,4 +16,4 @@ HEADERS += qjsonrpcservice.h \
            qjsonrpcmessage.h \
            qjsonrpcmessage_p.h
 SOURCES += qjsonrpcservice.cpp \
-           qjsonrpcmessage.cpp 
+           qjsonrpcmessage.cpp
