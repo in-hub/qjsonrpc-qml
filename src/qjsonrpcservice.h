@@ -34,39 +34,35 @@ Q_SIGNALS:
 private:
     QJsonRpcMessage m_response;
     friend class QJsonRpcSocket;
+    friend class QJsonRpcServerSocket;
 };
 
 // IDEA: QJsonRpcServiceSocket inherit from QJsonRpcServiceProvider
 //       QJsonRpcServiceProvider just has addService, process message
 //       QJsonRpcLocalServer/QJsonRpcTcpServer inherit from QJsonRpcServiceProvider + QJsonRpcServer
 
-class QJsonRpcSocket;
+class QJsonRpcServerSocket;
 class QJsonRpcServiceProviderPrivate;
-class Q_JSONRPC_EXPORT QJsonRpcServiceProvider : public QObject
+class Q_JSONRPC_EXPORT QJsonRpcServiceProvider
 {
-    Q_OBJECT
 public:
     ~QJsonRpcServiceProvider();
     void addService(QJsonRpcService *service);
 
-protected Q_SLOTS:
-    void processMessage(const QJsonRpcMessage &message);
-
 protected:
-    explicit QJsonRpcServiceProvider(QJsonRpcServiceProviderPrivate *dd, QObject *parent);
-    void processMessage(QJsonRpcSocket *socket, const QJsonRpcMessage &message);
-    Q_DECLARE_PRIVATE(QJsonRpcServiceProvider)
-    QScopedPointer<QJsonRpcServiceProviderPrivate> d_ptr;
+    QJsonRpcServiceProvider();
+    void processMessage(QJsonRpcServerSocket *socket, const QJsonRpcMessage &message);
+    QHash<QString, QJsonRpcService*> m_services;
 
 };
 
-class QJsonRpcSocketPrivate;
-class Q_JSONRPC_EXPORT QJsonRpcSocket : public QJsonRpcServiceProvider
+class QJsonRpcServerSocketPrivate;
+class Q_JSONRPC_EXPORT QJsonRpcServerSocket : public QObject
 {
     Q_OBJECT
 public:
-    explicit QJsonRpcSocket(QIODevice *device, QObject *parent = 0);
-    ~QJsonRpcSocket();
+    explicit QJsonRpcServerSocket(QIODevice *device, QObject *parent = 0);
+    ~QJsonRpcServerSocket();
 
     bool isValid() const;
 
@@ -87,13 +83,31 @@ Q_SIGNALS:
 private Q_SLOTS:
     void processIncomingData();
 
+protected:
+    virtual void processRequestMessage(const QJsonRpcMessage &message);
+
 private:
-    Q_DECLARE_PRIVATE(QJsonRpcSocket)
+    Q_DECLARE_PRIVATE(QJsonRpcServerSocket)
+    QScopedPointer<QJsonRpcServerSocketPrivate> d_ptr;
+
+};
+
+class Q_JSONRPC_EXPORT QJsonRpcSocket : public QJsonRpcServerSocket,
+                                        public QJsonRpcServiceProvider
+{
+    Q_OBJECT
+public:
+    explicit QJsonRpcSocket(QIODevice *device, QObject *parent = 0);
+    ~QJsonRpcSocket();
+
+private:
+    virtual void processRequestMessage(const QJsonRpcMessage &message);
 
 };
 
 class QJsonRpcServerPrivate;
-class Q_JSONRPC_EXPORT QJsonRpcServer : public QJsonRpcServiceProvider
+class Q_JSONRPC_EXPORT QJsonRpcServer : public QObject,
+                                        public QJsonRpcServiceProvider
 {
     Q_OBJECT
 public:
@@ -107,10 +121,12 @@ public Q_SLOTS:
 private Q_SLOTS:
     virtual void processIncomingConnection() = 0;
     virtual void clientDisconnected() = 0;
+    void processMessage(const QJsonRpcMessage &message);
 
 protected:
     explicit QJsonRpcServer(QJsonRpcServerPrivate *dd, QObject *parent);
     Q_DECLARE_PRIVATE(QJsonRpcServer)
+    QScopedPointer<QJsonRpcServerPrivate> d_ptr;
 
 };
 
