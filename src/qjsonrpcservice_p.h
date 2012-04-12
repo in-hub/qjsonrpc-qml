@@ -18,6 +18,12 @@ public:
 
 };
 
+class QJsonRpcServiceProviderPrivate
+{
+public:
+    QHash<QString, QJsonRpcService*> services;
+};
+
 class QJsonRpcServerPrivate
 {
 public:

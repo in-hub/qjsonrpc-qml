@@ -38,11 +38,6 @@ void QJsonRpcService::cacheInvokableInfo()
     }
 }
 
-QJsonRpcServer *QJsonRpcService::serviceProvider()
-{
-    return m_serviceProvider;
-}
-
 QJsonRpcMessage QJsonRpcService::dispatch(const QJsonRpcMessage &request) const
 {
     if (!request.type() == QJsonRpcMessage::Request) {
@@ -118,6 +113,112 @@ QJsonRpcMessage QJsonRpcServiceReply::response() const
 {
     return m_response;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+QJsonRpcServiceProvider::QJsonRpcServiceProvider(QJsonRpcServiceProviderPrivate *dd, QObject *parent)
+    : QObject(parent),
+      d_ptr(dd)
+{
+}
+
+QJsonRpcServiceProvider::~QJsonRpcServiceProvider()
+{
+}
+
+void QJsonRpcServiceProvider::addService(QJsonRpcService *service)
+{
+    Q_D(QJsonRpcServiceProvider);
+    const QMetaObject *mo = service->metaObject();
+    for (int i = 0; i < mo->classInfoCount(); i++) {
+        const QMetaClassInfo mci = mo->classInfo(i);
+        if (mci.name() == QLatin1String("serviceName")) {
+            service->cacheInvokableInfo();
+            d->services.insert(mci.value(), service);
+            if (!service->parent())
+                service->setParent(this);
+
+            return;
+        }
+    }
+
+    qDebug() << Q_FUNC_INFO << "service added without serviceName classinfo, aborting";
+}
+
+void QJsonRpcServiceProvider::processMessage(const QJsonRpcMessage &message)
+{
+    Q_D(QJsonRpcServiceProvider);
+    QJsonRpcServiceSocket *serviceSocket = static_cast<QJsonRpcServiceSocket*>(sender());
+    if (!serviceSocket) {
+        qDebug() << Q_FUNC_INFO << "called without service socket";
+        return;
+    }
+
+    switch (message.type()) {
+        case QJsonRpcMessage::Request:
+        case QJsonRpcMessage::Notification: {
+            QString serviceName = message.method().section(".", 0, -2);
+            if (serviceName.isEmpty() || !d->services.contains(serviceName)) {
+                if (message.type() == QJsonRpcMessage::Request) {
+                    QJsonRpcMessage error = message.createErrorResponse(QJsonRpc::MethodNotFound,
+                                                                        QString("service '%1' not found").arg(serviceName));
+                    serviceSocket->sendMessage(error);
+                }
+            } else {
+                QJsonRpcService *service = d->services.value(serviceName);
+                QJsonRpcMessage response = service->dispatch(message);
+                if (message.type() == QJsonRpcMessage::Request)
+                    serviceSocket->sendMessage(response);
+            }
+        }
+        break;
+
+        case QJsonRpcMessage::Response:
+            // we don't handle responses in the provider
+            break;
+
+        default: {
+            QJsonRpcMessage error = message.createErrorResponse(QJsonRpc::InvalidRequest,
+                                                                QString("invalid request"));
+            serviceSocket->sendMessage(error);
+            break;
+        }
+    };
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 QJsonRpcServiceSocket::QJsonRpcServiceSocket(QIODevice *device, QObject *parent)
     : QObject(parent),
@@ -265,7 +366,6 @@ void QJsonRpcServer::addService(QJsonRpcService *service)
         if (mci.name() == QLatin1String("serviceName")) {
             service->cacheInvokableInfo();
             d->services.insert(mci.value(), service);
-            service->m_serviceProvider = this;
             if (!service->parent())
                 service->setParent(this);
 

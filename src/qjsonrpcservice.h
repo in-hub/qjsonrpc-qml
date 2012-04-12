@@ -6,25 +6,21 @@
 
 #include "qjsonrpcmessage.h"
 
-class QJsonRpcServicePeer;
-class QJsonRpcServer;
+class QJsonRpcServiceProvider;
 class Q_JSONRPC_EXPORT QJsonRpcService : public QObject
 {
     Q_OBJECT
 public:
     explicit QJsonRpcService(QObject *parent = 0);
 
-protected:
-    QJsonRpcServer *serviceProvider();
-
 private:
     QJsonRpcMessage dispatch(const QJsonRpcMessage &request) const;
     void cacheInvokableInfo();
     QMultiHash<QByteArray, int> m_invokableMethodHash;
     QHash<int, QList<int> > m_parameterTypeHash;
-    QJsonRpcServer *m_serviceProvider;
 
     friend class QJsonRpcServer;
+    friend class QJsonRpcServiceProvider;
 };
 
 class Q_JSONRPC_EXPORT QJsonRpcServiceReply : public QObject
@@ -45,6 +41,32 @@ private:
 // IDEA: QJsonRpcServiceSocket inherit from QJsonRpcServiceProvider
 //       QJsonRpcServiceProvider just has addService, process message
 //       QJsonRpcLocalServer/QJsonRpcTcpServer inherit from QJsonRpcServiceProvider + QJsonRpcServer
+
+class QJsonRpcServiceProviderPrivate;
+class Q_JSONRPC_EXPORT QJsonRpcServiceProvider : public QObject
+{
+    Q_OBJECT
+public:
+    ~QJsonRpcServiceProvider();
+    void addService(QJsonRpcService *service);
+
+protected:
+    explicit QJsonRpcServiceProvider(QJsonRpcServiceProviderPrivate *dd, QObject *parent);
+    void processMessage(const QJsonRpcMessage &message);
+
+    Q_DECLARE_PRIVATE(QJsonRpcServiceProvider)
+    QScopedPointer<QJsonRpcServiceProviderPrivate> d_ptr;
+
+};
+
+
+
+
+
+
+
+
+
 
 class QJsonRpcServiceSocketPrivate;
 class Q_JSONRPC_EXPORT QJsonRpcServiceSocket : public QObject
