@@ -31,6 +31,7 @@ private Q_SLOTS:
     void testLocalHugeResponse();
     void testLocalComplexMethod();
     void testLocalDefaultParameters();
+    void testLocalNotifyServiceSocket();
 
     // TCP Server
     void testTcpNoParameter();
@@ -487,6 +488,45 @@ void TestQJsonRpcServer::testLocalDefaultParameters()
     QCOMPARE(response.result().toString(), QLatin1String("KONY2012"));
 }
 
+class TestNotifyService : public QJsonRpcService
+{
+    Q_OBJECT
+    Q_CLASSINFO("serviceName", "service")
+public:
+    TestNotifyService(QObject *parent = 0)
+        : QJsonRpcService(parent)
+    {
+    }
+
+public Q_SLOTS:
+    void testMethod() { qDebug() << "FUCK ME"; }
+};
+
+void TestQJsonRpcServer::testLocalNotifyServiceSocket()
+{
+    // Initialize the service provider.
+    QJsonRpcLocalServer serviceProvider;
+    QVERIFY(serviceProvider.listen("test"));
+
+    // Connect to the socket.
+    QLocalSocket socket;
+    socket.connectToServer("test");
+    QVERIFY(socket.waitForConnected());
+
+    QJsonRpcServiceSocket serviceSocket(&socket);
+    TestNumberParamsService *service = new TestNumberParamsService;
+    serviceSocket.addService(service);
+    QCOMPARE(service->callCount(), 0);
+
+    QEventLoop test;
+    QTimer::singleShot(10, &test, SLOT(quit()));
+    test.exec();
+    serviceProvider.notifyConnectedClients("service.numberParameters", QVariantList() << 10 << 3.14159);
+    QTimer::singleShot(10, &test, SLOT(quit()));
+    test.exec();
+
+    QCOMPARE(service->callCount(), 1);
+}
 
 
 

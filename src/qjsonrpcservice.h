@@ -3,9 +3,11 @@
 
 #include <QObject>
 #include <QHostAddress>
+#include <QWeakPointer>
 
 #include "qjsonrpcmessage.h"
 
+class QJsonRpcSocket;
 class QJsonRpcServiceProvider;
 class Q_JSONRPC_EXPORT QJsonRpcService : public QObject
 {
@@ -13,11 +15,15 @@ class Q_JSONRPC_EXPORT QJsonRpcService : public QObject
 public:
     explicit QJsonRpcService(QObject *parent = 0);
 
+protected:
+    QJsonRpcSocket *senderSocket();
+
 private:
     QJsonRpcMessage dispatch(const QJsonRpcMessage &request) const;
     void cacheInvokableInfo();
     QMultiHash<QByteArray, int> m_invokableMethodHash;
     QHash<int, QList<int> > m_parameterTypeHash;
+    QWeakPointer<QJsonRpcSocket> m_socket;
     friend class QJsonRpcServiceProvider;
 };
 

@@ -17,6 +17,13 @@ QJsonRpcService::QJsonRpcService(QObject *parent)
 {
 }
 
+QJsonRpcSocket *QJsonRpcService::senderSocket()
+{
+    if (m_socket)
+        return m_socket.data();
+    return 0;
+}
+
 void QJsonRpcService::cacheInvokableInfo()
 {
     const QMetaObject *obj = metaObject();
@@ -168,6 +175,7 @@ void QJsonRpcServiceProvider::processMessage(QJsonRpcSocket *socket, const QJson
                 }
             } else {
                 QJsonRpcService *service = m_services.value(serviceName);
+                service->m_socket = socket;
                 QJsonRpcMessage response = service->dispatch(message);
                 if (message.type() == QJsonRpcMessage::Request)
                     socket->notify(response);
