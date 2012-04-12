@@ -19,7 +19,8 @@ namespace QJsonRpc {
         InvalidParams   = -32602,           // Invalid method parameter(s).
         InternalError   = -32603,           // Internal JSON-RPC error.
         ServerErrorBase = -32000,           // Reserved for implementation-defined server-errors.
-        UserError       = -32099            // Anything after this is user defined
+        UserError       = -32099,           // Anything after this is user defined
+        TimeoutError    = -32100
     };
 }
 

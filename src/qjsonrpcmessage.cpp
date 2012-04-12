@@ -10,6 +10,8 @@ QJsonRpcMessagePrivate::QJsonRpcMessagePrivate()
 
 QJsonRpcMessagePrivate::~QJsonRpcMessagePrivate()
 {
+    if (object)
+        delete object;
 }
 
 QJsonRpcMessage::QJsonRpcMessage()

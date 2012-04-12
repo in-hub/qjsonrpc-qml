@@ -77,8 +77,10 @@ public:
 
     bool isValid() const;
 
-    //    void sendMessage(const QList<QJsonRpcMessage> &bulk);
+    void notify(const QJsonRpcMessage &message);
+    QJsonRpcMessage sendMessageBlocking(const QJsonRpcMessage &message, int msecs = 30000);
     QJsonRpcServiceReply *sendMessage(const QJsonRpcMessage &message);
+//  void sendMessage(const QList<QJsonRpcMessage> &bulk);
     QJsonRpcServiceReply *invokeRemoteMethod(const QString &method, const QVariant &arg1 = QVariant(),
                                              const QVariant &arg2 = QVariant(), const QVariant &arg3 = QVariant(),
                                              const QVariant &arg4 = QVariant(), const QVariant &arg5 = QVariant(),
@@ -103,7 +105,7 @@ class Q_JSONRPC_EXPORT QJsonRpcServer : public QJsonRpcServiceProvider
 {
     Q_OBJECT
 public:
-    ~QJsonRpcServer();
+    virtual ~QJsonRpcServer();
     virtual QString errorString() const = 0;
 
 public Q_SLOTS:

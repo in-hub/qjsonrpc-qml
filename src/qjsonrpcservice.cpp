@@ -5,6 +5,8 @@
 #include <QVarLengthArray>
 #include <QStringList>
 #include <QMetaMethod>
+#include <QEventLoop>
+#include <QTimer>
 
 #include "json/qjsondocument.h"
 #include "qjsonrpcservice_p.h"
@@ -173,13 +175,13 @@ void QJsonRpcServiceProvider::processMessage(const QJsonRpcMessage &message)
                 if (message.type() == QJsonRpcMessage::Request) {
                     QJsonRpcMessage error = message.createErrorResponse(QJsonRpc::MethodNotFound,
                                                                         QString("service '%1' not found").arg(serviceName));
-                    serviceSocket->sendMessage(error);
+                    serviceSocket->notify(error);
                 }
             } else {
                 QJsonRpcService *service = d->services.value(serviceName);
                 QJsonRpcMessage response = service->dispatch(message);
                 if (message.type() == QJsonRpcMessage::Request)
-                    serviceSocket->sendMessage(response);
+                    serviceSocket->notify(response);
             }
         }
         break;
@@ -191,7 +193,7 @@ void QJsonRpcServiceProvider::processMessage(const QJsonRpcMessage &message)
         default: {
             QJsonRpcMessage error = message.createErrorResponse(QJsonRpc::InvalidRequest,
                                                                 QString("invalid request"));
-            serviceSocket->sendMessage(error);
+            serviceSocket->notify(error);
             break;
         }
     };
@@ -223,7 +225,7 @@ void QJsonRpcServiceProvider::processMessage(const QJsonRpcMessage &message)
 QJsonRpcServiceSocket::QJsonRpcServiceSocket(QIODevice *device, QObject *parent)
     : QObject(parent),
       d_ptr(new QJsonRpcServiceSocketPrivate)
-{
+ {
     Q_D(QJsonRpcServiceSocket);
     connect(device, SIGNAL(readyRead()), this, SLOT(processIncomingData()));
     d->device = device;
@@ -239,7 +241,6 @@ bool QJsonRpcServiceSocket::isValid() const
     return d->device && d->device.data()->isOpen();
 }
 
-
 /*
 void QJsonRpcServiceSocket::sendMessage(const QList<QJsonRpcMessage> &messages)
 {
@@ -253,6 +254,21 @@ void QJsonRpcServiceSocket::sendMessage(const QList<QJsonRpcMessage> &messages)
 }
 */
 
+QJsonRpcMessage QJsonRpcServiceSocket::sendMessageBlocking(const QJsonRpcMessage &message, int msecs)
+{
+    QJsonRpcServiceReply *reply = sendMessage(message);
+    QScopedPointer<QJsonRpcServiceReply> replyPtr(reply);
+
+    QEventLoop responseLoop;
+    connect(reply, SIGNAL(finished()), &responseLoop, SLOT(quit()));
+    QTimer::singleShot(msecs, &responseLoop, SLOT(quit()));
+    responseLoop.exec();
+
+    if (!reply->response().isValid())
+        return message.createErrorResponse(QJsonRpc::TimeoutError, "request timed out");
+    return reply->response();
+}
+
 QJsonRpcServiceReply *QJsonRpcServiceSocket::sendMessage(const QJsonRpcMessage &message)
 {
     Q_D(QJsonRpcServiceSocket);
@@ -260,9 +276,16 @@ QJsonRpcServiceReply *QJsonRpcServiceSocket::sendMessage(const QJsonRpcMessage &
     // m_device.data()->write(doc.toBinaryData());
     d->device.data()->write(doc.toJson());
 
-    QJsonRpcServiceReply *reply = new QJsonRpcServiceReply(this);
+    QJsonRpcServiceReply *reply = new QJsonRpcServiceReply;
     d->replies.insert(message.id(), reply);
     return reply;
+}
+
+void QJsonRpcServiceSocket::notify(const QJsonRpcMessage &message)
+{
+    Q_D(QJsonRpcServiceSocket);
+    QJsonDocument doc = QJsonDocument(message.toObject());
+    d->device.data()->write(doc.toJson());
 }
 
 QJsonRpcServiceReply *QJsonRpcServiceSocket::invokeRemoteMethod(const QString &method, const QVariant &param1,
@@ -333,14 +356,13 @@ void QJsonRpcServiceSocket::processIncomingData()
                     qDebug() << "invalid response receieved: " << message;
                 }
             }
+            /*else {
+                // process incoming message as a provider message
+                processMessage(message);
+            }*/
         }
     }
 }
-
-
-
-
-
 
 QJsonRpcServer::QJsonRpcServer(QJsonRpcServerPrivate *dd, QObject *parent)
     : QJsonRpcServiceProvider(dd, parent)
@@ -350,10 +372,9 @@ QJsonRpcServer::QJsonRpcServer(QJsonRpcServerPrivate *dd, QObject *parent)
 QJsonRpcServer::~QJsonRpcServer()
 {
     Q_D(QJsonRpcServer);
-    while (!d->clients.isEmpty()) {
-        QJsonRpcServiceSocket *client = d->clients.takeFirst();
+    foreach (QJsonRpcServiceSocket *client, d->clients)
         client->deleteLater();
-    }
+    d->clients.clear();
 }
 
 void QJsonRpcServer::notifyConnectedClients(const QString &method, const QVariantList &params)
@@ -366,7 +387,7 @@ void QJsonRpcServer::notifyConnectedClients(const QJsonRpcMessage &message)
 {
     Q_D(QJsonRpcServer);
     for (int i = 0; i < d->clients.size(); ++i)
-        d->clients[i]->sendMessage(message);
+        d->clients[i]->notify(message);
 }
 
 
@@ -380,6 +401,10 @@ QJsonRpcLocalServer::QJsonRpcLocalServer(QObject *parent)
 
 QJsonRpcLocalServer::~QJsonRpcLocalServer()
 {
+    Q_D(QJsonRpcLocalServer);
+    foreach (QLocalSocket *socket, d->serviceSocketLookup.keys())
+        socket->deleteLater();
+    d->serviceSocketLookup.clear();
 }
 
 bool QJsonRpcLocalServer::listen(const QString &service)
@@ -434,6 +459,10 @@ QJsonRpcTcpServer::QJsonRpcTcpServer(QObject *parent)
 
 QJsonRpcTcpServer::~QJsonRpcTcpServer()
 {
+    Q_D(QJsonRpcTcpServer);
+    foreach (QTcpSocket *socket, d->serviceSocketLookup.keys())
+        socket->deleteLater();
+    d->serviceSocketLookup.clear();
 }
 
 bool QJsonRpcTcpServer::listen(const QHostAddress &address, quint16 port)
@@ -477,4 +506,5 @@ QString QJsonRpcTcpServer::errorString() const
     Q_D(const QJsonRpcTcpServer);
     return d->server->errorString();
 }
+
 
