@@ -5,7 +5,7 @@ int main(int argc, char **argv)
 {
     QCoreApplication app(argc, argv);
     TestService service;
-    QJsonRpcTcpServiceProvider rpcServer;
+    QJsonRpcTcpServer rpcServer;
     rpcServer.addService(&service);
     if (!rpcServer.listen(QHostAddress::LocalHost, 5555)) {
         qDebug() << "can't start tcp server: " << rpcServer.errorString();

@@ -7,7 +7,7 @@
 #include "qjsonrpcmessage.h"
 
 class QJsonRpcServicePeer;
-class QJsonRpcServiceProvider;
+class QJsonRpcServer;
 class Q_JSONRPC_EXPORT QJsonRpcService : public QObject
 {
     Q_OBJECT
@@ -15,19 +15,16 @@ public:
     explicit QJsonRpcService(QObject *parent = 0);
 
 protected:
-    QJsonRpcServiceProvider *serviceProvider();
-    QJsonRpcServicePeer *servicePeer();
+    QJsonRpcServer *serviceProvider();
 
 private:
     QJsonRpcMessage dispatch(const QJsonRpcMessage &request) const;
     void cacheInvokableInfo();
     QMultiHash<QByteArray, int> m_invokableMethodHash;
     QHash<int, QList<int> > m_parameterTypeHash;
-    QJsonRpcServiceProvider *m_serviceProvider;
-    QJsonRpcServicePeer *m_servicePeer;
+    QJsonRpcServer *m_serviceProvider;
 
-    friend class QJsonRpcServiceProvider;
-    friend class QJsonRpcServicePeer;
+    friend class QJsonRpcServer;
 };
 
 class Q_JSONRPC_EXPORT QJsonRpcServiceReply : public QObject
@@ -44,6 +41,10 @@ private:
     QJsonRpcMessage m_response;
     friend class QJsonRpcServiceSocket;
 };
+
+// IDEA: QJsonRpcServiceSocket inherit from QJsonRpcServiceProvider
+//       QJsonRpcServiceProvider just has addService, process message
+//       QJsonRpcLocalServer/QJsonRpcTcpServer inherit from QJsonRpcServiceProvider + QJsonRpcServer
 
 class QJsonRpcServiceSocketPrivate;
 class Q_JSONRPC_EXPORT QJsonRpcServiceSocket : public QObject
@@ -76,12 +77,12 @@ private:
 
 };
 
-class QJsonRpcServiceProviderPrivate;
-class Q_JSONRPC_EXPORT QJsonRpcServiceProvider : public QObject
+class QJsonRpcServerPrivate;
+class Q_JSONRPC_EXPORT QJsonRpcServer : public QObject
 {
     Q_OBJECT
 public:
-    ~QJsonRpcServiceProvider();
+    ~QJsonRpcServer();
     void addService(QJsonRpcService *service);
     virtual QString errorString() const = 0;
 
@@ -95,19 +96,19 @@ private Q_SLOTS:
     virtual void clientDisconnected() = 0;
 
 protected:
-    explicit QJsonRpcServiceProvider(QJsonRpcServiceProviderPrivate *dd, QObject *parent);
-    Q_DECLARE_PRIVATE(QJsonRpcServiceProvider)
-    QScopedPointer<QJsonRpcServiceProviderPrivate> d_ptr;
+    explicit QJsonRpcServer(QJsonRpcServerPrivate *dd, QObject *parent);
+    Q_DECLARE_PRIVATE(QJsonRpcServer)
+    QScopedPointer<QJsonRpcServerPrivate> d_ptr;
 
 };
 
-class QJsonRpcLocalServiceProviderPrivate;
-class QJsonRpcLocalServiceProvider : public QJsonRpcServiceProvider
+class QJsonRpcLocalServerPrivate;
+class QJsonRpcLocalServer : public QJsonRpcServer
 {
     Q_OBJECT
 public:
-    explicit QJsonRpcLocalServiceProvider(QObject *parent = 0);
-    ~QJsonRpcLocalServiceProvider();
+    explicit QJsonRpcLocalServer(QObject *parent = 0);
+    ~QJsonRpcLocalServer();
 
     QString errorString() const;
     bool listen(const QString &service);
@@ -117,17 +118,17 @@ private Q_SLOTS:
     void clientDisconnected();
 
 private:
-    Q_DECLARE_PRIVATE(QJsonRpcLocalServiceProvider)
+    Q_DECLARE_PRIVATE(QJsonRpcLocalServer )
 
 };
 
-class QJsonRpcTcpServiceProviderPrivate;
-class QJsonRpcTcpServiceProvider : public QJsonRpcServiceProvider
+class QJsonRpcTcpServerPrivate;
+class QJsonRpcTcpServer : public QJsonRpcServer
 {
     Q_OBJECT
 public:
-    explicit QJsonRpcTcpServiceProvider(QObject *parent = 0);
-    ~QJsonRpcTcpServiceProvider();
+    explicit QJsonRpcTcpServer(QObject *parent = 0);
+    ~QJsonRpcTcpServer();
 
     QString errorString() const;
     bool listen(const QHostAddress &address, quint16 port);
@@ -137,28 +138,7 @@ private Q_SLOTS:
     void clientDisconnected();
 
 private:
-    Q_DECLARE_PRIVATE(QJsonRpcTcpServiceProvider)
-
-};
-
-class QJsonRpcLocalServicePeer : public QJsonRpcLocalServiceProvider
-{
-    Q_OBJECT
-public:
-    QJsonRpcLocalServicePeer(QObject *parent = 0);
-    ~QJsonRpcLocalServicePeer();
-
-    bool connectToPeer(const QString &peer);
-    QJsonRpcServiceReply *sendMessage(const QJsonRpcMessage &message);
-    QJsonRpcServiceReply *invokeRemoteMethod(const QString &method, const QVariant &param1 = QVariant(),
-                                             const QVariant &param2 = QVariant(), const QVariant &param3 = QVariant(),
-                                             const QVariant &param4 = QVariant(), const QVariant &param5 = QVariant(),
-                                             const QVariant &param6 = QVariant(), const QVariant &param7 = QVariant(),
-                                             const QVariant &param8 = QVariant(), const QVariant &param9 = QVariant(),
-                                             const QVariant &param10 = QVariant());
-
-private:
-    QJsonRpcServiceSocket *m_peerSocket;
+    Q_DECLARE_PRIVATE(QJsonRpcTcpServer)
 
 };
 

@@ -25,7 +25,7 @@ int main(int argc, char **argv)
     }
 
     TestService service;
-    QJsonRpcLocalServiceProvider rpcServer;
+    QJsonRpcLocalServer rpcServer;
     rpcServer.addService(&service);
     if (!rpcServer.listen(serviceName)) {
         qDebug() << "could not start server: " << rpcServer.errorString();
