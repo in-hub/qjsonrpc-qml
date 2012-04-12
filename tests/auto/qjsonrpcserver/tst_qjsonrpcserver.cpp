@@ -736,8 +736,9 @@ void TestQJsonRpcServer::testTcpHugeResponse()
                                   SIGNAL(messageReceived(QJsonRpcMessage)));
 
     QJsonRpcMessage request = QJsonRpcMessage::createRequest("service.hugeResponse");
-    serviceSocket.sendMessageBlocking(request);
+    QJsonRpcMessage response = serviceSocket.sendMessageBlocking(request);
     QCOMPARE(spyMessageReceived.count(), 1);
+    QVERIFY(response.isValid());
 }
 
 QTEST_MAIN(TestQJsonRpcServer)

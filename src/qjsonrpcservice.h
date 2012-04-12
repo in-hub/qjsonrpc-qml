@@ -34,14 +34,9 @@ Q_SIGNALS:
 private:
     QJsonRpcMessage m_response;
     friend class QJsonRpcSocket;
-    friend class QJsonRpcServerSocket;
 };
 
-// IDEA: QJsonRpcServiceSocket inherit from QJsonRpcServiceProvider
-//       QJsonRpcServiceProvider just has addService, process message
-//       QJsonRpcLocalServer/QJsonRpcTcpServer inherit from QJsonRpcServiceProvider + QJsonRpcServer
-
-class QJsonRpcServerSocket;
+class QJsonRpcSocket;
 class QJsonRpcServiceProviderPrivate;
 class Q_JSONRPC_EXPORT QJsonRpcServiceProvider
 {
@@ -51,18 +46,18 @@ public:
 
 protected:
     QJsonRpcServiceProvider();
-    void processMessage(QJsonRpcServerSocket *socket, const QJsonRpcMessage &message);
+    void processMessage(QJsonRpcSocket *socket, const QJsonRpcMessage &message);
     QHash<QString, QJsonRpcService*> m_services;
 
 };
 
-class QJsonRpcServerSocketPrivate;
-class Q_JSONRPC_EXPORT QJsonRpcServerSocket : public QObject
+class QJsonRpcSocketPrivate;
+class Q_JSONRPC_EXPORT QJsonRpcSocket : public QObject
 {
     Q_OBJECT
 public:
-    explicit QJsonRpcServerSocket(QIODevice *device, QObject *parent = 0);
-    ~QJsonRpcServerSocket();
+    explicit QJsonRpcSocket(QIODevice *device, QObject *parent = 0);
+    ~QJsonRpcSocket();
 
     bool isValid() const;
 
@@ -87,18 +82,18 @@ protected:
     virtual void processRequestMessage(const QJsonRpcMessage &message);
 
 private:
-    Q_DECLARE_PRIVATE(QJsonRpcServerSocket)
-    QScopedPointer<QJsonRpcServerSocketPrivate> d_ptr;
+    Q_DECLARE_PRIVATE(QJsonRpcSocket)
+    QScopedPointer<QJsonRpcSocketPrivate> d_ptr;
 
 };
 
-class Q_JSONRPC_EXPORT QJsonRpcSocket : public QJsonRpcServerSocket,
-                                        public QJsonRpcServiceProvider
+class Q_JSONRPC_EXPORT QJsonRpcServiceSocket : public QJsonRpcSocket,
+                                               public QJsonRpcServiceProvider
 {
     Q_OBJECT
 public:
-    explicit QJsonRpcSocket(QIODevice *device, QObject *parent = 0);
-    ~QJsonRpcSocket();
+    explicit QJsonRpcServiceSocket(QIODevice *device, QObject *parent = 0);
+    ~QJsonRpcServiceSocket();
 
 private:
     virtual void processRequestMessage(const QJsonRpcMessage &message);

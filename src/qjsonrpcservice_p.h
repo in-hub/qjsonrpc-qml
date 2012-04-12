@@ -9,12 +9,7 @@
 
 #include "qjsonrpcservice.h"
 
-class QJsonRpcServiceProviderPrivate
-{
-public:
-};
-
-class QJsonRpcServerSocketPrivate : public QJsonRpcServiceProviderPrivate
+class QJsonRpcSocketPrivate
 {
 public:
     QWeakPointer<QIODevice> device;
@@ -23,10 +18,10 @@ public:
 
 };
 
-class QJsonRpcServerPrivate : public QJsonRpcServiceProviderPrivate
+class QJsonRpcServerPrivate
 {
 public:
-    QList<QJsonRpcServerSocket*> clients;
+    QList<QJsonRpcSocket*> clients;
 };
 
 class QLocalServer;
@@ -35,7 +30,7 @@ class QJsonRpcLocalServerPrivate : public QJsonRpcServerPrivate
 public:
     QJsonRpcLocalServerPrivate() : server(0) {}
     QLocalServer *server;
-    QHash<QLocalSocket*, QJsonRpcServerSocket*> socketLookup;
+    QHash<QLocalSocket*, QJsonRpcSocket*> socketLookup;
 };
 
 class QTcpServer;
@@ -44,7 +39,7 @@ class QJsonRpcTcpServerPrivate : public QJsonRpcServerPrivate
 public:
     QJsonRpcTcpServerPrivate() : server(0) {}
     QTcpServer *server;
-    QHash<QTcpSocket*, QJsonRpcServerSocket*> socketLookup;
+    QHash<QTcpSocket*, QJsonRpcSocket*> socketLookup;
 };
 
 #endif
