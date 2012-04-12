@@ -9,6 +9,12 @@
 
 #include "qjsonrpcservice.h"
 
+class QJsonRpcServiceProviderPrivate
+{
+public:
+    QHash<QString, QJsonRpcService*> services;
+};
+
 class QJsonRpcServiceSocketPrivate
 {
 public:
@@ -18,17 +24,10 @@ public:
 
 };
 
-class QJsonRpcServiceProviderPrivate
-{
-public:
-    QHash<QString, QJsonRpcService*> services;
-};
-
-class QJsonRpcServerPrivate
+class QJsonRpcServerPrivate : public QJsonRpcServiceProviderPrivate
 {
 public:
     QList<QJsonRpcServiceSocket*> clients;
-    QHash<QString, QJsonRpcService*> services;
 };
 
 class QLocalServer;

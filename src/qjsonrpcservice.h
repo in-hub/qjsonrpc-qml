@@ -18,8 +18,6 @@ private:
     void cacheInvokableInfo();
     QMultiHash<QByteArray, int> m_invokableMethodHash;
     QHash<int, QList<int> > m_parameterTypeHash;
-
-    friend class QJsonRpcServer;
     friend class QJsonRpcServiceProvider;
 };
 
@@ -50,10 +48,11 @@ public:
     ~QJsonRpcServiceProvider();
     void addService(QJsonRpcService *service);
 
-protected:
-    explicit QJsonRpcServiceProvider(QJsonRpcServiceProviderPrivate *dd, QObject *parent);
+protected Q_SLOTS:
     void processMessage(const QJsonRpcMessage &message);
 
+protected:
+    explicit QJsonRpcServiceProvider(QJsonRpcServiceProviderPrivate *dd, QObject *parent);
     Q_DECLARE_PRIVATE(QJsonRpcServiceProvider)
     QScopedPointer<QJsonRpcServiceProviderPrivate> d_ptr;
 
@@ -100,12 +99,11 @@ private:
 };
 
 class QJsonRpcServerPrivate;
-class Q_JSONRPC_EXPORT QJsonRpcServer : public QObject
+class Q_JSONRPC_EXPORT QJsonRpcServer : public QJsonRpcServiceProvider
 {
     Q_OBJECT
 public:
     ~QJsonRpcServer();
-    void addService(QJsonRpcService *service);
     virtual QString errorString() const = 0;
 
 public Q_SLOTS:
@@ -113,14 +111,12 @@ public Q_SLOTS:
     void notifyConnectedClients(const QString &method, const QVariantList &params = QVariantList());
 
 private Q_SLOTS:
-    void processMessage(const QJsonRpcMessage &message);
     virtual void processIncomingConnection() = 0;
     virtual void clientDisconnected() = 0;
 
 protected:
     explicit QJsonRpcServer(QJsonRpcServerPrivate *dd, QObject *parent);
     Q_DECLARE_PRIVATE(QJsonRpcServer)
-    QScopedPointer<QJsonRpcServerPrivate> d_ptr;
 
 };
 
@@ -140,7 +136,7 @@ private Q_SLOTS:
     void clientDisconnected();
 
 private:
-    Q_DECLARE_PRIVATE(QJsonRpcLocalServer )
+    Q_DECLARE_PRIVATE(QJsonRpcLocalServer)
 
 };
 
