@@ -6,7 +6,7 @@
 #include <QScriptClass>
 #include <QScriptable>
 
-class QJsonRpcServiceSocket;
+class QJsonRpcSocket;
 class QJsonRpcServiceSocketPrototype : public QObject,
                                        protected QScriptable
 {
@@ -25,7 +25,7 @@ public Q_SLOTS:
                                 const QVariant &arg10 = QVariant());
 
 private:
-    QJsonRpcServiceSocket *m_socket;
+    QJsonRpcSocket *m_socket;
 
 };
 

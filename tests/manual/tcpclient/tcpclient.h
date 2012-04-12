@@ -4,7 +4,7 @@
 #include <QObject>
 #include "qjsonrpcmessage.h"
 
-class QJsonRpcServiceSocket;
+class QJsonRpcSocket;
 class TcpClient : public QObject
 {
     Q_OBJECT
@@ -16,7 +16,7 @@ private Q_SLOTS:
     void processResponse();
 
 private:
-    QJsonRpcServiceSocket *m_client;
+    QJsonRpcSocket *m_client;
 
 };
 

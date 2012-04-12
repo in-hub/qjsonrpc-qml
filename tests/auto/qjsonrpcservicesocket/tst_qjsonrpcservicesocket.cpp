@@ -44,7 +44,7 @@ void TestQJsonRpcServiceSocket::testSocketNoParameters()
 {
     QBuffer buffer;
     buffer.open(QIODevice::ReadWrite);
-    QJsonRpcServiceSocket serviceSocket(&buffer, this);
+    QJsonRpcSocket serviceSocket(&buffer, this);
     QSignalSpy spyMessageReceived(&serviceSocket,
                                   SIGNAL(messageReceived(QJsonRpcMessage)));
     QVERIFY(serviceSocket.isValid());
@@ -70,7 +70,7 @@ void TestQJsonRpcServiceSocket::testSocketMultiparamter()
 {
     QBuffer buffer;
     buffer.open(QIODevice::ReadWrite);
-    QJsonRpcServiceSocket serviceSocket(&buffer, this);
+    QJsonRpcSocket serviceSocket(&buffer, this);
     QSignalSpy spyMessageReceived(&serviceSocket,
                                   SIGNAL(messageReceived(QJsonRpcMessage)));
     QVERIFY(serviceSocket.isValid());
@@ -97,7 +97,7 @@ void TestQJsonRpcServiceSocket::testSocketNotification()
 {
     QBuffer buffer;
     buffer.open(QIODevice::ReadWrite);
-    QJsonRpcServiceSocket serviceSocket(&buffer, this);
+    QJsonRpcSocket serviceSocket(&buffer, this);
     QSignalSpy spyMessageReceived(&serviceSocket,
                                   SIGNAL(messageReceived(QJsonRpcMessage)));
     QVERIFY(serviceSocket.isValid());
@@ -123,7 +123,7 @@ void TestQJsonRpcServiceSocket::testSocketResponse()
 {
     QBuffer buffer;
     buffer.open(QIODevice::ReadWrite);
-    QJsonRpcServiceSocket serviceSocket(&buffer, this);
+    QJsonRpcSocket serviceSocket(&buffer, this);
     QSignalSpy spyMessageReceived(&serviceSocket,
                                   SIGNAL(messageReceived(QJsonRpcMessage)));
     QVERIFY(serviceSocket.isValid());

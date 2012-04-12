@@ -33,13 +33,14 @@ Q_SIGNALS:
 
 private:
     QJsonRpcMessage m_response;
-    friend class QJsonRpcServiceSocket;
+    friend class QJsonRpcSocket;
 };
 
 // IDEA: QJsonRpcServiceSocket inherit from QJsonRpcServiceProvider
 //       QJsonRpcServiceProvider just has addService, process message
 //       QJsonRpcLocalServer/QJsonRpcTcpServer inherit from QJsonRpcServiceProvider + QJsonRpcServer
 
+class QJsonRpcSocket;
 class QJsonRpcServiceProviderPrivate;
 class Q_JSONRPC_EXPORT QJsonRpcServiceProvider : public QObject
 {
@@ -53,27 +54,19 @@ protected Q_SLOTS:
 
 protected:
     explicit QJsonRpcServiceProvider(QJsonRpcServiceProviderPrivate *dd, QObject *parent);
+    void processMessage(QJsonRpcSocket *socket, const QJsonRpcMessage &message);
     Q_DECLARE_PRIVATE(QJsonRpcServiceProvider)
     QScopedPointer<QJsonRpcServiceProviderPrivate> d_ptr;
 
 };
 
-
-
-
-
-
-
-
-
-
-class QJsonRpcServiceSocketPrivate;
-class Q_JSONRPC_EXPORT QJsonRpcServiceSocket : public QObject
+class QJsonRpcSocketPrivate;
+class Q_JSONRPC_EXPORT QJsonRpcSocket : public QJsonRpcServiceProvider
 {
     Q_OBJECT
 public:
-    explicit QJsonRpcServiceSocket(QIODevice *device, QObject *parent = 0);
-    ~QJsonRpcServiceSocket();
+    explicit QJsonRpcSocket(QIODevice *device, QObject *parent = 0);
+    ~QJsonRpcSocket();
 
     bool isValid() const;
 
@@ -95,8 +88,7 @@ private Q_SLOTS:
     void processIncomingData();
 
 private:
-    Q_DECLARE_PRIVATE(QJsonRpcServiceSocket)
-    QScopedPointer<QJsonRpcServiceSocketPrivate> d_ptr;
+    Q_DECLARE_PRIVATE(QJsonRpcSocket)
 
 };
 

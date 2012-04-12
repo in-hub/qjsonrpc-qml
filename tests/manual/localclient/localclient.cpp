@@ -19,7 +19,7 @@ void LocalClient::run()
         return;
     }
 
-    m_client = new QJsonRpcServiceSocket(socket, this);
+    m_client = new QJsonRpcSocket(socket, this);
     QJsonRpcServiceReply *reply = m_client->invokeRemoteMethod("agent.testMethod");
     connect(reply, SIGNAL(finished()), this, SLOT(processResponse()));
 

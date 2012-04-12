@@ -31,7 +31,7 @@ void QJsonRpcServiceSocketPrototype::connectToLocalService(const QString &servic
         return;
     }
 
-    m_socket = new QJsonRpcServiceSocket(localSocket, this);
+    m_socket = new QJsonRpcSocket(localSocket, this);
 }
 
 QVariant QJsonRpcServiceSocketPrototype::invokeRemoteMethod(const QString &method,
