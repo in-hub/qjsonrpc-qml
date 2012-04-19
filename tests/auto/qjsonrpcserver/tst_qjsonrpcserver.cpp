@@ -23,6 +23,7 @@ private Q_SLOTS:
     void testLocalSingleParameter();
     void testLocalMultiparameter();
     void testLocalVariantParameter();
+    void testLocalVariantResult();
     void testLocalInvalidArgs();
     void testLocalMethodNotFound();
     void testLocalInvalidRequest();
@@ -75,6 +76,21 @@ public Q_SLOTS:
     bool variantParameter(const QVariant &variantParam) const
     {
         return variantParam.toBool();
+    }
+
+    QVariant variantStringResult() {
+        return "hello";
+    }
+
+    QVariantList variantListResult() {
+        return QVariantList() << "one" << 2 << 3.0;
+    }
+
+    QVariantMap variantMapResult() {
+        QVariantMap result;
+        result["one"] = 1;
+        result["two"] = 2.0;
+        return result;
     }
 };
 
@@ -188,6 +204,26 @@ void TestQJsonRpcServer::testLocalVariantParameter()
     QVERIFY(response.errorCode() == QJsonRpc::NoError);
     QCOMPARE(request.id(), response.id());
     QVERIFY(response.result() == true);
+}
+
+void TestQJsonRpcServer::testLocalVariantResult()
+{
+    // Initialize the service provider.
+    QJsonRpcLocalServer serviceProvider;
+    serviceProvider.addService(new TestService);
+    QVERIFY(serviceProvider.listen("test"));
+
+    // Connect to the socket.
+    QLocalSocket socket;
+    socket.connectToServer("test");
+    QVERIFY(socket.waitForConnected());
+    QJsonRpcSocket serviceSocket(&socket, this);
+
+
+    QJsonRpcMessage response = serviceSocket.invokeRemoteMethodBlocking("service.variantStringResult");
+    QVERIFY(response.errorCode() == QJsonRpc::NoError);
+    QString stringResult = response.result().toString();
+    QCOMPARE(stringResult, QLatin1String("hello"));
 }
 
 void TestQJsonRpcServer::testLocalInvalidArgs()
@@ -499,7 +535,7 @@ public:
     }
 
 public Q_SLOTS:
-    void testMethod() { qDebug() << "FUCK ME"; }
+    void testMethod() { qDebug() << "text"; }
 };
 
 void TestQJsonRpcServer::testLocalNotifyServiceSocket()

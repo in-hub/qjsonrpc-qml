@@ -80,14 +80,16 @@ QJsonRpcMessage QJsonRpcService::dispatch(const QJsonRpcMessage &request) const
         return error;
     }
 
-    // QList<QVariant> auxArguments;
     QVarLengthArray<void *, 10> parameters;
     parameters.reserve(parameterTypes.count());
 
     // first argument to metacall is the return value
-    void *null = 0;
-    QVariant returnValue(parameterTypes[0], null);
-    parameters.append(const_cast<void *>(returnValue.constData()));
+    QMetaType::Type returnType = static_cast<QMetaType::Type>(parameterTypes[0]);
+    QVariant returnValue(returnType, QMetaType::construct(returnType));
+    if (returnType == QMetaType::QVariant)
+        parameters.append(&returnValue);
+    else
+        parameters.append(const_cast<void *>(returnValue.constData()));
 
     // compile arguments
     for (int i = 0; i < parameterTypes.size() - 1; ++i) {
@@ -97,11 +99,10 @@ QJsonRpcMessage QJsonRpcService::dispatch(const QJsonRpcMessage &request) const
             parameterType != QMetaType::QVariant)
             const_cast<QVariant*>(&argument)->convert(static_cast<QVariant::Type>(parameterType));
         parameters.append(const_cast<void *>(argument.constData()));
-
     }
 
-    bool success = false;
-    success = const_cast<QJsonRpcService*>(this)->qt_metacall(QMetaObject::InvokeMetaMethod, idx, parameters.data()) < 0;
+    bool success =
+        const_cast<QJsonRpcService*>(this)->qt_metacall(QMetaObject::InvokeMetaMethod, idx, parameters.data()) < 0;
     if (!success) {
         QString message = QString("dispatch for method '%1' failed").arg(method.constData());
         QJsonRpcMessage error =
@@ -283,6 +284,29 @@ void QJsonRpcSocket::notify(const QJsonRpcMessage &message)
     Q_D(QJsonRpcSocket);
     QJsonDocument doc = QJsonDocument(message.toObject());
     d->device.data()->write(doc.toJson());
+}
+
+QJsonRpcMessage QJsonRpcSocket::invokeRemoteMethodBlocking(const QString &method, const QVariant &param1,
+                                                           const QVariant &param2, const QVariant &param3,
+                                                           const QVariant &param4, const QVariant &param5,
+                                                           const QVariant &param6, const QVariant &param7,
+                                                           const QVariant &param8, const QVariant &param9,
+                                                           const QVariant &param10)
+{
+    QVariantList params;
+    if (param1.isValid()) params.append(param1);
+    if (param2.isValid()) params.append(param2);
+    if (param3.isValid()) params.append(param3);
+    if (param4.isValid()) params.append(param4);
+    if (param5.isValid()) params.append(param5);
+    if (param6.isValid()) params.append(param6);
+    if (param7.isValid()) params.append(param7);
+    if (param8.isValid()) params.append(param8);
+    if (param9.isValid()) params.append(param9);
+    if (param10.isValid()) params.append(param10);
+
+    QJsonRpcMessage request = QJsonRpcMessage::createRequest(method, params);
+    return sendMessageBlocking(request);
 }
 
 QJsonRpcServiceReply *QJsonRpcSocket::invokeRemoteMethod(const QString &method, const QVariant &param1,
