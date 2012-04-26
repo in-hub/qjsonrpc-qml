@@ -65,6 +65,13 @@ public:
     explicit QJsonRpcSocket(QIODevice *device, QObject *parent = 0);
     ~QJsonRpcSocket();
 
+    enum WireFormat {
+        Plain,
+        Binary
+    };
+    WireFormat wireFormat() const;
+    void setWireFormat(WireFormat format);
+
     bool isValid() const;
 
     void notify(const QJsonRpcMessage &message);
@@ -120,6 +127,9 @@ class Q_JSONRPC_EXPORT QJsonRpcServer : public QObject,
 public:
     virtual ~QJsonRpcServer();
     virtual QString errorString() const = 0;
+
+    QJsonRpcSocket::WireFormat wireFormat() const;
+    void setWireFormat(QJsonRpcSocket::WireFormat format);
 
 public Q_SLOTS:
     void notifyConnectedClients(const QJsonRpcMessage &message);

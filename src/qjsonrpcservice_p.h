@@ -12,16 +12,21 @@
 class QJsonRpcSocketPrivate
 {
 public:
+    QJsonRpcSocketPrivate() : format(QJsonRpcSocket::Plain) {}
     QWeakPointer<QIODevice> device;
     QByteArray buffer;
     QHash<int, QJsonRpcServiceReply*> replies;
+    QJsonRpcSocket::WireFormat format;
 
 };
 
 class QJsonRpcServerPrivate
 {
 public:
+    QJsonRpcServerPrivate() : format(QJsonRpcSocket::Plain) {}
     QList<QJsonRpcSocket*> clients;
+    QJsonRpcSocket::WireFormat format;
+
 };
 
 class QLocalServer;

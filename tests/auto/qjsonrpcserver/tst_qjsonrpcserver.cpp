@@ -20,6 +20,7 @@ private Q_SLOTS:
 
     // Local Server
     void testLocalNoParameter();
+    void testLocalNoParameterBinary();
     void testLocalSingleParameter();
     void testLocalMultiparameter();
     void testLocalVariantParameter();
@@ -30,6 +31,7 @@ private Q_SLOTS:
     void testLocalNotifyConnectedClients();
     void testLocalNumberParameters();
     void testLocalHugeResponse();
+    void testLocalHugeResponseBinary();
     void testLocalComplexMethod();
     void testLocalDefaultParameters();
     void testLocalNotifyServiceSocket();
@@ -123,6 +125,30 @@ void TestQJsonRpcServer::testLocalNoParameter()
     socket.connectToServer("test");
     QVERIFY(socket.waitForConnected());
     QJsonRpcSocket serviceSocket(&socket, this);
+    QSignalSpy spyMessageReceived(&serviceSocket,
+                                  SIGNAL(messageReceived(QJsonRpcMessage)));
+
+    QJsonRpcMessage request = QJsonRpcMessage::createRequest("service.noParam");
+    QJsonRpcMessage response = serviceSocket.sendMessageBlocking(request);
+    QCOMPARE(spyMessageReceived.count(), 1);
+    QVERIFY(response.errorCode() == QJsonRpc::NoError);
+    QCOMPARE(request.id(), response.id());
+}
+
+void TestQJsonRpcServer::testLocalNoParameterBinary()
+{
+    // Initialize the service provider.
+    QJsonRpcLocalServer serviceProvider;
+    serviceProvider.setWireFormat(QJsonRpcSocket::Binary);
+    serviceProvider.addService(new TestService);
+    QVERIFY(serviceProvider.listen("test"));
+
+    // Connect to the socket.
+    QLocalSocket socket;
+    socket.connectToServer("test");
+    QVERIFY(socket.waitForConnected());
+    QJsonRpcSocket serviceSocket(&socket, this);
+    serviceSocket.setWireFormat(QJsonRpcSocket::Binary);
     QSignalSpy spyMessageReceived(&serviceSocket,
                                   SIGNAL(messageReceived(QJsonRpcMessage)));
 
@@ -426,6 +452,29 @@ void TestQJsonRpcServer::testLocalHugeResponse()
     socket.connectToServer("test");
     QVERIFY(socket.waitForConnected());
     QJsonRpcSocket serviceSocket(&socket, this);
+    QSignalSpy spyMessageReceived(&serviceSocket,
+                                  SIGNAL(messageReceived(QJsonRpcMessage)));
+
+    QJsonRpcMessage request = QJsonRpcMessage::createRequest("service.hugeResponse");
+    QJsonRpcMessage response = serviceSocket.sendMessageBlocking(request);
+    QCOMPARE(spyMessageReceived.count(), 1);
+    QVERIFY(response.isValid());
+}
+
+void TestQJsonRpcServer::testLocalHugeResponseBinary()
+{
+    // Initialize the service provider.
+    QJsonRpcLocalServer serviceProvider;
+    serviceProvider.setWireFormat(QJsonRpcSocket::Binary);
+    serviceProvider.addService(new TestHugeResponseService);
+    QVERIFY(serviceProvider.listen("test"));
+
+    // Connect to the socket.
+    QLocalSocket socket;
+    socket.connectToServer("test");
+    QVERIFY(socket.waitForConnected());
+    QJsonRpcSocket serviceSocket(&socket, this);
+    serviceSocket.setWireFormat(QJsonRpcSocket::Binary);
     QSignalSpy spyMessageReceived(&serviceSocket,
                                   SIGNAL(messageReceived(QJsonRpcMessage)));
 

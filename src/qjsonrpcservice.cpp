@@ -271,8 +271,10 @@ QJsonRpcServiceReply *QJsonRpcSocket::sendMessage(const QJsonRpcMessage &message
 {
     Q_D(QJsonRpcSocket);
     QJsonDocument doc = QJsonDocument(message.toObject());
-    // m_device.data()->write(doc.toBinaryData());
-    d->device.data()->write(doc.toJson());
+    if (d->format == QJsonRpcSocket::Binary)
+        d->device.data()->write(doc.toBinaryData());
+    else
+        d->device.data()->write(doc.toJson());
 
     QJsonRpcServiceReply *reply = new QJsonRpcServiceReply;
     d->replies.insert(message.id(), reply);
@@ -283,7 +285,10 @@ void QJsonRpcSocket::notify(const QJsonRpcMessage &message)
 {
     Q_D(QJsonRpcSocket);
     QJsonDocument doc = QJsonDocument(message.toObject());
-    d->device.data()->write(doc.toJson());
+    if (d->format == QJsonRpcSocket::Binary)
+        d->device.data()->write(doc.toBinaryData());
+    else
+        d->device.data()->write(doc.toJson());
 }
 
 QJsonRpcMessage QJsonRpcSocket::invokeRemoteMethodBlocking(const QString &method, const QVariant &param1,
@@ -332,6 +337,19 @@ QJsonRpcServiceReply *QJsonRpcSocket::invokeRemoteMethod(const QString &method, 
     return sendMessage(request);
 }
 
+QJsonRpcSocket::WireFormat QJsonRpcSocket::wireFormat() const
+{
+    Q_D(const QJsonRpcSocket);
+    return d->format;
+}
+
+void QJsonRpcSocket::setWireFormat(WireFormat format)
+{
+    Q_D(QJsonRpcSocket);
+    d->format = format;
+}
+
+
 void QJsonRpcSocket::processIncomingData()
 {
     Q_D(QJsonRpcSocket);
@@ -342,16 +360,19 @@ void QJsonRpcSocket::processIncomingData()
 
     d->buffer.append(d->device.data()->readAll());
     while (!d->buffer.isEmpty()) {
-        // NOTE: sending this stuff in binary breaks compatibility with
-        //       other jsonrpc implementations
-        // QJsonDocument document = QJsonDocument::fromBinaryData(data);
-        // data = data.mid(document.toBinaryData().size());
-
-        QJsonDocument document = QJsonDocument::fromJson(d->buffer);
+        QJsonDocument document;
+        if (d->format == QJsonRpcSocket::Binary)
+            document = QJsonDocument::fromBinaryData(d->buffer);
+        else
+            document = QJsonDocument::fromJson(d->buffer);
         if (document.isEmpty())
             break;
 
-        d->buffer = d->buffer.mid(document.toJson().size());
+        if (d->format == QJsonRpcSocket::Binary)
+            d->buffer = d->buffer.mid(document.toBinaryData().size());
+        else
+            d->buffer = d->buffer.mid(document.toJson().size());
+
         if (document.isArray()) {
             qDebug() << "bulk support is current disabled";
             /*
@@ -416,6 +437,18 @@ QJsonRpcServer::~QJsonRpcServer()
     d->clients.clear();
 }
 
+QJsonRpcSocket::WireFormat QJsonRpcServer::wireFormat() const
+{
+    Q_D(const QJsonRpcServer);
+    return d->format;
+}
+
+void QJsonRpcServer::setWireFormat(QJsonRpcSocket::WireFormat format)
+{
+    Q_D(QJsonRpcServer);
+    d->format = format;
+}
+
 void QJsonRpcServer::notifyConnectedClients(const QString &method, const QVariantList &params)
 {
     QJsonRpcMessage notification = QJsonRpcMessage::createNotification(method, params);
@@ -474,6 +507,7 @@ void QJsonRpcLocalServer::processIncomingConnection()
     QLocalSocket *localSocket = d->server->nextPendingConnection();
     QIODevice *device = qobject_cast<QIODevice*>(localSocket);
     QJsonRpcSocket *socket = new QJsonRpcSocket(device, this);
+    socket->setWireFormat(d->format);
     connect(socket, SIGNAL(messageReceived(QJsonRpcMessage)), this, SLOT(processMessage(QJsonRpcMessage)));
     d->clients.append(socket);
     connect(localSocket, SIGNAL(disconnected()), this, SLOT(clientDisconnected()));
@@ -532,6 +566,7 @@ void QJsonRpcTcpServer::processIncomingConnection()
     QTcpSocket *tcpSocket = d->server->nextPendingConnection();
     QIODevice *device = qobject_cast<QIODevice*>(tcpSocket);
     QJsonRpcSocket *socket = new QJsonRpcSocket(device, this);
+    socket->setWireFormat(d->format);
     connect(socket, SIGNAL(messageReceived(QJsonRpcMessage)), this, SLOT(processMessage(QJsonRpcMessage)));
     d->clients.append(socket);
     connect(tcpSocket, SIGNAL(disconnected()), this, SLOT(clientDisconnected()));
