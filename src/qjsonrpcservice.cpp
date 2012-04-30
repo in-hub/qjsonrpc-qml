@@ -85,11 +85,12 @@ QJsonRpcMessage QJsonRpcService::dispatch(const QJsonRpcMessage &request) const
 
     // first argument to metacall is the return value
     QMetaType::Type returnType = static_cast<QMetaType::Type>(parameterTypes[0]);
-    QVariant returnValue(returnType, QMetaType::construct(returnType));
+    void *returnData = QMetaType::construct(returnType);
+    QVariant returnValue(returnType, returnData);
     if (returnType == QMetaType::QVariant)
         parameters.append(&returnValue);
     else
-        parameters.append(const_cast<void *>(returnValue.constData()));
+        parameters.append(returnValue.data());
 
     // compile arguments
     for (int i = 0; i < parameterTypes.size() - 1; ++i) {
@@ -110,7 +111,9 @@ QJsonRpcMessage QJsonRpcService::dispatch(const QJsonRpcMessage &request) const
         return error;
     }
 
-    return request.createResponse(returnValue);
+    QVariant returnCopy(returnValue);
+    QMetaType::destroy(returnType, returnData);
+    return request.createResponse(returnCopy);
 }
 
 
