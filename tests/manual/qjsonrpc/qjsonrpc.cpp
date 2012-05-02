@@ -16,7 +16,7 @@ int main(int argc, char **argv)
     if (notification)
         args.removeAll("-n");
 
-    if (args.size() < 3) {
+    if (args.size() < 2) {
         qDebug("usage: %s [-n] <service> <method> <arguments>", appName.toLocal8Bit().data());
         return -1;
     }
@@ -52,7 +52,9 @@ int main(int argc, char **argv)
     QVariantList arguments;
     foreach (QString arg, args)
         arguments.append(arg);
-    QJsonRpcMessage request = QJsonRpcMessage::createRequest(method, arguments);
+
+    QJsonRpcMessage request = notification ? QJsonRpcMessage::createNotification(method, arguments) :
+                                             QJsonRpcMessage::createRequest(method, arguments);
     QJsonRpcMessage response = socket.sendMessageBlocking(request, 5000);
     if (response.type() == QJsonRpcMessage::Error) {
         qDebug("error(%d): %s", response.errorCode(), response.errorMessage().toLocal8Bit().data());
