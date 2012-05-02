@@ -273,6 +273,11 @@ QJsonRpcMessage QJsonRpcSocket::sendMessageBlocking(const QJsonRpcMessage &messa
 QJsonRpcServiceReply *QJsonRpcSocket::sendMessage(const QJsonRpcMessage &message)
 {
     Q_D(QJsonRpcSocket);
+    if (!d->device) {
+        qDebug() << Q_FUNC_INFO << "trying to send message with no device, aborting...";
+        return 0;
+    }
+
     QJsonDocument doc = QJsonDocument(message.toObject());
     if (d->format == QJsonRpcSocket::Binary)
         d->device.data()->write(doc.toBinaryData());
