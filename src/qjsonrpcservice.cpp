@@ -47,12 +47,14 @@ void QJsonRpcService::cacheInvokableInfo()
     }
 }
 
-QJsonRpcMessage QJsonRpcService::dispatch(const QJsonRpcMessage &request) const
+//QJsonRpcMessage QJsonRpcService::dispatch(const QJsonRpcMessage &request) const
+bool QJsonRpcService::dispatch(const QJsonRpcMessage &request)
 {
     if (!request.type() == QJsonRpcMessage::Request) {
         QJsonRpcMessage error =
                 request.createErrorResponse(QJsonRpc::InvalidRequest, "invalid request");
-        return error;
+        Q_EMIT result(error);
+        return false;
     }
 
     QByteArray method = request.method().section(".", -1).toLatin1();
@@ -60,7 +62,8 @@ QJsonRpcMessage QJsonRpcService::dispatch(const QJsonRpcMessage &request) const
     if (!m_invokableMethodHash.contains(method)) {
         QJsonRpcMessage error =
             request.createErrorResponse(QJsonRpc::MethodNotFound, "invalid method called");
-        return error;
+        Q_EMIT result(error);
+        return false;
     }
 
     int idx = -1;
@@ -77,7 +80,8 @@ QJsonRpcMessage QJsonRpcService::dispatch(const QJsonRpcMessage &request) const
     if (idx == -1) {
         QJsonRpcMessage error =
             request.createErrorResponse(QJsonRpc::InvalidParams, "invalid parameters");
-        return error;
+        Q_EMIT result(error);
+        return false;
     }
 
     QVarLengthArray<void *, 10> parameters;
@@ -108,12 +112,14 @@ QJsonRpcMessage QJsonRpcService::dispatch(const QJsonRpcMessage &request) const
         QString message = QString("dispatch for method '%1' failed").arg(method.constData());
         QJsonRpcMessage error =
             request.createErrorResponse(QJsonRpc::InvalidRequest, message);
-        return error;
+        Q_EMIT result(error);
+        return false;
     }
 
     QVariant returnCopy(returnValue);
     QMetaType::destroy(returnType, returnData);
-    return request.createResponse(returnCopy);
+    Q_EMIT result(request.createResponse(returnCopy));
+    return true;
 }
 
 
@@ -180,9 +186,11 @@ void QJsonRpcServiceProvider::processMessage(QJsonRpcSocket *socket, const QJson
             } else {
                 QJsonRpcService *service = m_services.value(serviceName);
                 service->m_socket = socket;
-                QJsonRpcMessage response = service->dispatch(message);
-                if (message.type() == QJsonRpcMessage::Request)
-                    socket->notify(response);
+                QObject::connect(service, SIGNAL(result(QJsonRpcMessage)), socket, SLOT(notify(QJsonRpcMessage)));
+                QMetaObject::invokeMethod(service, "dispatch", Qt::QueuedConnection, Q_ARG(QJsonRpcMessage, message));
+                // QJsonRpcMessage response = service->dispatch(message);
+                // if (message.type() == QJsonRpcMessage::Request)
+                //    socket->notify(response);
             }
         }
         break;
@@ -274,7 +282,7 @@ QJsonRpcServiceReply *QJsonRpcSocket::sendMessage(const QJsonRpcMessage &message
 {
     Q_D(QJsonRpcSocket);
     if (!d->device) {
-        qDebug() << Q_FUNC_INFO << "trying to send message with no device, aborting...";
+        qDebug() << Q_FUNC_INFO << "trying to send message without device";
         return 0;
     }
 
@@ -292,6 +300,11 @@ QJsonRpcServiceReply *QJsonRpcSocket::sendMessage(const QJsonRpcMessage &message
 void QJsonRpcSocket::notify(const QJsonRpcMessage &message)
 {
     Q_D(QJsonRpcSocket);
+    if (!d->device) {
+        qDebug() << Q_FUNC_INFO << "trying to send message without device";
+        return;
+    }
+
     QJsonDocument doc = QJsonDocument(message.toObject());
     if (d->format == QJsonRpcSocket::Binary)
         d->device.data()->write(doc.toBinaryData());

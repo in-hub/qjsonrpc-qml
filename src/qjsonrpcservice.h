@@ -15,16 +15,22 @@ class Q_JSONRPC_EXPORT QJsonRpcService : public QObject
 public:
     explicit QJsonRpcService(QObject *parent = 0);
 
+Q_SIGNALS:
+    void result(const QJsonRpcMessage &result);
+
 protected:
     QJsonRpcSocket *senderSocket();
 
+private Q_SLOTS:
+    bool dispatch(const QJsonRpcMessage &request);
+
 private:
-    QJsonRpcMessage dispatch(const QJsonRpcMessage &request) const;
     void cacheInvokableInfo();
     QMultiHash<QByteArray, int> m_invokableMethodHash;
     QHash<int, QList<int> > m_parameterTypeHash;
     QWeakPointer<QJsonRpcSocket> m_socket;
     friend class QJsonRpcServiceProvider;
+
 };
 
 class Q_JSONRPC_EXPORT QJsonRpcServiceReply : public QObject
@@ -74,6 +80,7 @@ public:
 
     bool isValid() const;
 
+public Q_SLOTS:
     void notify(const QJsonRpcMessage &message);
     QJsonRpcMessage sendMessageBlocking(const QJsonRpcMessage &message, int msecs = 30000);
     QJsonRpcServiceReply *sendMessage(const QJsonRpcMessage &message);
