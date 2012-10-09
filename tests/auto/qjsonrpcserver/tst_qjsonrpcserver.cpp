@@ -35,6 +35,7 @@ private Q_SLOTS:
     void testLocalComplexMethod();
     void testLocalDefaultParameters();
     void testLocalNotifyServiceSocket();
+    void testLocalListOfInts();
 
     // TCP Server
     void testTcpNoParameter();
@@ -48,6 +49,11 @@ private Q_SLOTS:
     void testTcpNumberParameters();
     void testTcpHugeResponse();
 
+private:
+    // fix later
+    void testLocalNoWhitespace();
+
+
 };
 
 class TestService : public QJsonRpcService
@@ -56,7 +62,14 @@ class TestService : public QJsonRpcService
     Q_CLASSINFO("serviceName", "service")
 public:
     TestService(QObject *parent = 0)
-        : QJsonRpcService(parent) {}
+        : QJsonRpcService(parent),
+          m_called(0)
+    {}
+
+    void resetCount() { m_called = 0; }
+    int callCount() const {
+        return m_called;
+    }
 
 public Q_SLOTS:
     void noParam() const {}
@@ -94,6 +107,26 @@ public Q_SLOTS:
         result["two"] = 2.0;
         return result;
     }
+
+    void increaseCalled() {
+        m_called++;
+    }
+
+    bool methodWithListOfInts(const QList<int> &list) {
+        if (list.size() < 3)
+            return false;
+
+        if (list.at(0) != 300)
+            return false;
+        if (list.at(1) != 30)
+            return false;
+        if (list.at(2) != 3)
+            return false;
+        return true;
+    }
+
+private:
+    int m_called;
 };
 
 void TestQJsonRpcServer::initTestCase()
@@ -328,6 +361,31 @@ void TestQJsonRpcServer::testLocalInvalidRequest()
     QJsonRpcMessage error = message.value<QJsonRpcMessage>();
     QCOMPARE(request.id(), error.id());
     QVERIFY(error.errorCode() == QJsonRpc::InvalidRequest);
+}
+
+void TestQJsonRpcServer::testLocalNoWhitespace()
+{
+    // Initialize the service provider.
+    QJsonRpcLocalServer serviceProvider;
+    TestService *service = new TestService;
+    serviceProvider.addService(service);
+    QVERIFY(serviceProvider.listen("test"));
+
+    // Connect to the socket.
+    QLocalSocket socket;
+    socket.connectToServer("test");
+    QVERIFY(socket.waitForConnected());
+
+    QByteArray singleNoWhite("{\"jsonrpc\":\"2.0\",\"method\":\"service.increaseCalled\"}");
+    QCOMPARE(socket.write(singleNoWhite), (qint64)singleNoWhite.size());
+    QTest::qWait(200);
+    QCOMPARE(service->callCount(), 1);
+
+    service->resetCount();
+    QByteArray multipleNoWhite("{\"jsonrpc\":\"2.0\",\"method\":\"service.increaseCalled\"}{\"jsonrpc\":\"2.0\",\"method\":\"service.increaseCalled\"}{\"jsonrpc\":\"2.0\",\"method\":\"service.increaseCalled\"}");
+    QCOMPARE(socket.write(multipleNoWhite), (qint64)multipleNoWhite.size());
+    QTest::qWait(200);
+    QCOMPARE(service->callCount(), 3);
 }
 
 class ServerNotificationHelper : public QObject
@@ -613,12 +671,30 @@ void TestQJsonRpcServer::testLocalNotifyServiceSocket()
     QCOMPARE(service->callCount(), 1);
 }
 
+Q_DECLARE_METATYPE(QList<int>)
+void TestQJsonRpcServer::testLocalListOfInts()
+{
+    // Initialize the service provider.
+    QEventLoop loop;
+    QJsonRpcLocalServer serviceProvider;
+    serviceProvider.addService(new TestService);
+    QVERIFY(serviceProvider.listen("test"));
 
+    // Connect to the socket.
+    QLocalSocket socket;
+    socket.connectToServer("test");
+    QVERIFY(socket.waitForConnected());
+    QJsonRpcSocket serviceSocket(&socket, this);
 
+    qRegisterMetaType<QList<int> >("QList<int>");
+    QList<int> intList = QList<int>() << 300 << 30 << 3;
+    QVariant variant = QVariant::fromValue(intList);
 
-
-
-
+    QJsonRpcMessage intRequest = QJsonRpcMessage::createRequest("service.methodWithListOfInts", variant);
+    QJsonRpcMessage response = serviceSocket.sendMessageBlocking(intRequest);
+    QVERIFY(response.type() != QJsonRpcMessage::Error);
+    QVERIFY(response.result().toBool());
+}
 
 
 
