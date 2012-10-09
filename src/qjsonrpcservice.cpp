@@ -52,7 +52,7 @@ bool QJsonRpcService::dispatch(const QJsonRpcMessage &request)
 {
     if (!request.type() == QJsonRpcMessage::Request) {
         QJsonRpcMessage error =
-                request.createErrorResponse(QJsonRpc::InvalidRequest, "invalid request");
+            request.createErrorResponse(QJsonRpc::InvalidRequest, "invalid request");
         Q_EMIT result(error);
         return false;
     }
@@ -132,19 +132,6 @@ QJsonRpcMessage QJsonRpcServiceReply::response() const
 {
     return m_response;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 QJsonRpcServiceProvider::QJsonRpcServiceProvider()
 {
@@ -281,17 +268,7 @@ QJsonRpcMessage QJsonRpcSocket::sendMessageBlocking(const QJsonRpcMessage &messa
 QJsonRpcServiceReply *QJsonRpcSocket::sendMessage(const QJsonRpcMessage &message)
 {
     Q_D(QJsonRpcSocket);
-    if (!d->device) {
-        qDebug() << Q_FUNC_INFO << "trying to send message without device";
-        return 0;
-    }
-
-    QJsonDocument doc = QJsonDocument(message.toObject());
-    if (d->format == QJsonRpcSocket::Binary)
-        d->device.data()->write(doc.toBinaryData());
-    else
-        d->device.data()->write(doc.toJson());
-
+    notify(message);
     QJsonRpcServiceReply *reply = new QJsonRpcServiceReply;
     d->replies.insert(message.id(), reply);
     return reply;
@@ -305,6 +282,7 @@ void QJsonRpcSocket::notify(const QJsonRpcMessage &message)
         return;
     }
 
+    // TODO: check if its a QJsonRpcType, if so convert it to QVariantMap
     QJsonDocument doc = QJsonDocument(message.toObject());
     if (d->format == QJsonRpcSocket::Binary)
         d->device.data()->write(doc.toBinaryData());
