@@ -44,7 +44,7 @@
 #include <QtCore/QFile>
 #include <QtCore/QTextStream>
 #include <QtCore/QStringList>
-#include <QtGui/QApplication>
+#include <QCoreApplication>
 
 #include <stdlib.h>
 
@@ -138,13 +138,13 @@ static QScriptValue loadScripts(QScriptContext *context, QScriptEngine *engine)
 
 int main(int argc, char *argv[])
 {
-    QApplication *app;
+    QCoreApplication *app;
     if (argc >= 2 && !qstrcmp(argv[1], "-tty")) {
         ++argv;
        --argc;
-        app = new QApplication(argc, argv, QApplication::Tty);
+        app = new QCoreApplication(argc, argv, QCoreApplication::Tty);
     } else {
-        app = new QApplication(argc, argv);
+        app = new QCoreApplication(argc, argv);
     }
 
     QScriptEngine *eng = new QScriptEngine();

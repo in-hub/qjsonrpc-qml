@@ -3,7 +3,7 @@
 
 #include <QHash>
 #include <QHostAddress>
-#include <QWeakPointer>
+#include <QPointer>
 #include <QLocalSocket>
 #include <QTcpSocket>
 
@@ -13,7 +13,7 @@ class QJsonRpcSocketPrivate
 {
 public:
     QJsonRpcSocketPrivate() : format(QJsonRpcSocket::Plain) {}
-    QWeakPointer<QIODevice> device;
+    QPointer<QIODevice> device;
     QByteArray buffer;
     QHash<int, QJsonRpcServiceReply*> replies;
     QJsonRpcSocket::WireFormat format;

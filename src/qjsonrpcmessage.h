@@ -3,18 +3,25 @@
 
 #include <QSharedDataPointer>
 
-#include "json/qjsonexport.h"
+#if QT_VERSION >= 0x050000
+#include <QJsonValue>
+#include <QJsonObject>
+#include <QJsonArray>
+#include <QVariant>
+#else
 #include "json/qjsonvalue.h"
 #include "json/qjsonobject.h"
 #include "json/qjsonarray.h"
+#endif
+#include "json/qjsonexport.h"
 
 // error codes defined by spec
 namespace QJsonRpc {
     enum ErrorCode {
         NoError         = 0,
-        ParseError      = -32700,        	// Invalid JSON was received by the server.
+        ParseError      = -32700,           // Invalid JSON was received by the server.
                                             // An error occurred on the server while parsing the JSON text.
-        InvalidRequest  = -32600,         	// The JSON sent is not a valid Request object.
+        InvalidRequest  = -32600,           // The JSON sent is not a valid Request object.
         MethodNotFound  = -32601,           // The method does not exist / is not available.
         InvalidParams   = -32602,           // Invalid method parameter(s).
         InternalError   = -32603,           // Internal JSON-RPC error.

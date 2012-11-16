@@ -32,7 +32,11 @@ void QJsonRpcService::cacheInvokableInfo()
         const QMetaMethod method = obj->method(idx);
         if (method.methodType() == QMetaMethod::Slot &&
             method.access() == QMetaMethod::Public) {
+#if QT_VERSION >= 0x050000
+            QByteArray signature = method.methodSignature();
+#else
             QByteArray signature = method.signature();
+#endif
             QByteArray methodName = signature.left(signature.indexOf('('));
             m_invokableMethodHash.insert(methodName, idx);
 
@@ -89,7 +93,12 @@ bool QJsonRpcService::dispatch(const QJsonRpcMessage &request)
 
     // first argument to metacall is the return value
     QMetaType::Type returnType = static_cast<QMetaType::Type>(parameterTypes[0]);
+#if QT_VERSION >= 0x050000
+    void *returnData = QMetaType::create(returnType);
+#else
     void *returnData = QMetaType::construct(returnType);
+#endif
+
     QVariant returnValue(returnType, returnData);
     if (returnType == QMetaType::QVariant)
         parameters.append(&returnValue);

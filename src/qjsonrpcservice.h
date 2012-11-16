@@ -3,7 +3,7 @@
 
 #include <QObject>
 #include <QHostAddress>
-#include <QWeakPointer>
+#include <QPointer>
 
 #include "qjsonrpcmessage.h"
 
@@ -28,7 +28,7 @@ private:
     void cacheInvokableInfo();
     QMultiHash<QByteArray, int> m_invokableMethodHash;
     QHash<int, QList<int> > m_parameterTypeHash;
-    QWeakPointer<QJsonRpcSocket> m_socket;
+    QPointer<QJsonRpcSocket> m_socket;
     friend class QJsonRpcServiceProvider;
 
 };
