@@ -9,7 +9,7 @@
 
 class QJsonRpcSocket;
 class QJsonRpcServiceProvider;
-class Q_JSONRPC_EXPORT QJsonRpcService : public QObject
+class QJSONRPC_EXPORT QJsonRpcService : public QObject
 {
     Q_OBJECT
 public:
@@ -33,7 +33,7 @@ private:
 
 };
 
-class Q_JSONRPC_EXPORT QJsonRpcServiceReply : public QObject
+class QJSONRPC_EXPORT QJsonRpcServiceReply : public QObject
 {
     Q_OBJECT
 public:
@@ -50,7 +50,7 @@ private:
 
 class QJsonRpcSocket;
 class QJsonRpcServiceProviderPrivate;
-class Q_JSONRPC_EXPORT QJsonRpcServiceProvider
+class QJSONRPC_EXPORT QJsonRpcServiceProvider
 {
 public:
     ~QJsonRpcServiceProvider();
@@ -64,7 +64,7 @@ protected:
 };
 
 class QJsonRpcSocketPrivate;
-class Q_JSONRPC_EXPORT QJsonRpcSocket : public QObject
+class QJSONRPC_EXPORT QJsonRpcSocket : public QObject
 {
     Q_OBJECT
 public:
@@ -113,7 +113,7 @@ private:
 
 };
 
-class Q_JSONRPC_EXPORT QJsonRpcServiceSocket : public QJsonRpcSocket,
+class QJSONRPC_EXPORT QJsonRpcServiceSocket : public QJsonRpcSocket,
                                                public QJsonRpcServiceProvider
 {
     Q_OBJECT
@@ -127,7 +127,7 @@ private:
 };
 
 class QJsonRpcServerPrivate;
-class Q_JSONRPC_EXPORT QJsonRpcServer : public QObject,
+class QJSONRPC_EXPORT QJsonRpcServer : public QObject,
                                         public QJsonRpcServiceProvider
 {
     Q_OBJECT

@@ -13,7 +13,8 @@
 #include "json/qjsonobject.h"
 #include "json/qjsonarray.h"
 #endif
-#include "json/qjsonexport.h"
+
+#include "qjsonrpc_export.h"
 
 // error codes defined by spec
 namespace QJsonRpc {
@@ -32,7 +33,7 @@ namespace QJsonRpc {
 }
 
 class QJsonRpcMessagePrivate;
-class Q_JSONRPC_EXPORT QJsonRpcMessage
+class QJSONRPC_EXPORT QJsonRpcMessage
 {
 public:
     QJsonRpcMessage();
@@ -83,7 +84,7 @@ private:
 
 };
 
-Q_JSONRPC_EXPORT QDebug operator<<(QDebug, const QJsonRpcMessage &);
+QJSONRPC_EXPORT QDebug operator<<(QDebug, const QJsonRpcMessage &);
 Q_DECLARE_METATYPE(QJsonRpcMessage)
 
 #endif

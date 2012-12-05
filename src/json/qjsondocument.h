@@ -54,7 +54,7 @@ namespace QJsonPrivate {
     class Parser;
 }
 
-struct Q_JSONRPC_EXPORT QJsonParseError
+struct QJSONRPC_EXPORT QJsonParseError
 {
     enum ParseError {
         NoError = 0,
@@ -75,7 +75,7 @@ struct Q_JSONRPC_EXPORT QJsonParseError
     ParseError error;
 };
 
-class Q_JSONRPC_EXPORT QJsonDocument
+class QJSONRPC_EXPORT QJsonDocument
 {
 public:
 #ifdef Q_LITTLE_ENDIAN
@@ -128,7 +128,7 @@ private:
     friend class QJsonValue;
     friend class QJsonPrivate::Data;
     friend class QJsonPrivate::Parser;
-    friend Q_JSONRPC_EXPORT QDebug operator<<(QDebug, const QJsonDocument &);
+    friend QJSONRPC_EXPORT QDebug operator<<(QDebug, const QJsonDocument &);
 
     QJsonDocument(QJsonPrivate::Data *data);
 
@@ -136,7 +136,7 @@ private:
 };
 
 #ifndef QT_NO_DEBUG_STREAM
-Q_JSONRPC_EXPORT QDebug operator<<(QDebug, const QJsonDocument &);
+QJSONRPC_EXPORT QDebug operator<<(QDebug, const QJsonDocument &);
 #endif
 
 QT_END_NAMESPACE

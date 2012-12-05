@@ -142,7 +142,7 @@ int main(int argc, char *argv[])
     if (argc >= 2 && !qstrcmp(argv[1], "-tty")) {
         ++argv;
        --argc;
-        app = new QCoreApplication(argc, argv, QCoreApplication::Tty);
+        app = new QCoreApplication(argc, argv);
     } else {
         app = new QCoreApplication(argc, argv);
     }

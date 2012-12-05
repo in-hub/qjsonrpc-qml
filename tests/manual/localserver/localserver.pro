@@ -1,12 +1,9 @@
 DEPTH = ../../..
-include($$DEPTH/qjsonrpc.pri)
+include($${DEPTH}/qjsonrpc.pri)
+include($${DEPTH}/tests/tests.pri)
 
 TEMPLATE = app
 TARGET = server
-INCLUDEPATH += .
-CONFIG += console
-CONFIG -= app_bundle
-
 HEADERS = testservice.h
 SOURCES = testservice.cpp \
           localserver.cpp

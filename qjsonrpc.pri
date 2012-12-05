@@ -1,19 +1,21 @@
-QJSONRPC_PATH = $${OUT_PWD}/$${DEPTH}/lib
-QJSONRPC_INCLUDE_PATH = $${PWD}/src
+QJSONRPC_VERSION = 1.0.0
+
+isEmpty(QJSONRPC_LIBRARY_TYPE) {
+    QJSONRPC_LIBRARY_TYPE = shared
+}
+
 QT += network
+QJSONRPC_INCLUDEPATH = $${PWD}/src
+QJSONRPC_LIBS = -lqjsonrpc
+contains(QJSONRPC_LIBRARY_TYPE, staticlib) {
+    DEFINES += QJSONRPC_STATIC
+} else {
+    DEFINES += QJSONRPC_SHARED
+}
 
-INCLUDEPATH += $${QJSONRPC_INCLUDE_PATH}
-LIBS += -L$${QJSONRPC_PATH} -lqjsonrpc
-
-#Dll
-#win32:DEFINES += Q_JSONRPC_DLL
-
-#win32 {
-#  LIBS += -L$${QJSONRPC_PATH} -lqjsonrpc0
-#} macx {
-#  QMAKE_LFLAGS += -F$${QJSONRPC_PATH}
-#  LIBS += -framework qjsonrpc
-#} unix:!macx {
-#  LIBS += -L$${QJSONRPC_PATH} -lqjsonrpc
-#}
-
+isEmpty(PREFIX) {
+    PREFIX = /usr/local
+}
+isEmpty(LIBDIR) {
+    LIBDIR = lib
+}

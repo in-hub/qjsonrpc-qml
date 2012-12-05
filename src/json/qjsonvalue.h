@@ -46,7 +46,7 @@
 #include <QtCore/qstring.h>
 #include <QtCore/qvariant.h>
 
-#include "qjsonexport.h"
+#include "qjsonrpc_export.h"
 
 QT_BEGIN_HEADER
 
@@ -67,7 +67,7 @@ namespace QJsonPrivate {
     class Entry;
 }
 
-class Q_JSONRPC_EXPORT QJsonValue
+class QJSONRPC_EXPORT QJsonValue
 {
 public:
     enum Type {
@@ -121,7 +121,7 @@ private:
     friend class QJsonPrivate::Value;
     friend class QJsonArray;
     friend class QJsonObject;
-    friend Q_JSONRPC_EXPORT QDebug operator<<(QDebug, const QJsonValue &);
+    friend QJSONRPC_EXPORT QDebug operator<<(QDebug, const QJsonValue &);
 
     QJsonValue(QJsonPrivate::Data *d, QJsonPrivate::Base *b, const QJsonPrivate::Value& v);
 
@@ -141,7 +141,7 @@ private:
     Type t;
 };
 
-class Q_JSONRPC_EXPORT QJsonValueRef
+class QJSONRPC_EXPORT QJsonValueRef
 {
 public:
     QJsonValueRef(QJsonArray *array, int idx)
@@ -182,7 +182,7 @@ private:
 };
 
 #ifndef QT_NO_DEBUG_STREAM
-Q_JSONRPC_EXPORT QDebug operator<<(QDebug, const QJsonValue &);
+QJSONRPC_EXPORT QDebug operator<<(QDebug, const QJsonValue &);
 #endif
 
 QT_END_NAMESPACE

@@ -1,11 +1,9 @@
 DEPTH = ../../..
-include($$DEPTH/qjsonrpc.pri)
+include($${DEPTH}/qjsonrpc.pri)
+include($${DEPTH}/tests/tests.pri)
 
-QT += core script network
-win32: CONFIG += console
-mac:CONFIG -= app_bundle
-LIBS += $${QJSONRPC_INTERNAL_LIBS}
-
+TEMPLATE = app
+QT += script core
 HEADERS = interface.h
 SOURCES = interface.cpp \
           main.cpp

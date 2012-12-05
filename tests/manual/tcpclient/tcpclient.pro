@@ -1,12 +1,9 @@
 DEPTH = ../../..
-include($$DEPTH/qjsonrpc.pri)
+include($${DEPTH}/qjsonrpc.pri)
+include($${DEPTH}/tests/tests.pri)
 
 TEMPLATE = app
-TARGET = client
-INCLUDEPATH += .
-CONFIG += console
-CONFIG -= app_bundle
-
+TARGET = tcpclient
 HEADERS = tcpclient.h
 SOURCES = tcpclient.cpp \
           main.cpp
