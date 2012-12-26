@@ -17,6 +17,8 @@ public:
 
 Q_SIGNALS:
     void result(const QJsonRpcMessage &result);
+    void notifyConnectedClients(const QJsonRpcMessage &message);
+    void notifyConnectedClients(const QString &method, const QVariantList &params = QVariantList());
 
 protected:
     QJsonRpcSocket *senderSocket();
@@ -55,7 +57,7 @@ class QJSONRPC_EXPORT QJsonRpcServiceProvider
 {
 public:
     ~QJsonRpcServiceProvider();
-    void addService(QJsonRpcService *service);
+    virtual void addService(QJsonRpcService *service);
 
 protected:
     QJsonRpcServiceProvider();
@@ -135,6 +137,7 @@ class QJSONRPC_EXPORT QJsonRpcServer : public QObject,
 public:
     virtual ~QJsonRpcServer();
     virtual QString errorString() const = 0;
+    virtual void addService(QJsonRpcService *service);
 
     QJsonRpcSocket::WireFormat wireFormat() const;
     void setWireFormat(QJsonRpcSocket::WireFormat format);

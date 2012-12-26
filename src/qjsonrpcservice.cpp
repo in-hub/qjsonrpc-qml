@@ -63,7 +63,6 @@ bool QJsonRpcService::dispatch(const QJsonRpcMessage &request)
     }
 
     QByteArray method = request.method().section(".", -1).toLatin1();
-    QVariantList arguments = request.params();
     if (!m_invokableMethodHash.contains(method)) {
         QJsonRpcMessage error =
             request.createErrorResponse(QJsonRpc::MethodNotFound, "invalid method called");
@@ -74,6 +73,7 @@ bool QJsonRpcService::dispatch(const QJsonRpcMessage &request)
     int idx = -1;
     QList<int> parameterTypes;
     QList<int> indexes = m_invokableMethodHash.values(method);
+    QVariantList arguments = request.params();
     foreach (int methodIndex, indexes) {
         parameterTypes = m_parameterTypeHash.value(methodIndex);
         if (arguments.size() == parameterTypes.size() - 1) {
@@ -107,13 +107,22 @@ bool QJsonRpcService::dispatch(const QJsonRpcMessage &request)
         parameters.append(returnValue.data());
 
     // compile arguments
+    QHash<void*, QMetaType::Type> cleanup;
     for (int i = 0; i < parameterTypes.size() - 1; ++i) {
         int parameterType = parameterTypes[i + 1];
         const QVariant &argument = arguments.at(i);
-        if (argument.userType() != parameterType &&
-            parameterType != QMetaType::QVariant)
-            const_cast<QVariant*>(&argument)->convert(static_cast<QVariant::Type>(parameterType));
-        parameters.append(const_cast<void *>(argument.constData()));
+        if (!argument.isValid()) {
+            // pass in a default constructed parameter in this case
+            void *value = QMetaType::construct(parameterType);
+            parameters.append(value);
+            cleanup.insert(value, static_cast<QMetaType::Type>(parameterType));
+        } else {
+            if (argument.userType() != parameterType &&
+                parameterType != QMetaType::QVariant &&
+                const_cast<QVariant*>(&argument)->canConvert(static_cast<QVariant::Type>(parameterType)))
+                const_cast<QVariant*>(&argument)->convert(static_cast<QVariant::Type>(parameterType));
+            parameters.append(const_cast<void *>(argument.constData()));
+        }
     }
 
     bool success =
@@ -126,8 +135,14 @@ bool QJsonRpcService::dispatch(const QJsonRpcMessage &request)
         return false;
     }
 
+    // cleanup and result
     QVariant returnCopy(returnValue);
     QMetaType::destroy(returnType, returnData);
+    foreach (void *value, cleanup.keys()) {
+        cleanup.remove(value);
+        QMetaType::destroy(cleanup.value(value), value);
+    }
+
     Q_EMIT result(request.createResponse(returnCopy));
     return true;
 }
@@ -149,8 +164,10 @@ QJsonRpcServiceProvider::QJsonRpcServiceProvider()
 
 QJsonRpcServiceProvider::~QJsonRpcServiceProvider()
 {
-    foreach (QJsonRpcService *service, m_services)
-        service->deleteLater();
+    foreach (QJsonRpcService *service, m_services) {
+        if (!service->parent())
+            service->deleteLater();
+    }
 }
 
 void QJsonRpcServiceProvider::addService(QJsonRpcService *service)
@@ -183,11 +200,9 @@ void QJsonRpcServiceProvider::processMessage(QJsonRpcSocket *socket, const QJson
             } else {
                 QJsonRpcService *service = m_services.value(serviceName);
                 service->m_socket = socket;
-                QObject::connect(service, SIGNAL(result(QJsonRpcMessage)), socket, SLOT(notify(QJsonRpcMessage)));
+                if (message.type() == QJsonRpcMessage::Request)
+                    QObject::connect(service, SIGNAL(result(QJsonRpcMessage)), socket, SLOT(notify(QJsonRpcMessage)));
                 QMetaObject::invokeMethod(service, "dispatch", Qt::QueuedConnection, Q_ARG(QJsonRpcMessage, message));
-                // QJsonRpcMessage response = service->dispatch(message);
-                // if (message.type() == QJsonRpcMessage::Request)
-                //    socket->notify(response);
             }
         }
         break;
@@ -278,7 +293,17 @@ QJsonRpcMessage QJsonRpcSocket::sendMessageBlocking(const QJsonRpcMessage &messa
 QJsonRpcServiceReply *QJsonRpcSocket::sendMessage(const QJsonRpcMessage &message)
 {
     Q_D(QJsonRpcSocket);
-    notify(message);
+    if (!d->device) {
+        qDebug() << Q_FUNC_INFO << "trying to send message without device";
+        return 0;
+    }
+
+    QJsonDocument doc = QJsonDocument(message.toObject());
+    if (d->format == QJsonRpcSocket::Binary)
+        d->device.data()->write(doc.toBinaryData());
+    else
+        d->device.data()->write(doc.toJson());
+
     QJsonRpcServiceReply *reply = new QJsonRpcServiceReply;
     d->replies.insert(message.id(), reply);
     return reply;
@@ -291,6 +316,11 @@ void QJsonRpcSocket::notify(const QJsonRpcMessage &message)
         qDebug() << Q_FUNC_INFO << "trying to send message without device";
         return;
     }
+
+    // disconnect the result message if we need to
+    QJsonRpcService *service = qobject_cast<QJsonRpcService*>(sender());
+    if (service)
+        disconnect(service, SIGNAL(result(QJsonRpcMessage)), this, SLOT(notify(QJsonRpcMessage)));
 
     // TODO: check if its a QJsonRpcType, if so convert it to QVariantMap
     QJsonDocument doc = QJsonDocument(message.toObject());
@@ -446,6 +476,15 @@ QJsonRpcServer::~QJsonRpcServer()
     d->clients.clear();
 }
 
+void QJsonRpcServer::addService(QJsonRpcService *service)
+{
+    QJsonRpcServiceProvider::addService(service);
+    connect(service, SIGNAL(notifyConnectedClients(QJsonRpcMessage)),
+               this, SLOT(notifyConnectedClients(QJsonRpcMessage)));
+    connect(service, SIGNAL(notifyConnectedClients(QString,QVariantList)),
+               this, SLOT(notifyConnectedClients(QString,QVariantList)));
+}
+
 QJsonRpcSocket::WireFormat QJsonRpcServer::wireFormat() const
 {
     Q_D(const QJsonRpcServer);
@@ -514,6 +553,11 @@ void QJsonRpcLocalServer::processIncomingConnection()
 {
     Q_D(QJsonRpcLocalServer);
     QLocalSocket *localSocket = d->server->nextPendingConnection();
+    if (!localSocket) {
+        qDebug() << Q_FUNC_INFO << "nextPendingConnection is null";
+        return;
+    }
+
     QIODevice *device = qobject_cast<QIODevice*>(localSocket);
     QJsonRpcSocket *socket = new QJsonRpcSocket(device, this);
     socket->setWireFormat(d->format);
@@ -531,7 +575,9 @@ void QJsonRpcLocalServer::clientDisconnected()
         if (d->socketLookup.contains(localSocket)) {
             QJsonRpcSocket *socket = d->socketLookup.take(localSocket);
             d->clients.removeAll(socket);
+            socket->deleteLater();
         }
+
         localSocket->deleteLater();
     }
 }
@@ -573,6 +619,11 @@ void QJsonRpcTcpServer::processIncomingConnection()
 {
     Q_D(QJsonRpcTcpServer);
     QTcpSocket *tcpSocket = d->server->nextPendingConnection();
+    if (!tcpSocket) {
+        qDebug() << Q_FUNC_INFO << "nextPendingConnection is null";
+        return;
+    }
+
     QIODevice *device = qobject_cast<QIODevice*>(tcpSocket);
     QJsonRpcSocket *socket = new QJsonRpcSocket(device, this);
     socket->setWireFormat(d->format);
@@ -590,7 +641,9 @@ void QJsonRpcTcpServer::clientDisconnected()
         if (d->socketLookup.contains(tcpSocket)) {
             QJsonRpcSocket *socket = d->socketLookup.take(tcpSocket);
             d->clients.removeAll(socket);
+            socket->deleteLater();
         }
+
         tcpSocket->deleteLater();
     }
 }
