@@ -26,6 +26,7 @@ private Q_SLOTS:
 
 private:
     void cacheInvokableInfo();
+    static int s_qjsonRpcMessageType;
     QMultiHash<QByteArray, int> m_invokableMethodHash;
     QHash<int, QList<int> > m_parameterTypeHash;
     QPointer<QJsonRpcSocket> m_socket;

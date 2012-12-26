@@ -12,6 +12,7 @@
 #include "qjsonrpcservice_p.h"
 #include "qjsonrpcservice.h"
 
+int QJsonRpcService::s_qjsonRpcMessageType = qRegisterMetaType<QJsonRpcMessage>("QJsonRpcMessage");
 QJsonRpcService::QJsonRpcService(QObject *parent)
     : QObject(parent)
 {
