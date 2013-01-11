@@ -220,29 +220,6 @@ void QJsonRpcServiceProvider::processMessage(QJsonRpcSocket *socket, const QJson
     };
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 QJsonRpcSocket::QJsonRpcSocket(QIODevice *device, QObject *parent)
     : QObject(parent),
       d_ptr(new QJsonRpcSocketPrivate)
@@ -299,10 +276,10 @@ QJsonRpcServiceReply *QJsonRpcSocket::sendMessage(const QJsonRpcMessage &message
     }
 
     QJsonDocument doc = QJsonDocument(message.toObject());
-    if (d->format == QJsonRpcSocket::Binary)
-        d->device.data()->write(doc.toBinaryData());
-    else
-        d->device.data()->write(doc.toJson());
+    QByteArray data = (d->format == QJsonRpcSocket::Binary ? doc.toBinaryData() : doc.toJson());
+    d->device.data()->write(data);
+    if (qgetenv("QJSONRPC_DEBUG").toInt())
+        qDebug() << data;
 
     QJsonRpcServiceReply *reply = new QJsonRpcServiceReply;
     d->replies.insert(message.id(), reply);
@@ -322,12 +299,11 @@ void QJsonRpcSocket::notify(const QJsonRpcMessage &message)
     if (service)
         disconnect(service, SIGNAL(result(QJsonRpcMessage)), this, SLOT(notify(QJsonRpcMessage)));
 
-    // TODO: check if its a QJsonRpcType, if so convert it to QVariantMap
     QJsonDocument doc = QJsonDocument(message.toObject());
-    if (d->format == QJsonRpcSocket::Binary)
-        d->device.data()->write(doc.toBinaryData());
-    else
-        d->device.data()->write(doc.toJson());
+    QByteArray data = (d->format == QJsonRpcSocket::Binary ? doc.toBinaryData() : doc.toJson());
+    d->device.data()->write(data);
+    if (qgetenv("QJSONRPC_DEBUG").toInt())
+        qDebug() << data;
 }
 
 QJsonRpcMessage QJsonRpcSocket::invokeRemoteMethodBlocking(const QString &method, const QVariant &param1,
@@ -424,6 +400,9 @@ void QJsonRpcSocket::processIncomingData()
             }
             */
         } else if (document.isObject()){
+	    if (qgetenv("QJSONRPC_DEBUG").toInt())
+	        qDebug() << document.toJson();
+
             QJsonRpcMessage message(document.object());
             Q_EMIT messageReceived(message);
 
