@@ -6,13 +6,13 @@ QT += core network
 DEFINES += QJSONRPC_BUILD
 CONFIG += $${QJSONRPC_LIBRARY_TYPE}
 VERSION = $${QJSONRPC_VERSION}
+win32:DESTDIR = $$OUT_PWD
 
 # check if we need to build qjson
 QT_VERSION = $$[QT_VERSION]
 QT_VERSION = $$split(QT_VERSION, ".")
 QT_VERSION_MAJOR = $$member(QT_VERSION, 0)
 lessThan(QT_VERSION_MAJOR, 5) {
-    message("building qjson")
     include(json/json.pri)
 }
 

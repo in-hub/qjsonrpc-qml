@@ -159,7 +159,7 @@ protected:
 };
 
 class QJsonRpcLocalServerPrivate;
-class QJsonRpcLocalServer : public QJsonRpcServer
+class QJSONRPC_EXPORT QJsonRpcLocalServer : public QJsonRpcServer
 {
     Q_OBJECT
 public:
@@ -179,7 +179,7 @@ private:
 };
 
 class QJsonRpcTcpServerPrivate;
-class QJsonRpcTcpServer : public QJsonRpcServer
+class QJSONRPC_EXPORT QJsonRpcTcpServer : public QJsonRpcServer
 {
     Q_OBJECT
 public:
