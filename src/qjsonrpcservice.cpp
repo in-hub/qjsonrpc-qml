@@ -46,8 +46,8 @@ int QJsonRpcSocketPrivate::findJsonDocumentEnd(const QByteArray &jsonData)
 
 int QJsonRpcSocketPrivate::findJsonDocumentStart(const QByteArray &jsonData, int startIndex)
 {
-    int i = startIndex;
-    for (i; i < jsonData.length(); i++) {
+    int i;
+    for (i = startIndex; i < jsonData.length(); i++) {
         if (jsonData.at(i) == '{')
             return i;
     }
@@ -55,7 +55,7 @@ int QJsonRpcSocketPrivate::findJsonDocumentStart(const QByteArray &jsonData, int
     return i;
 }
 
-QJsonRpcSocketPrivate::writeData(const QJsonRpcMessage &message)
+void QJsonRpcSocketPrivate::writeData(const QJsonRpcMessage &message)
 {
     QByteArray data;
     QJsonDocument doc = QJsonDocument(message.toObject());
