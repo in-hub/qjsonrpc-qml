@@ -275,8 +275,21 @@ QJsonRpcServiceReply *QJsonRpcSocket::sendMessage(const QJsonRpcMessage &message
         return 0;
     }
 
+    QByteArray data;
     QJsonDocument doc = QJsonDocument(message.toObject());
-    QByteArray data = (d->format == QJsonRpcSocket::Binary ? doc.toBinaryData() : doc.toJson());
+    switch (d->format) {
+    case QJsonRpcSocket::Plain:
+        data = doc.toJson();
+        break;
+    case QJsonRpcSocket::Binary:
+        data = doc.toBinaryData();
+        break;
+    case QJsonRpcSocket::Compact:
+    default:
+        data = doc.toJson(true);
+        break;
+    }
+
     d->device.data()->write(data);
     if (qgetenv("QJSONRPC_DEBUG").toInt())
         qDebug() << data;
@@ -299,8 +312,21 @@ void QJsonRpcSocket::notify(const QJsonRpcMessage &message)
     if (service)
         disconnect(service, SIGNAL(result(QJsonRpcMessage)), this, SLOT(notify(QJsonRpcMessage)));
 
+    QByteArray data;
     QJsonDocument doc = QJsonDocument(message.toObject());
-    QByteArray data = (d->format == QJsonRpcSocket::Binary ? doc.toBinaryData() : doc.toJson());
+    switch (d->format) {
+    case QJsonRpcSocket::Plain:
+        data = doc.toJson();
+        break;
+    case QJsonRpcSocket::Binary:
+        data = doc.toBinaryData();
+        break;
+    case QJsonRpcSocket::Compact:
+    default:
+        data = doc.toJson(true);
+        break;
+    }
+
     d->device.data()->write(data);
     if (qgetenv("QJSONRPC_DEBUG").toInt())
         qDebug() << data;
@@ -363,7 +389,6 @@ void QJsonRpcSocket::setWireFormat(WireFormat format)
     Q_D(QJsonRpcSocket);
     d->format = format;
 }
-
 
 void QJsonRpcSocket::processIncomingData()
 {
@@ -632,5 +657,3 @@ QString QJsonRpcTcpServer::errorString() const
     Q_D(const QJsonRpcTcpServer);
     return d->server->errorString();
 }
-
-
