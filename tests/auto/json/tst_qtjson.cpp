@@ -128,8 +128,6 @@ private Q_SLOTS:
 
     void bom();
     void nesting();
-private:
-    QString testDataDir;
 };
 
 tst_QtJson::tst_QtJson(QObject *parent) : QObject(parent)
@@ -138,9 +136,6 @@ tst_QtJson::tst_QtJson(QObject *parent) : QObject(parent)
 
 void tst_QtJson::initTestCase()
 {
-    testDataDir = QFileInfo("test.json").absolutePath();
-    if (testDataDir.isEmpty())
-        testDataDir = QCoreApplication::applicationDirPath();
 }
 
 void tst_QtJson::cleanupTestCase()
@@ -1303,7 +1298,7 @@ void tst_QtJson::fromJsonErrors()
 
 void tst_QtJson::fromBinary()
 {
-    QFile file(testDataDir + "/test.json");
+    QFile file(":/test.json");
     file.open(QFile::ReadOnly);
     QByteArray testJson = file.readAll();
 
@@ -1312,7 +1307,7 @@ void tst_QtJson::fromBinary()
     QVERIFY(!outdoc.isNull());
     QVERIFY(doc == outdoc);
 
-    QFile bfile(testDataDir + "/test.bjson");
+    QFile bfile(":/test.bjson");
     bfile.open(QFile::ReadOnly);
     QByteArray binary = bfile.readAll();
 
@@ -1325,8 +1320,8 @@ void tst_QtJson::fromBinary()
 void tst_QtJson::toAndFromBinary_data()
 {
     QTest::addColumn<QString>("filename");
-    QTest::newRow("test.json") << (testDataDir + "/test.json");
-    QTest::newRow("test2.json") << (testDataDir + "/test2.json");
+    QTest::newRow("test.json") << (":/test.json");
+    QTest::newRow("test2.json") << (":/test2.json");
 }
 
 void tst_QtJson::toAndFromBinary()
@@ -1505,7 +1500,7 @@ void tst_QtJson::parseDuplicateKeys()
 
 void tst_QtJson::testParser()
 {
-    QFile file(testDataDir + "/test.json");
+    QFile file(":/test.json");
     file.open(QFile::ReadOnly);
     QByteArray testJson = file.readAll();
 
@@ -1590,7 +1585,7 @@ void tst_QtJson::compactObject()
 void tst_QtJson::validation()
 {
     // this basically tests that we don't crash on corrupt data
-    QFile file(testDataDir + "/test.json");
+    QFile file(":/test.json");
     QVERIFY(file.open(QFile::ReadOnly));
     QByteArray testJson = file.readAll();
     QVERIFY(!testJson.isEmpty());
@@ -1611,7 +1606,7 @@ void tst_QtJson::validation()
     }
 
 
-    QFile file2(testDataDir + "/test3.json");
+    QFile file2(":/test3.json");
     file2.open(QFile::ReadOnly);
     testJson = file2.readAll();
     QVERIFY(!testJson.isEmpty());
@@ -1938,7 +1933,7 @@ void tst_QtJson::valueEquals()
 
 void tst_QtJson::bom()
 {
-    QFile file(testDataDir + "/bom.json");
+    QFile file(":/bom.json");
     file.open(QFile::ReadOnly);
     QByteArray json = file.readAll();
 

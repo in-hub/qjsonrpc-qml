@@ -11,3 +11,4 @@ LIBS += -L../../../src -lqjsonrpc
 
 TESTDATA += test.json test.bjson test3.json test2.json
 SOURCES += tst_qtjson.cpp
+RESOURCES += tst_qtjson.qrc
