@@ -1875,7 +1875,7 @@ void tst_QtJson::testDetachBug()
 
     embedded.insert("Key1", QString("Value1"));
     embedded.insert("Key2", QString("Value2"));
-    dynamic.insert(QStringLiteral("Bogus"), QString("bogusValue"));
+    dynamic.insert(QLatin1String("Bogus"), QString("bogusValue"));
     dynamic.insert("embedded", embedded);
     local = dynamic.value("embedded").toObject();
 
