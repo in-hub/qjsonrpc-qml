@@ -7,12 +7,35 @@
 #include <QLocalSocket>
 #include <QTcpSocket>
 
+#include "qjsondocument.h"
 #include "qjsonrpcservice.h"
 
 class QJsonRpcSocketPrivate
 {
 public:
     QJsonRpcSocketPrivate() : format(QJsonRpcSocket::Plain) {}
+
+    void writeData(const QJsonRpcMessage &message) {
+        QByteArray data;
+        QJsonDocument doc = QJsonDocument(message.toObject());
+        switch (format) {
+        case QJsonRpcSocket::Plain:
+            data = doc.toJson();
+            break;
+        case QJsonRpcSocket::Binary:
+            data = doc.toBinaryData();
+            break;
+        case QJsonRpcSocket::Compact:
+        default:
+            data = doc.toJson(true);
+            break;
+        }
+
+        device.data()->write(data);
+        if (qgetenv("QJSONRPC_DEBUG").toInt())
+            qDebug() << data;
+    }
+
     QPointer<QIODevice> device;
     QByteArray buffer;
     QHash<int, QJsonRpcServiceReply*> replies;

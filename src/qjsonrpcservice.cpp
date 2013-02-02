@@ -275,25 +275,7 @@ QJsonRpcServiceReply *QJsonRpcSocket::sendMessage(const QJsonRpcMessage &message
         return 0;
     }
 
-    QByteArray data;
-    QJsonDocument doc = QJsonDocument(message.toObject());
-    switch (d->format) {
-    case QJsonRpcSocket::Plain:
-        data = doc.toJson();
-        break;
-    case QJsonRpcSocket::Binary:
-        data = doc.toBinaryData();
-        break;
-    case QJsonRpcSocket::Compact:
-    default:
-        data = doc.toJson(true);
-        break;
-    }
-
-    d->device.data()->write(data);
-    if (qgetenv("QJSONRPC_DEBUG").toInt())
-        qDebug() << data;
-
+    d->writeData(message);
     QJsonRpcServiceReply *reply = new QJsonRpcServiceReply;
     d->replies.insert(message.id(), reply);
     return reply;
@@ -312,24 +294,7 @@ void QJsonRpcSocket::notify(const QJsonRpcMessage &message)
     if (service)
         disconnect(service, SIGNAL(result(QJsonRpcMessage)), this, SLOT(notify(QJsonRpcMessage)));
 
-    QByteArray data;
-    QJsonDocument doc = QJsonDocument(message.toObject());
-    switch (d->format) {
-    case QJsonRpcSocket::Plain:
-        data = doc.toJson();
-        break;
-    case QJsonRpcSocket::Binary:
-        data = doc.toBinaryData();
-        break;
-    case QJsonRpcSocket::Compact:
-    default:
-        data = doc.toJson(true);
-        break;
-    }
-
-    d->device.data()->write(data);
-    if (qgetenv("QJSONRPC_DEBUG").toInt())
-        qDebug() << data;
+    d->writeData(message);
 }
 
 QJsonRpcMessage QJsonRpcSocket::invokeRemoteMethodBlocking(const QString &method, const QVariant &param1,
