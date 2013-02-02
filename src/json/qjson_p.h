@@ -1,38 +1,38 @@
 /****************************************************************************
 **
-** Copyright (C) 2012 Nokia Corporation and/or its subsidiary(-ies).
-** Contact: http://www.qt-project.org/
+** Copyright (C) 2013 Digia Plc and/or its subsidiary(-ies).
+** Contact: http://www.qt-project.org/legal
 **
 ** This file is part of the QtCore module of the Qt Toolkit.
 **
 ** $QT_BEGIN_LICENSE:LGPL$
-** GNU Lesser General Public License Usage
-** This file may be used under the terms of the GNU Lesser General Public
-** License version 2.1 as published by the Free Software Foundation and
-** appearing in the file LICENSE.LGPL included in the packaging of this
-** file. Please review the following information to ensure the GNU Lesser
-** General Public License version 2.1 requirements will be met:
-** http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html.
+** Commercial License Usage
+** Licensees holding valid commercial Qt licenses may use this file in
+** accordance with the commercial license agreement provided with the
+** Software or, alternatively, in accordance with the terms contained in
+** a written agreement between you and Digia.  For licensing terms and
+** conditions see http://qt.digia.com/licensing.  For further information
+** use the contact form at http://qt.digia.com/contact-us.
 **
-** In addition, as a special exception, Nokia gives you certain additional
-** rights. These rights are described in the Nokia Qt LGPL Exception
+** GNU Lesser General Public License Usage
+** Alternatively, this file may be used under the terms of the GNU Lesser
+** General Public License version 2.1 as published by the Free Software
+** Foundation and appearing in the file LICENSE.LGPL included in the
+** packaging of this file.  Please review the following information to
+** ensure the GNU Lesser General Public License version 2.1 requirements
+** will be met: http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html.
+**
+** In addition, as a special exception, Digia gives you certain additional
+** rights.  These rights are described in the Digia Qt LGPL Exception
 ** version 1.1, included in the file LGPL_EXCEPTION.txt in this package.
 **
 ** GNU General Public License Usage
-** Alternatively, this file may be used under the terms of the GNU General
-** Public License version 3.0 as published by the Free Software Foundation
-** and appearing in the file LICENSE.GPL included in the packaging of this
-** file. Please review the following information to ensure the GNU General
-** Public License version 3.0 requirements will be met:
-** http://www.gnu.org/copyleft/gpl.html.
-**
-** Other Usage
-** Alternatively, this file may be used in accordance with the terms and
-** conditions contained in a signed written agreement between you and Nokia.
-**
-**
-**
-**
+** Alternatively, this file may be used under the terms of the GNU
+** General Public License version 3.0 as published by the Free Software
+** Foundation and appearing in the file LICENSE.GPL included in the
+** packaging of this file.  Please review the following information to
+** ensure the GNU General Public License version 3.0 requirements will be
+** met: http://www.gnu.org/copyleft/gpl.html.
 **
 **
 ** $QT_END_LICENSE$
@@ -58,7 +58,6 @@
 #include "qjsondocument.h"
 #include "qjsonarray.h"
 
-#include <qdebug.h>
 #include <qatomic.h>
 #include <qstring.h>
 #include <qendian.h>
@@ -311,6 +310,7 @@ public:
     {
         d->length = str.length();
 #if Q_BYTE_ORDER == Q_BIG_ENDIAN
+        const qle_ushort *uc = (const qle_ushort *)str.unicode();
         for (int i = 0; i < str.length(); ++i)
             d->utf16[i] = uc[i];
 #else
@@ -361,7 +361,7 @@ public:
         QString str(l, Qt::Uninitialized);
         QChar *ch = str.data();
         for (int i = 0; i < l; ++i)
-            ch[i] = d->utf16[i];
+            ch[i] = QChar(d->utf16[i]);
         return str;
 #endif
     }
@@ -593,9 +593,9 @@ public:
     int size() const {
         int s = sizeof(Entry);
         if (value.latinKey)
-            s += sizeof(ushort) + *(ushort *) ((const char *)this + sizeof(Entry));
+            s += sizeof(ushort) + qFromLittleEndian(*(ushort *) ((const char *)this + sizeof(Entry)));
         else
-            s += sizeof(uint) + *(int *) ((const char *)this + sizeof(Entry));
+            s += sizeof(uint) + qFromLittleEndian(*(int *) ((const char *)this + sizeof(Entry)));
         return alignedSize(s);
     }
 
@@ -623,14 +623,23 @@ public:
 
     bool operator ==(const QString &key) const;
     inline bool operator !=(const QString &key) const { return !operator ==(key); }
-    bool operator >=(const QString &key) const;
+    inline bool operator >=(const QString &key) const;
 
     bool operator ==(const Entry &other) const;
     bool operator >=(const Entry &other) const;
 };
 
+inline bool Entry::operator >=(const QString &key) const
+{
+    if (value.latinKey)
+        return (shallowLatin1Key() >= key);
+    else
+        return (shallowKey() >= key);
+}
+
 inline bool operator <(const QString &key, const Entry &e)
 { return e >= key; }
+
 
 class Header {
 public:
@@ -738,7 +747,15 @@ public:
 
     Data *clone(Base *b, int reserve = 0)
     {
-        int size = sizeof(Header) + b->size + reserve;
+        int size = sizeof(Header) + b->size;
+        if (b == header->root() && int(ref) == 1 && alloc >= size + reserve)
+            return this;
+
+        if (reserve) {
+            if (reserve < 128)
+                reserve = 128;
+            size = qMax(size + reserve, size *2);
+        }
         char *raw = (char *)malloc(size);
         Q_CHECK_PTR(raw);
         memcpy(raw + sizeof(Header), b, b->size);

@@ -1,44 +1,47 @@
 /****************************************************************************
 **
-** Copyright (C) 2012 Nokia Corporation and/or its subsidiary(-ies).
-** Contact: http://www.qt-project.org/
+** Copyright (C) 2013 Digia Plc and/or its subsidiary(-ies).
+** Contact: http://www.qt-project.org/legal
 **
 ** This file is part of the QtCore module of the Qt Toolkit.
 **
 ** $QT_BEGIN_LICENSE:LGPL$
-** GNU Lesser General Public License Usage
-** This file may be used under the terms of the GNU Lesser General Public
-** License version 2.1 as published by the Free Software Foundation and
-** appearing in the file LICENSE.LGPL included in the packaging of this
-** file. Please review the following information to ensure the GNU Lesser
-** General Public License version 2.1 requirements will be met:
-** http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html.
+** Commercial License Usage
+** Licensees holding valid commercial Qt licenses may use this file in
+** accordance with the commercial license agreement provided with the
+** Software or, alternatively, in accordance with the terms contained in
+** a written agreement between you and Digia.  For licensing terms and
+** conditions see http://qt.digia.com/licensing.  For further information
+** use the contact form at http://qt.digia.com/contact-us.
 **
-** In addition, as a special exception, Nokia gives you certain additional
-** rights. These rights are described in the Nokia Qt LGPL Exception
+** GNU Lesser General Public License Usage
+** Alternatively, this file may be used under the terms of the GNU Lesser
+** General Public License version 2.1 as published by the Free Software
+** Foundation and appearing in the file LICENSE.LGPL included in the
+** packaging of this file.  Please review the following information to
+** ensure the GNU Lesser General Public License version 2.1 requirements
+** will be met: http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html.
+**
+** In addition, as a special exception, Digia gives you certain additional
+** rights.  These rights are described in the Digia Qt LGPL Exception
 ** version 1.1, included in the file LGPL_EXCEPTION.txt in this package.
 **
 ** GNU General Public License Usage
-** Alternatively, this file may be used under the terms of the GNU General
-** Public License version 3.0 as published by the Free Software Foundation
-** and appearing in the file LICENSE.GPL included in the packaging of this
-** file. Please review the following information to ensure the GNU General
-** Public License version 3.0 requirements will be met:
-** http://www.gnu.org/copyleft/gpl.html.
-**
-** Other Usage
-** Alternatively, this file may be used in accordance with the terms and
-** conditions contained in a signed written agreement between you and Nokia.
-**
-**
-**
-**
+** Alternatively, this file may be used under the terms of the GNU
+** General Public License version 3.0 as published by the Free Software
+** Foundation and appearing in the file LICENSE.GPL included in the
+** packaging of this file.  Please review the following information to
+** ensure the GNU General Public License version 3.0 requirements will be
+** met: http://www.gnu.org/copyleft/gpl.html.
 **
 **
 ** $QT_END_LICENSE$
 **
 ****************************************************************************/
 
+#ifndef QT_BOOTSTRAPPED
+#include <qcoreapplication.h>
+#endif
 #include <qdebug.h>
 #include "qjsonparser_p.h"
 #include "qjson_p.h"
@@ -55,12 +58,133 @@ static int indent = 0;
 #define DEBUG if (1) ; else qDebug()
 #endif
 
+static const int nestingLimit = 1024;
+
 QT_BEGIN_NAMESPACE
+
+// error strings for the JSON parser
+#define JSONERR_OK          QT_TRANSLATE_NOOP("QJsonParseError", "no error occurred")
+#define JSONERR_UNTERM_OBJ  QT_TRANSLATE_NOOP("QJsonParseError", "unterminated object")
+#define JSONERR_MISS_NSEP   QT_TRANSLATE_NOOP("QJsonParseError", "missing name separator")
+#define JSONERR_UNTERM_AR   QT_TRANSLATE_NOOP("QJsonParseError", "unterminated array")
+#define JSONERR_MISS_VSEP   QT_TRANSLATE_NOOP("QJsonParseError", "missing value separator")
+#define JSONERR_ILLEGAL_VAL QT_TRANSLATE_NOOP("QJsonParseError", "illegal value")
+#define JSONERR_END_OF_NUM  QT_TRANSLATE_NOOP("QJsonParseError", "invalid termination by number")
+#define JSONERR_ILLEGAL_NUM QT_TRANSLATE_NOOP("QJsonParseError", "illegal number")
+#define JSONERR_STR_ESC_SEQ QT_TRANSLATE_NOOP("QJsonParseError", "invalid escape sequence")
+#define JSONERR_STR_UTF8    QT_TRANSLATE_NOOP("QJsonParseError", "invalid UTF8 string")
+#define JSONERR_UTERM_STR   QT_TRANSLATE_NOOP("QJsonParseError", "unterminated string")
+#define JSONERR_MISS_OBJ    QT_TRANSLATE_NOOP("QJsonParseError", "object is missing after a comma")
+#define JSONERR_DEEP_NEST   QT_TRANSLATE_NOOP("QJsonParseError", "too deeply nested document")
+
+/*!
+    \class QJsonParseError
+    \inmodule QtCore
+    \ingroup json
+    \reentrant
+    \since 5.0
+
+    \brief The QJsonParseError class is used to report errors during JSON parsing.
+*/
+
+/*!
+    \enum QJsonParseError::ParseError
+
+    This enum describes the type of error that occurred during the parsing of a JSON document.
+
+    \value NoError                  No error occurred
+    \value UnterminatedObject       An object is not correctly terminated with a closing curly bracket
+    \value MissingNameSeparator     A comma separating different items is missing
+    \value UnterminatedArray        The array is not correctly terminated with a closing square bracket
+    \value MissingValueSeparator    A colon separating keys from values inside objects is missing
+    \value IllegalValue             The value is illegal
+    \value TerminationByNumber      The input stream ended while parsing a number
+    \value IllegalNumber            The number is not well formed
+    \value IllegalEscapeSequence    An illegal escape sequence occurred in the input
+    \value IllegalUTF8String        An illegal UTF8 sequence occurred in the input
+    \value UnterminatedString       A string wasn't terminated with a quote
+    \value MissingObject            An object was expected but couldn't be found
+    \value DeepNesting              The JSON document is too deeply nested for the parser to parse it
+*/
+
+/*!
+    \variable QJsonParseError::error
+
+    Contains the type of the parse error. Is equal to QJsonParseError::NoError if the document
+    was parsed correctly.
+
+    \sa ParseError, errorString()
+*/
+
+
+/*!
+    \variable QJsonParseError::offset
+
+    Contains the offset in the input string where the parse error occurred.
+
+    \sa error, errorString()
+*/
+
+/*!
+  Returns the human-readable message appropriate to the reported JSON parsing error.
+
+  \sa error
+ */
+QString QJsonParseError::errorString() const
+{
+    const char *sz = "";
+    switch (error) {
+    case NoError:
+        sz = JSONERR_OK;
+        break;
+    case UnterminatedObject:
+        sz = JSONERR_UNTERM_OBJ;
+        break;
+    case MissingNameSeparator:
+        sz = JSONERR_MISS_NSEP;
+        break;
+    case UnterminatedArray:
+        sz = JSONERR_UNTERM_AR;
+        break;
+    case MissingValueSeparator:
+        sz = JSONERR_MISS_VSEP;
+        break;
+    case IllegalValue:
+        sz = JSONERR_ILLEGAL_VAL;
+        break;
+    case TerminationByNumber:
+        sz = JSONERR_END_OF_NUM;
+        break;
+    case IllegalNumber:
+        sz = JSONERR_ILLEGAL_NUM;
+        break;
+    case IllegalEscapeSequence:
+        sz = JSONERR_STR_ESC_SEQ;
+        break;
+    case IllegalUTF8String:
+        sz = JSONERR_STR_UTF8;
+        break;
+    case UnterminatedString:
+        sz = JSONERR_UTERM_STR;
+        break;
+    case MissingObject:
+        sz = JSONERR_MISS_OBJ;
+        break;
+    case DeepNesting:
+        sz = JSONERR_DEEP_NEST;
+        break;
+    }
+#ifndef QT_BOOTSTRAPPED
+    return QCoreApplication::translate("QJsonParseError", sz);
+#else
+    return QLatin1String(sz);
+#endif
+}
 
 using namespace QJsonPrivate;
 
 Parser::Parser(const char *json, int length)
-    : head(json), json(json), data(0), dataLength(0), current(0), lastError(QJsonParseError::NoError)
+    : head(json), json(json), data(0), dataLength(0), current(0), nestingLevel(0), lastError(QJsonParseError::NoError)
 {
     end = json + length;
 }
@@ -107,7 +231,16 @@ enum {
     Quote = 0x22
 };
 
-
+void Parser::eatBOM()
+{
+    // eat UTF-8 byte order mark
+    uchar utf8bom[3] = { 0xef, 0xbb, 0xbf };
+    if (end - json > 3 &&
+        (uchar)json[0] == utf8bom[0] &&
+        (uchar)json[1] == utf8bom[1] &&
+        (uchar)json[2] == utf8bom[2])
+        json += 3;
+}
 
 bool Parser::eatSpace()
 {
@@ -166,8 +299,10 @@ QJsonDocument Parser::parse(QJsonParseError *error)
 
     current = sizeof(QJsonPrivate::Header);
 
+    eatBOM();
     char token = nextToken();
-    DEBUG << token;
+
+    DEBUG << hex << (uint)token;
     if (token == BeginArray) {
         if (!parseArray())
             goto error;
@@ -175,6 +310,7 @@ QJsonDocument Parser::parse(QJsonParseError *error)
         if (!parseObject())
             goto error;
     } else {
+        lastError = QJsonParseError::IllegalValue;
         goto error;
     }
 
@@ -229,6 +365,11 @@ void Parser::ParsedObject::insert(uint offset) {
 
 bool Parser::parseObject()
 {
+    if (++nestingLevel > nestingLimit) {
+        lastError = QJsonParseError::DeepNesting;
+        return false;
+    }
+
     int objectOffset = reserveSpace(sizeof(QJsonPrivate::Object));
     BEGIN << "parseObject pos=" << objectOffset << current << json;
 
@@ -266,7 +407,7 @@ bool Parser::parseObject()
         memcpy(data + table, parsedObject.offsets.constData(), tableSize);
 #else
         offset *o = (offset *)(data + table);
-        for (int i = 0; i < tableSize; ++i)
+        for (int i = 0; i < parsedObject.offsets.size(); ++i)
             o[i] = parsedObject.offsets[i];
 
 #endif
@@ -280,6 +421,8 @@ bool Parser::parseObject()
 
     DEBUG << "current=" << current;
     END;
+
+    --nestingLevel;
     return true;
 }
 
@@ -318,9 +461,15 @@ bool Parser::parseMember(int baseOffset)
 bool Parser::parseArray()
 {
     BEGIN << "parseArray";
+
+    if (++nestingLevel > nestingLimit) {
+        lastError = QJsonParseError::DeepNesting;
+        return false;
+    }
+
     int arrayOffset = reserveSpace(sizeof(QJsonPrivate::Array));
 
-    QVarLengthArray<QJsonPrivate::Value> values;
+    QVarLengthArray<QJsonPrivate::Value, 64> values;
 
     if (!eatSpace()) {
         lastError = QJsonParseError::UnterminatedArray;
@@ -364,6 +513,8 @@ bool Parser::parseArray()
 
     DEBUG << "current=" << current;
     END;
+
+    --nestingLevel;
     return true;
 }
 
@@ -524,7 +675,7 @@ bool Parser::parseNumber(QJsonPrivate::Value *val, int baseOffset)
     }
 
     if (json >= end) {
-        lastError = QJsonParseError::EndOfNumber;
+        lastError = QJsonParseError::TerminationByNumber;
         return false;
     }
 
@@ -717,12 +868,12 @@ bool Parser::parseString(bool *latin1)
             break;
         else if (*json == '\\') {
             if (!scanEscapeSequence(json, end, &ch)) {
-                lastError = QJsonParseError::StringEscapeSequence;
+                lastError = QJsonParseError::IllegalEscapeSequence;
                 return false;
             }
         } else {
             if (!scanUtf8Char(json, end, &ch)) {
-                lastError = QJsonParseError::StringUTF8Scan;
+                lastError = QJsonParseError::IllegalUTF8String;
                 return false;
             }
         }
@@ -737,14 +888,14 @@ bool Parser::parseString(bool *latin1)
     ++json;
     DEBUG << "end of string";
     if (json >= end) {
-        lastError = QJsonParseError::EndOfString;
+        lastError = QJsonParseError::UnterminatedString;
         return false;
     }
 
     // no unicode string, we are done
     if (*latin1) {
         // write string length
-        *(QJsonPrivate::qle_ushort *)(data + stringPos) = current - outStart - sizeof(ushort);
+        *(QJsonPrivate::qle_ushort *)(data + stringPos) = ushort(current - outStart - sizeof(ushort));
         int pos = reserveSpace((4 - current) & 3);
         while (pos & 3)
             data[pos++] = 0;
@@ -764,16 +915,16 @@ bool Parser::parseString(bool *latin1)
             break;
         else if (*json == '\\') {
             if (!scanEscapeSequence(json, end, &ch)) {
-                lastError = QJsonParseError::StringEscapeSequence;
+                lastError = QJsonParseError::IllegalEscapeSequence;
                 return false;
             }
         } else {
             if (!scanUtf8Char(json, end, &ch)) {
-                lastError = QJsonParseError::StringUTF8Scan;
+                lastError = QJsonParseError::IllegalUTF8String;
                 return false;
             }
         }
-        if (ch > 0xffff) {
+        if (QChar::requiresSurrogates(ch)) {
             int pos = reserveSpace(4);
             *(QJsonPrivate::qle_ushort *)(data + pos) = QChar::highSurrogate(ch);
             *(QJsonPrivate::qle_ushort *)(data + pos + 2) = QChar::lowSurrogate(ch);
@@ -785,7 +936,7 @@ bool Parser::parseString(bool *latin1)
     ++json;
 
     if (json >= end) {
-        lastError = QJsonParseError::EndOfString;
+        lastError = QJsonParseError::UnterminatedString;
         return false;
     }
 

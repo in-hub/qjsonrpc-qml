@@ -2,12 +2,12 @@
 #define QJSONRPCMESSAGE_H
 
 #include <QSharedDataPointer>
+#include <QVariant>
 
 #if QT_VERSION >= 0x050000
 #include <QJsonValue>
 #include <QJsonObject>
 #include <QJsonArray>
-#include <QVariant>
 #else
 #include "json/qjsonvalue.h"
 #include "json/qjsonobject.h"
