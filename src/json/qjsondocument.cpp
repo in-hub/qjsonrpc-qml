@@ -301,7 +301,7 @@ QVariant QJsonDocument::toVariant() const
 
  \sa fromJson()
  */
-QByteArray QJsonDocument::toJson() const
+QByteArray QJsonDocument::toJson(bool compact) const
 {
     if (!d)
         return QByteArray();
@@ -309,9 +309,9 @@ QByteArray QJsonDocument::toJson() const
     QByteArray json;
 
     if (d->header->root()->isArray())
-        QJsonPrivate::Writer::arrayToJson(static_cast<QJsonPrivate::Array *>(d->header->root()), json, 0);
+        QJsonPrivate::Writer::arrayToJson(static_cast<QJsonPrivate::Array *>(d->header->root()), json, 0, compact);
     else
-        QJsonPrivate::Writer::objectToJson(static_cast<QJsonPrivate::Object *>(d->header->root()), json, 0);
+        QJsonPrivate::Writer::objectToJson(static_cast<QJsonPrivate::Object *>(d->header->root()), json, 0, compact);
 
     return json;
 }

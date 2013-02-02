@@ -110,7 +110,7 @@ public:
     QVariant toVariant() const;
 
     static QJsonDocument fromJson(const QByteArray &json, QJsonParseError *error = 0);
-    QByteArray toJson() const;
+    QByteArray toJson(bool compact = false) const;
 
     bool isEmpty() const;
     bool isArray() const;
