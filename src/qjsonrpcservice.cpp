@@ -63,9 +63,6 @@ void QJsonRpcSocketPrivate::writeData(const QJsonRpcMessage &message)
     case QJsonRpcSocket::Plain:
         data = doc.toJson();
         break;
-    case QJsonRpcSocket::Binary:
-        data = doc.toBinaryData();
-        break;
     case QJsonRpcSocket::Compact:
     default:
         data = doc.toJson(true);
@@ -431,19 +428,11 @@ void QJsonRpcSocket::processIncomingData()
 
     d->buffer.append(d->device.data()->readAll());
     while (!d->buffer.isEmpty()) {
-        QJsonDocument document;
-        if (d->format == QJsonRpcSocket::Binary)
-            document = QJsonDocument::fromBinaryData(d->buffer);
-        else
-            document = QJsonDocument::fromJson(d->buffer);
+        QJsonDocument document = QJsonDocument::fromJson(d->buffer);
         if (document.isEmpty())
             break;
 
-        if (d->format == QJsonRpcSocket::Binary)
-            d->buffer = d->buffer.mid(document.toBinaryData().size());
-        else
-            d->buffer = d->buffer.mid(document.toJson().size());
-
+        d->buffer = d->buffer.mid(document.rawDataSize());
         if (document.isArray()) {
             qDebug() << "bulk support is current disabled";
             /*

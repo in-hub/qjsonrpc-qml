@@ -76,8 +76,7 @@ public:
 
     enum WireFormat {
         Plain,
-        Compact,
-        Binary
+        Compact
     };
     WireFormat wireFormat() const;
     void setWireFormat(WireFormat format);
