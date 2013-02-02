@@ -35,6 +35,7 @@ private Q_SLOTS:
     void testLocalComplexMethod();
     void testLocalDefaultParameters();
     void testLocalNotifyServiceSocket();
+    void testLocalNoWhitespace();
 
     // TCP Server
     void testTcpNoParameter();
@@ -50,7 +51,6 @@ private Q_SLOTS:
 
 private:
     // fix later
-    void testLocalNoWhitespace();
     void testLocalListOfInts();
 
 };

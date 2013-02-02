@@ -12,6 +12,72 @@
 #include "qjsonrpcservice_p.h"
 #include "qjsonrpcservice.h"
 
+int QJsonRpcSocketPrivate::findJsonDocumentEnd(const QByteArray &jsonData)
+{
+    const char* pos = jsonData.constData();
+    const char* end = pos + jsonData.length();
+
+    // Skip open symbol '{'
+    int depth = 1;
+    int index = 1;
+    pos++;
+
+    bool inString = false;
+    while (depth > 0 && pos != end) {
+        if (*pos == '\\') {
+            pos += 2;
+            index += 2;
+            continue;
+        } else if (*pos == '"') {
+            inString = !inString;
+        } else if (!inString) {
+            if (*pos == '{')
+                depth++;
+            else if (*pos == '}')
+                depth--;
+        }
+
+        pos++;
+        index++;
+    }
+
+    return depth == 0 ? index-1 : -1;
+}
+
+int QJsonRpcSocketPrivate::findJsonDocumentStart(const QByteArray &jsonData, int startIndex)
+{
+    int i = startIndex;
+    for (i; i < jsonData.length(); i++) {
+        if (jsonData.at(i) == '{')
+            return i;
+    }
+
+    return i;
+}
+
+QJsonRpcSocketPrivate::writeData(const QJsonRpcMessage &message)
+{
+    QByteArray data;
+    QJsonDocument doc = QJsonDocument(message.toObject());
+    switch (format) {
+    case QJsonRpcSocket::Plain:
+        data = doc.toJson();
+        break;
+    case QJsonRpcSocket::Binary:
+        data = doc.toBinaryData();
+        break;
+    case QJsonRpcSocket::Compact:
+    default:
+        data = doc.toJson(true);
+        break;
+    }
+
+    device.data()->write(data);
+    if (qgetenv("QJSONRPC_DEBUG").toInt())
+        qDebug() << data;
+}
+
+
 int QJsonRpcService::s_qjsonRpcMessageType = qRegisterMetaType<QJsonRpcMessage>("QJsonRpcMessage");
 QJsonRpcService::QJsonRpcService(QObject *parent)
     : QObject(parent)
