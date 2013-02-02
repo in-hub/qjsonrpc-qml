@@ -1,5 +1,5 @@
 TEMPLATE = subdirs
 SUBDIRS += json
 SUBDIRS += qjsonrpcmessage \
-           qjsonrpcservicesocket \
+           qjsonrpcsocket \
            qjsonrpcserver
