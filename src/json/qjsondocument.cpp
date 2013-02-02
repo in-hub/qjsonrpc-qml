@@ -544,4 +544,9 @@ QDebug operator<<(QDebug dbg, const QJsonDocument &o)
 }
 #endif
 
+int QJsonDocument::rawDataSize() const
+{
+    return d->rawDataSize;
+}
+
 QT_END_NAMESPACE

@@ -61,6 +61,7 @@
 #include <qatomic.h>
 #include <qstring.h>
 #include <qendian.h>
+#include <qdebug.h>
 
 #include <limits.h>
 
@@ -703,6 +704,7 @@ public:
 
     QAtomicInt ref;
     int alloc;
+    int rawDataSize;
     union {
         char *rawData;
         Header *header;
@@ -711,7 +713,7 @@ public:
     uint ownsData : 1;
 
     inline Data(char *raw, int a)
-        : alloc(a), rawData(raw), compactionCounter(0), ownsData(true)
+        : alloc(a), rawDataSize(0), rawData(raw), compactionCounter(0), ownsData(true)
     {
     }
     inline Data(int reserved, QJsonValue::Type valueType)
