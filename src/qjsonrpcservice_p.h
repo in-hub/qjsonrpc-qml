@@ -15,7 +15,6 @@ class QJsonRpcSocketPrivate
 public:
     QJsonRpcSocketPrivate() : format(QJsonRpcSocket::Plain) {}
     int findJsonDocumentEnd(const QByteArray &jsonData);
-    int findJsonDocumentStart(const QByteArray &jsonData, int startIndex);
     void writeData(const QJsonRpcMessage &message);
 
     QPointer<QIODevice> device;

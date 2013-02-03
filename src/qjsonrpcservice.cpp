@@ -44,17 +44,6 @@ int QJsonRpcSocketPrivate::findJsonDocumentEnd(const QByteArray &jsonData)
     return depth == 0 ? index-1 : -1;
 }
 
-int QJsonRpcSocketPrivate::findJsonDocumentStart(const QByteArray &jsonData, int startIndex)
-{
-    int i;
-    for (i = startIndex; i < jsonData.length(); i++) {
-        if (jsonData.at(i) == '{')
-            return i;
-    }
-
-    return i;
-}
-
 void QJsonRpcSocketPrivate::writeData(const QJsonRpcMessage &message)
 {
     QByteArray data;

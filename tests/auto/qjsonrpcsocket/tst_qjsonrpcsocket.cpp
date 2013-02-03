@@ -6,10 +6,11 @@
 #include <QtTest/QtTest>
 
 #include "json/qjsondocument.h"
+#include "qjsonrpcservice_p.h"
 #include "qjsonrpcservice.h"
 #include "qjsonrpcmessage.h"
 
-class TestQJsonRpcServiceSocket: public QObject
+class TestQJsonRpcSocket: public QObject
 {
     Q_OBJECT  
 private Q_SLOTS:
@@ -17,30 +18,34 @@ private Q_SLOTS:
     void cleanupTestCase();
     void init();
     void cleanup();
+
     void testSocketNoParameters();
     void testSocketMultiparamter();
     void testSocketNotification();
     void testSocketResponse();
+
+    // benchmark parsing speed
+    void jsonParsingBenchmark();
 };
 
-void TestQJsonRpcServiceSocket::initTestCase()
+void TestQJsonRpcSocket::initTestCase()
 {
     qRegisterMetaType<QJsonRpcMessage>("QJsonRpcMessage");
 }
 
-void TestQJsonRpcServiceSocket::cleanupTestCase()
+void TestQJsonRpcSocket::cleanupTestCase()
 {
 }
 
-void TestQJsonRpcServiceSocket::init()
+void TestQJsonRpcSocket::init()
 {
 }
 
-void TestQJsonRpcServiceSocket::cleanup()
+void TestQJsonRpcSocket::cleanup()
 {
 }
 
-void TestQJsonRpcServiceSocket::testSocketNoParameters()
+void TestQJsonRpcSocket::testSocketNoParameters()
 {
     QBuffer buffer;
     buffer.open(QIODevice::ReadWrite);
@@ -66,7 +71,7 @@ void TestQJsonRpcServiceSocket::testSocketNoParameters()
     QCOMPARE(spyMessageReceived.count(), 0);
 }
 
-void TestQJsonRpcServiceSocket::testSocketMultiparamter()
+void TestQJsonRpcSocket::testSocketMultiparamter()
 {
     QBuffer buffer;
     buffer.open(QIODevice::ReadWrite);
@@ -93,7 +98,7 @@ void TestQJsonRpcServiceSocket::testSocketMultiparamter()
     QCOMPARE(spyMessageReceived.count(), 0);
 }
 
-void TestQJsonRpcServiceSocket::testSocketNotification()
+void TestQJsonRpcSocket::testSocketNotification()
 {
     QBuffer buffer;
     buffer.open(QIODevice::ReadWrite);
@@ -119,7 +124,7 @@ void TestQJsonRpcServiceSocket::testSocketNotification()
     QCOMPARE(spyMessageReceived.count(), 0);
 }
 
-void TestQJsonRpcServiceSocket::testSocketResponse()
+void TestQJsonRpcSocket::testSocketResponse()
 {
     QBuffer buffer;
     buffer.open(QIODevice::ReadWrite);
@@ -146,5 +151,29 @@ void TestQJsonRpcServiceSocket::testSocketResponse()
     QCOMPARE(spyMessageReceived.count(), 0);
 }
 
-QTEST_MAIN(TestQJsonRpcServiceSocket)
-#include "tst_qjsonrpcservicesocket.moc"
+
+void TestQJsonRpcSocket::jsonParsingBenchmark()
+{
+    QFile testData(":/testwire.json");
+    QVERIFY(testData.open(QIODevice::ReadOnly));
+    QByteArray jsonData = testData.readAll();
+    QJsonRpcSocketPrivate socketPrivate;
+
+    int pos = 0;
+    int messageCount = 0;
+    while (!jsonData.isEmpty() && pos >= 0) {
+        QBENCHMARK {
+            pos = socketPrivate.findJsonDocumentEnd(jsonData);
+        }
+
+        if (pos) {
+            messageCount++;
+            jsonData = jsonData.mid(pos + 1);
+        }
+    }
+
+    QCOMPARE(messageCount, 8);
+}
+
+QTEST_MAIN(TestQJsonRpcSocket)
+#include "tst_qjsonrpcsocket.moc"
