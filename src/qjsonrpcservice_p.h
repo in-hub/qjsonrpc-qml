@@ -14,7 +14,7 @@
 class QJSONRPC_EXPORT QJsonRpcSocketPrivate
 {
 public:
-    QJsonRpcSocketPrivate() : format(QJsonRpcSocket::Plain) {}
+    QJsonRpcSocketPrivate() : format(QJsonRpcSocket::Compact) {}
     int findJsonDocumentEnd(const QByteArray &jsonData);
     void writeData(const QJsonRpcMessage &message);
 
@@ -28,7 +28,7 @@ public:
 class QJsonRpcServerPrivate
 {
 public:
-    QJsonRpcServerPrivate() : format(QJsonRpcSocket::Plain) {}
+    QJsonRpcServerPrivate() : format(QJsonRpcSocket::Compact) {}
     QList<QJsonRpcSocket*> clients;
     QJsonRpcSocket::WireFormat format;
 

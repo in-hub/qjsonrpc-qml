@@ -24,6 +24,7 @@ private Q_SLOTS:
     void testSocketNotification();
     void testSocketResponse();
 
+private:
     // benchmark parsing speed
     void jsonParsingBenchmark();
 };
@@ -159,16 +160,18 @@ void TestQJsonRpcSocket::jsonParsingBenchmark()
     QByteArray jsonData = testData.readAll();
     QJsonRpcSocketPrivate socketPrivate;
 
-    int pos = 0;
     int messageCount = 0;
-    while (!jsonData.isEmpty() && pos >= 0) {
+    while (!jsonData.isEmpty()) {
+        int pos;
         QBENCHMARK {
             pos = socketPrivate.findJsonDocumentEnd(jsonData);
         }
 
-        if (pos) {
+        if (pos > -1) {
             messageCount++;
             jsonData = jsonData.mid(pos + 1);
+        } else {
+            break;
         }
     }
 
