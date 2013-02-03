@@ -9,8 +9,9 @@
 
 #include "qjsondocument.h"
 #include "qjsonrpcservice.h"
+#include "qjsonrpc_export.h"
 
-class QJsonRpcSocketPrivate
+class QJSONRPC_EXPORT QJsonRpcSocketPrivate
 {
 public:
     QJsonRpcSocketPrivate() : format(QJsonRpcSocket::Plain) {}
