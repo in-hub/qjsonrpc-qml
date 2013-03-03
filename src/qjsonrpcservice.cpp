@@ -8,7 +8,12 @@
 #include <QEventLoop>
 #include <QTimer>
 
+#if QT_VERSION >= 0x050000
+#include <QJsonDocument>
+#else
 #include "json/qjsondocument.h"
+#endif
+
 #include "qjsonrpcservice_p.h"
 #include "qjsonrpcservice.h"
 
@@ -46,18 +51,8 @@ int QJsonRpcSocketPrivate::findJsonDocumentEnd(const QByteArray &jsonData)
 
 void QJsonRpcSocketPrivate::writeData(const QJsonRpcMessage &message)
 {
-    QByteArray data;
     QJsonDocument doc = QJsonDocument(message.toObject());
-    switch (format) {
-    case QJsonRpcSocket::Plain:
-        data = doc.toJson();
-        break;
-    case QJsonRpcSocket::Compact:
-    default:
-        data = doc.toJson(true);
-        break;
-    }
-
+    QByteArray data = doc.toJson(format);
     device.data()->write(data);
     if (qgetenv("QJSONRPC_DEBUG").toInt())
         qDebug() << data;
@@ -395,13 +390,13 @@ QJsonRpcServiceReply *QJsonRpcSocket::invokeRemoteMethod(const QString &method, 
     return sendMessage(request);
 }
 
-QJsonRpcSocket::WireFormat QJsonRpcSocket::wireFormat() const
+QJsonDocument::JsonFormat QJsonRpcSocket::wireFormat() const
 {
     Q_D(const QJsonRpcSocket);
     return d->format;
 }
 
-void QJsonRpcSocket::setWireFormat(WireFormat format)
+void QJsonRpcSocket::setWireFormat(QJsonDocument::JsonFormat format)
 {
     Q_D(QJsonRpcSocket);
     d->format = format;
@@ -498,13 +493,13 @@ void QJsonRpcServer::addService(QJsonRpcService *service)
                this, SLOT(notifyConnectedClients(QString,QVariantList)));
 }
 
-QJsonRpcSocket::WireFormat QJsonRpcServer::wireFormat() const
+QJsonDocument::JsonFormat QJsonRpcServer::wireFormat() const
 {
     Q_D(const QJsonRpcServer);
     return d->format;
 }
 
-void QJsonRpcServer::setWireFormat(QJsonRpcSocket::WireFormat format)
+void QJsonRpcServer::setWireFormat(QJsonDocument::JsonFormat format)
 {
     Q_D(QJsonRpcServer);
     d->format = format;

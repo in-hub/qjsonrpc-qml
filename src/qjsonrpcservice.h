@@ -5,6 +5,12 @@
 #include <QHostAddress>
 #include <QPointer>
 
+#if QT_VERSION >= 0x050000
+#include <QJsonDocument>
+#else
+#include "qjsondocument.h"
+#endif
+
 #include "qjsonrpcmessage.h"
 
 class QJsonRpcSocket;
@@ -74,12 +80,8 @@ public:
     explicit QJsonRpcSocket(QIODevice *device, QObject *parent = 0);
     ~QJsonRpcSocket();
 
-    enum WireFormat {
-        Plain,
-        Compact
-    };
-    WireFormat wireFormat() const;
-    void setWireFormat(WireFormat format);
+    QJsonDocument::JsonFormat wireFormat() const;
+    void setWireFormat(QJsonDocument::JsonFormat format);
 
     bool isValid() const;
 
@@ -139,8 +141,8 @@ public:
     virtual QString errorString() const = 0;
     virtual void addService(QJsonRpcService *service);
 
-    QJsonRpcSocket::WireFormat wireFormat() const;
-    void setWireFormat(QJsonRpcSocket::WireFormat format);
+    QJsonDocument::JsonFormat wireFormat() const;
+    void setWireFormat(QJsonDocument::JsonFormat format);
 
 public Q_SLOTS:
     void notifyConnectedClients(const QJsonRpcMessage &message);

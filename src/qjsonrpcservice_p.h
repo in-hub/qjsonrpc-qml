@@ -7,31 +7,35 @@
 #include <QLocalSocket>
 #include <QTcpSocket>
 
+#if QT_VERSION >= 0x050000
+#include <QJsonDocument>
+#else
 #include "qjsondocument.h"
+#endif
+
 #include "qjsonrpcservice.h"
 #include "qjsonrpc_export.h"
 
 class QJSONRPC_EXPORT QJsonRpcSocketPrivate
 {
 public:
-    QJsonRpcSocketPrivate() : format(QJsonRpcSocket::Compact) {}
+    QJsonRpcSocketPrivate() : format(QJsonDocument::Compact) {}
     int findJsonDocumentEnd(const QByteArray &jsonData);
     void writeData(const QJsonRpcMessage &message);
 
     QPointer<QIODevice> device;
     QByteArray buffer;
     QHash<int, QJsonRpcServiceReply*> replies;
-    QJsonRpcSocket::WireFormat format;
+    QJsonDocument::JsonFormat format;
 
 };
 
 class QJsonRpcServerPrivate
 {
 public:
-    QJsonRpcServerPrivate() : format(QJsonRpcSocket::Compact) {}
+    QJsonRpcServerPrivate() : format(QJsonDocument::Compact) {}
     QList<QJsonRpcSocket*> clients;
-    QJsonRpcSocket::WireFormat format;
-
+    QJsonDocument::JsonFormat format;
 };
 
 class QLocalServer;
