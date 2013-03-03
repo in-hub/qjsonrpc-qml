@@ -17,16 +17,38 @@
 #include "qjsonrpcservice_p.h"
 #include "qjsonrpcservice.h"
 
+
 int QJsonRpcSocketPrivate::findJsonDocumentEnd(const QByteArray &jsonData)
 {
     const char* pos = jsonData.constData();
     const char* end = pos + jsonData.length();
 
-    // Skip open symbol '{'
-    int depth = 1;
-    int index = 1;
-    pos++;
+    char blockStart = 0;
+    char blockEnd = 0;
+    int index = 0;
 
+    // Find the beginning of the JSON document and determine if it is an object or an array
+    while (true) {
+        if (pos == end) {
+            return -1;
+        } else if (*pos == '{') {
+            blockStart = '{';
+            blockEnd = '}';
+            break;
+        } else if(*pos == '[') {
+            blockStart = '[';
+            blockEnd = ']';
+            break;
+        }
+
+        pos++;
+        index++;
+    }
+
+    // Find the end of the JSON document
+    pos++;
+    index++;
+    int depth = 1;
     bool inString = false;
     while (depth > 0 && pos != end) {
         if (*pos == '\\') {
@@ -36,9 +58,9 @@ int QJsonRpcSocketPrivate::findJsonDocumentEnd(const QByteArray &jsonData)
         } else if (*pos == '"') {
             inString = !inString;
         } else if (!inString) {
-            if (*pos == '{')
+            if (*pos == blockStart)
                 depth++;
-            else if (*pos == '}')
+            else if (*pos == blockEnd)
                 depth--;
         }
 
@@ -46,6 +68,7 @@ int QJsonRpcSocketPrivate::findJsonDocumentEnd(const QByteArray &jsonData)
         index++;
     }
 
+    // index-1 because we are one position ahead
     return depth == 0 ? index-1 : -1;
 }
 
@@ -412,11 +435,17 @@ void QJsonRpcSocket::processIncomingData()
 
     d->buffer.append(d->device.data()->readAll());
     while (!d->buffer.isEmpty()) {
+        int dataSize = d->findJsonDocumentEnd(d->buffer);
+        if (dataSize == -1) {
+            // incomplete data, wait for more
+            return;
+        }
+
         QJsonDocument document = QJsonDocument::fromJson(d->buffer);
         if (document.isEmpty())
             break;
 
-        d->buffer = d->buffer.mid(document.rawDataSize());
+        d->buffer = d->buffer.mid(dataSize + 1);
         if (document.isArray()) {
             qDebug() << "bulk support is current disabled";
             /*
