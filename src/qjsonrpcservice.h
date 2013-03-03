@@ -8,7 +8,7 @@
 #if QT_VERSION >= 0x050000
 #include <QJsonDocument>
 #else
-#include "qjsondocument.h"
+#include "json/qjsondocument.h"
 #endif
 
 #include "qjsonrpcmessage.h"
