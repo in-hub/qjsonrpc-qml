@@ -322,7 +322,6 @@ QJsonDocument Parser::parse(QJsonParseError *error)
         }
 
         QJsonPrivate::Data *d = new QJsonPrivate::Data(data, current);
-        d->rawDataSize = (json - head);
         return QJsonDocument(d);
     }
 

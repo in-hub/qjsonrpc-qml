@@ -138,8 +138,6 @@ public:
 
     bool isNull() const;
 
-    int rawDataSize() const;
-
 private:
     friend class QJsonValue;
     friend class QJsonPrivate::Data;
