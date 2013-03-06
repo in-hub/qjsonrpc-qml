@@ -13,8 +13,3 @@ This includes building of qjsonrpc library,
 client sample in examples/client directory,
 server sample in examples/server directory,
 and unit tests from test. 
-
-To generate the documentation run
-doxygen qjsonrpc.doxy
-
-Check doc/html/index.html for the generated documentation.
