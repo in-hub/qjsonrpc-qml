@@ -925,7 +925,7 @@ void TestQJsonRpcServer::testTcpHugeResponse()
 {
     // Initialize the service provider.
     QJsonRpcTcpServer serviceProvider;
-    serviceProvider.addService(new TestHugeResponseService);
+    serviceProvider.addService(new TestHugeResponseService(this));
     QVERIFY(serviceProvider.listen(QHostAddress::LocalHost, 5555));
 
     // Connect to the socket.
