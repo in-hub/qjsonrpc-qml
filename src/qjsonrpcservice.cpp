@@ -33,7 +33,6 @@
 #include "qjsonrpcservice_p.h"
 #include "qjsonrpcservice.h"
 
-
 int QJsonRpcSocketPrivate::findJsonDocumentEnd(const QByteArray &jsonData)
 {
     const char* pos = jsonData.constData();
@@ -97,17 +96,21 @@ void QJsonRpcSocketPrivate::writeData(const QJsonRpcMessage &message)
         qDebug() << data;
 }
 
-
-int QJsonRpcService::s_qjsonRpcMessageType = qRegisterMetaType<QJsonRpcMessage>("QJsonRpcMessage");
 QJsonRpcService::QJsonRpcService(QObject *parent)
-    : QObject(parent)
+    : QObject(parent),
+      d_ptr(new QJsonRpcServicePrivate(this))
+{
+}
+
+QJsonRpcService::~QJsonRpcService()
 {
 }
 
 QJsonRpcSocket *QJsonRpcService::senderSocket()
 {
-    if (m_socket)
-        return m_socket.data();
+    Q_D(QJsonRpcService);
+    if (d->socket)
+        return d->socket.data();
     return 0;
 }
 
@@ -136,10 +139,12 @@ int convertVariantTypeToJSType(int type)
     return type;
 }
 
-void QJsonRpcService::cacheInvokableInfo()
+int QJsonRpcServicePrivate::qjsonRpcMessageType = qRegisterMetaType<QJsonRpcMessage>("QJsonRpcMessage");
+void QJsonRpcServicePrivate::cacheInvokableInfo()
 {
-    const QMetaObject *obj = metaObject();
-    int startIdx = QObject::staticMetaObject.methodCount(); // skip QObject slots
+    Q_Q(QJsonRpcService);
+    const QMetaObject *obj = q->metaObject();
+    int startIdx = q->staticMetaObject.methodCount(); // skip QObject slots
     for (int idx = startIdx; idx < obj->methodCount(); ++idx) {
         const QMetaMethod method = obj->method(idx);
         if (method.methodType() == QMetaMethod::Slot &&
@@ -150,7 +155,7 @@ void QJsonRpcService::cacheInvokableInfo()
             QByteArray signature = method.signature();
 #endif
             QByteArray methodName = signature.left(signature.indexOf('('));
-            m_invokableMethodHash.insert(methodName, idx);
+            invokableMethodHash.insert(methodName, idx);
 
             QList<int> parameterTypes;
             QList<int> jsParameterTypes;
@@ -160,8 +165,8 @@ void QJsonRpcService::cacheInvokableInfo()
                 jsParameterTypes << convertVariantTypeToJSType(QMetaType::type(parameterType));
             }
 
-            m_parameterTypeHash[idx] = parameterTypes;
-            m_jsParameterTypeHash[idx] = jsParameterTypes;
+            parameterTypeHash[idx] = parameterTypes;
+            jsParameterTypeHash[idx] = jsParameterTypes;
         }
     }
 }
@@ -169,6 +174,7 @@ void QJsonRpcService::cacheInvokableInfo()
 //QJsonRpcMessage QJsonRpcService::dispatch(const QJsonRpcMessage &request) const
 bool QJsonRpcService::dispatch(const QJsonRpcMessage &request)
 {
+    Q_D(QJsonRpcService);
     if (!request.type() == QJsonRpcMessage::Request) {
         QJsonRpcMessage error =
             request.createErrorResponse(QJsonRpc::InvalidRequest, "invalid request");
@@ -177,7 +183,7 @@ bool QJsonRpcService::dispatch(const QJsonRpcMessage &request)
     }
 
     QByteArray method = request.method().section(".", -1).toLatin1();
-    if (!m_invokableMethodHash.contains(method)) {
+    if (!d->invokableMethodHash.contains(method)) {
         QJsonRpcMessage error =
             request.createErrorResponse(QJsonRpc::MethodNotFound, "invalid method called");
         Q_EMIT result(error);
@@ -186,14 +192,14 @@ bool QJsonRpcService::dispatch(const QJsonRpcMessage &request)
 
     int idx = -1;
     QList<int> parameterTypes;
-    QList<int> indexes = m_invokableMethodHash.values(method);
+    QList<int> indexes = d->invokableMethodHash.values(method);
     QVariantList arguments = request.params();
     QList<int> argumentTypes;
     foreach (QVariant argument, arguments)
         argumentTypes.append(static_cast<int>(argument.type()));
     foreach (int methodIndex, indexes) {
-        if (argumentTypes == m_jsParameterTypeHash[methodIndex]) {
-            parameterTypes = m_parameterTypeHash[methodIndex];
+        if (argumentTypes == d->jsParameterTypeHash[methodIndex]) {
+            parameterTypes = d->parameterTypeHash[methodIndex];
             idx = methodIndex;
             break;
         }
@@ -202,8 +208,8 @@ bool QJsonRpcService::dispatch(const QJsonRpcMessage &request)
     // fallback to old behavior if we found nothing, mostly to support QVariant parameters
     if (idx == -1) {
         foreach (int methodIndex, indexes) {
-            if (argumentTypes.size() == m_jsParameterTypeHash[methodIndex].size()) {
-                parameterTypes = m_parameterTypeHash[methodIndex];
+            if (argumentTypes.size() == d->jsParameterTypeHash[methodIndex].size()) {
+                parameterTypes = d->parameterTypeHash[methodIndex];
                 idx = methodIndex;
                 break;
             }
@@ -304,7 +310,7 @@ void QJsonRpcServiceProvider::addService(QJsonRpcService *service)
     for (int i = 0; i < mo->classInfoCount(); i++) {
         const QMetaClassInfo mci = mo->classInfo(i);
         if (mci.name() == QLatin1String("serviceName")) {
-            service->cacheInvokableInfo();
+            service->d_ptr->cacheInvokableInfo();
             m_services.insert(mci.value(), service);
             return;
         }
@@ -327,7 +333,7 @@ void QJsonRpcServiceProvider::processMessage(QJsonRpcSocket *socket, const QJson
                 }
             } else {
                 QJsonRpcService *service = m_services.value(serviceName);
-                service->m_socket = socket;
+                service->d_ptr->socket = socket;
                 if (message.type() == QJsonRpcMessage::Request)
                     QObject::connect(service, SIGNAL(result(QJsonRpcMessage)), socket, SLOT(notify(QJsonRpcMessage)));
                 QMetaObject::invokeMethod(service, "dispatch", Qt::QueuedConnection, Q_ARG(QJsonRpcMessage, message));

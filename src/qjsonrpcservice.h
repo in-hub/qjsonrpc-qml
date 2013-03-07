@@ -31,11 +31,13 @@
 
 class QJsonRpcSocket;
 class QJsonRpcServiceProvider;
+class QJsonRpcServicePrivate;
 class QJSONRPC_EXPORT QJsonRpcService : public QObject
 {
     Q_OBJECT
 public:
     explicit QJsonRpcService(QObject *parent = 0);
+    ~QJsonRpcService();
 
 Q_SIGNALS:
     void result(const QJsonRpcMessage &result);
@@ -49,12 +51,8 @@ private Q_SLOTS:
     bool dispatch(const QJsonRpcMessage &request);
 
 private:
-    void cacheInvokableInfo();
-    static int s_qjsonRpcMessageType;
-    QMultiHash<QByteArray, int> m_invokableMethodHash;
-    QHash<int, QList<int> > m_parameterTypeHash;    // actual parameter types to convert to
-    QHash<int, QList<int> > m_jsParameterTypeHash;  // for comparing incoming messages
-    QPointer<QJsonRpcSocket> m_socket;
+    Q_DECLARE_PRIVATE(QJsonRpcService)
+    QScopedPointer<QJsonRpcServicePrivate> d_ptr;
     friend class QJsonRpcServiceProvider;
 
 };

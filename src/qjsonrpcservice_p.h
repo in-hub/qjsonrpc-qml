@@ -30,8 +30,31 @@
  * Lesser General Public License for more details.
  */
 #include "qjsonrpcservice.h"
+#include "qjsonrpcmessage.h"
 #include "qjsonrpc_export.h"
 
+class QJsonRpcSocket;
+class QJsonRpcService;
+class QJsonRpcServicePrivate
+{
+public:
+    QJsonRpcServicePrivate(QJsonRpcService *parent)
+        : q_ptr(parent)
+    {
+    }
+
+    void cacheInvokableInfo();
+    static int qjsonRpcMessageType;
+    QMultiHash<QByteArray, int> invokableMethodHash;
+    QHash<int, QList<int> > parameterTypeHash;    // actual parameter types to convert to
+    QHash<int, QList<int> > jsParameterTypeHash;  // for comparing incoming messages
+    QPointer<QJsonRpcSocket> socket;
+
+    QJsonRpcService * const q_ptr;
+    Q_DECLARE_PUBLIC(QJsonRpcService)
+};
+
+class QJsonRpcServiceReply;
 class QJSONRPC_EXPORT QJsonRpcSocketPrivate
 {
 public:
