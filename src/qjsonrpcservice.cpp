@@ -111,6 +111,31 @@ QJsonRpcSocket *QJsonRpcService::senderSocket()
     return 0;
 }
 
+int convertVariantTypeToJSType(int type)
+{
+    switch (type) {
+    case QMetaType::Int:
+    case QMetaType::UInt:
+    case QMetaType::Double:
+    case QMetaType::Long:
+    case QMetaType::LongLong:
+    case QMetaType::Short:
+    case QMetaType::Char:
+    case QMetaType::ULong:
+    case QMetaType::ULongLong:
+    case QMetaType::UShort:
+    case QMetaType::UChar:
+    case QMetaType::Float:
+        return QMetaType::Double;    // all numeric types in js are doubles
+        break;
+
+    default:
+        break;
+    }
+
+    return type;
+}
+
 void QJsonRpcService::cacheInvokableInfo()
 {
     const QMetaObject *obj = metaObject();
@@ -128,12 +153,15 @@ void QJsonRpcService::cacheInvokableInfo()
             m_invokableMethodHash.insert(methodName, idx);
 
             QList<int> parameterTypes;
+            QList<int> jsParameterTypes;
             parameterTypes << QMetaType::type(method.typeName());
-
             foreach(QByteArray parameterType, method.parameterTypes()) {
                 parameterTypes << QMetaType::type(parameterType);
+                jsParameterTypes << convertVariantTypeToJSType(QMetaType::type(parameterType));
             }
+
             m_parameterTypeHash[idx] = parameterTypes;
+            m_jsParameterTypeHash[idx] = jsParameterTypes;
         }
     }
 }
@@ -160,11 +188,25 @@ bool QJsonRpcService::dispatch(const QJsonRpcMessage &request)
     QList<int> parameterTypes;
     QList<int> indexes = m_invokableMethodHash.values(method);
     QVariantList arguments = request.params();
+    QList<int> argumentTypes;
+    foreach (QVariant argument, arguments)
+        argumentTypes.append(static_cast<int>(argument.type()));
     foreach (int methodIndex, indexes) {
-        parameterTypes = m_parameterTypeHash.value(methodIndex);
-        if (arguments.size() == parameterTypes.size() - 1) {
+        if (argumentTypes == m_jsParameterTypeHash[methodIndex]) {
+            parameterTypes = m_parameterTypeHash[methodIndex];
             idx = methodIndex;
             break;
+        }
+    }
+
+    // fallback to old behavior if we found nothing, mostly to support QVariant parameters
+    if (idx == -1) {
+        foreach (int methodIndex, indexes) {
+            if (argumentTypes.size() == m_jsParameterTypeHash[methodIndex].size()) {
+                parameterTypes = m_parameterTypeHash[methodIndex];
+                idx = methodIndex;
+                break;
+            }
         }
     }
 

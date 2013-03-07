@@ -50,6 +50,7 @@ private Q_SLOTS:
     void testLocalDefaultParameters();
     void testLocalNotifyServiceSocket();
     void testLocalNoWhitespace();
+    void testLocalOverloadedMethod();
 
     // TCP Server
     void testTcpNoParameter();
@@ -138,6 +139,9 @@ public Q_SLOTS:
         return true;
     }
 
+    bool overloadedMethod(int input) { Q_UNUSED(input) return true; }
+    bool overloadedMethod(const QString &input) { Q_UNUSED(input) return false; }
+
 private:
     int m_called;
 };
@@ -202,6 +206,36 @@ void TestQJsonRpcServer::testLocalSingleParameter()
     QVERIFY(response.errorCode() == QJsonRpc::NoError);
     QCOMPARE(request.id(), response.id());
     QCOMPARE(response.result().toString(), QLatin1String("single"));
+}
+
+void TestQJsonRpcServer::testLocalOverloadedMethod()
+{
+    // Initialize the service provider.
+    QJsonRpcLocalServer serviceProvider;
+    serviceProvider.addService(new TestService);
+    QVERIFY(serviceProvider.listen("test"));
+
+    // Connect to the socket.
+    QLocalSocket socket;
+    socket.connectToServer("test");
+    QVERIFY(socket.waitForConnected());
+    QJsonRpcSocket serviceSocket(&socket, this);
+    QSignalSpy spyMessageReceived(&serviceSocket,
+                                  SIGNAL(messageReceived(QJsonRpcMessage)));
+
+    QJsonRpcMessage stringRequest = QJsonRpcMessage::createRequest("service.overloadedMethod", QString("single"));
+    QJsonRpcMessage stringResponse = serviceSocket.sendMessageBlocking(stringRequest);
+    QCOMPARE(spyMessageReceived.count(), 1);
+    QVERIFY(stringResponse.errorCode() == QJsonRpc::NoError);
+    QCOMPARE(stringRequest.id(), stringResponse.id());
+    QCOMPARE(stringResponse.result().toBool(), false);
+
+    QJsonRpcMessage intRequest = QJsonRpcMessage::createRequest("service.overloadedMethod", 10);
+    QJsonRpcMessage intResponse = serviceSocket.sendMessageBlocking(intRequest);
+    QCOMPARE(spyMessageReceived.count(), 2);
+    QVERIFY(intResponse.errorCode() == QJsonRpc::NoError);
+    QCOMPARE(intRequest.id(), intResponse.id());
+    QCOMPARE(intResponse.result().toBool(), true);
 }
 
 void TestQJsonRpcServer::testLocalMultiparameter()

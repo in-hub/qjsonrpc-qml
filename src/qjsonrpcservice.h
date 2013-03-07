@@ -52,7 +52,8 @@ private:
     void cacheInvokableInfo();
     static int s_qjsonRpcMessageType;
     QMultiHash<QByteArray, int> m_invokableMethodHash;
-    QHash<int, QList<int> > m_parameterTypeHash;
+    QHash<int, QList<int> > m_parameterTypeHash;    // actual parameter types to convert to
+    QHash<int, QList<int> > m_jsParameterTypeHash;  // for comparing incoming messages
     QPointer<QJsonRpcSocket> m_socket;
     friend class QJsonRpcServiceProvider;
 
