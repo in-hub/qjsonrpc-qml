@@ -5,6 +5,7 @@ SUBDIRS += localserver \
            tcpclient \
            qjsonrpc \
            httpclient \
+           httpserver \
            benchmark
 
 greaterThan(QT_MAJOR_VERSION, 4) {

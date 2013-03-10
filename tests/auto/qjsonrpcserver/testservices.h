@@ -55,7 +55,6 @@ public Q_SLOTS:
     bool overloadedMethod(int input);
     bool overloadedMethod(const QString &input);
     bool stringListParameter(int one, const QString &two, const QString &three, const QStringList &list);
-    bool delayedResponse();
 
     // return values
     QJsonArray returnQJsonArray();

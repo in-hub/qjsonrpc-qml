@@ -1,4 +1,5 @@
 include(../qjsonrpc.pri)
+include(http-parser/http-parser.pri)
 
 INCLUDEPATH += .
 TEMPLATE = lib
@@ -20,7 +21,8 @@ PRIVATE_HEADERS += \
     qjsonrpcservice_p.h \
     qjsonrpcsocket_p.h \
     qjsonrpcabstractserver_p.h \
-    qjsonrpcservicereply_p.h
+    qjsonrpcservicereply_p.h \
+    qjsonrpchttpserver_p.h
 
 INSTALL_HEADERS += \
     qjsonrpcmessage.h \
@@ -32,7 +34,8 @@ INSTALL_HEADERS += \
     qjsonrpctcpserver.h \
     qjsonrpcglobal.h \
     qjsonrpcservicereply.h \
-    qjsonrpchttpclient.h
+    qjsonrpchttpclient.h \
+    qjsonrpchttpserver.h
 
 greaterThan(QT_MAJOR_VERSION, 4) {
     greaterThan(QT_MINOR_VERSION, 1) {
@@ -53,7 +56,8 @@ SOURCES += \
     qjsonrpclocalserver.cpp \
     qjsonrpctcpserver.cpp \
     qjsonrpcservicereply.cpp \
-    qjsonrpchttpclient.cpp
+    qjsonrpchttpclient.cpp \
+    qjsonrpchttpserver.cpp
 
 # install
 headers.files = $${INSTALL_HEADERS}

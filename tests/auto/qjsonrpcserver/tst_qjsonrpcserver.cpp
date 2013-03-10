@@ -31,6 +31,8 @@
 #include "qjsonrpcabstractserver.h"
 #include "qjsonrpclocalserver.h"
 #include "qjsonrpctcpserver.h"
+#include "qjsonrpchttpserver.h"
+#include "qjsonrpchttpclient.h"
 #include "qjsonrpcsocket.h"
 #include "qjsonrpcmessage.h"
 #include "qjsonrpcservicereply.h"
@@ -44,7 +46,8 @@ public:
 
     enum ServerType {
         TcpServer,
-        LocalServer
+        LocalServer,
+        HttpServer
     };
 
 private Q_SLOTS:
@@ -87,10 +90,10 @@ private Q_SLOTS:
     void cantAddServiceTwice();
 
 private:
-    QJsonRpcSocket *createClient();
+    QJsonRpcAbstractSocket *createClient();
 
     // client related
-    QScopedPointer<QJsonRpcSocket> clientSocket;
+    QScopedPointer<QJsonRpcAbstractSocket> clientSocket;
     QList<QTcpSocket*> tcpSockets;
     QList<QLocalSocket*> localSockets;
 
@@ -99,6 +102,7 @@ private:
     QThread serverThread;
     QScopedPointer<QJsonRpcTcpServer> tcpServer;
     QScopedPointer<QJsonRpcLocalServer> localServer;
+    QScopedPointer<QJsonRpcHttpServer> httpServer;
 
 private:
     // temporarily disabled
@@ -117,6 +121,7 @@ void TestQJsonRpcServer::initTestCase_data()
     QTest::addColumn<ServerType>("serverType");
     QTest::newRow("tcp") << TcpServer;
     QTest::newRow("local") << LocalServer;
+    QTest::newRow("http") << HttpServer;
 }
 
 void TestQJsonRpcServer::initTestCase()
@@ -130,11 +135,11 @@ void TestQJsonRpcServer::cleanupTestCase()
     QVERIFY(serverThread.wait());
 }
 
-QJsonRpcSocket *TestQJsonRpcServer::createClient()
+QJsonRpcAbstractSocket *TestQJsonRpcServer::createClient()
 {
     QFETCH_GLOBAL(ServerType, serverType);
 
-    QJsonRpcSocket *socket = 0;
+    QJsonRpcAbstractSocket *socket = 0;
     if (serverType == LocalServer) {
         QLocalSocket *localSocket = new QLocalSocket;
         connect(localServer.data(), SIGNAL(clientConnected()),
@@ -161,6 +166,10 @@ QJsonRpcSocket *TestQJsonRpcServer::createClient()
 
         socket = new QJsonRpcSocket(tcpSocket);
         tcpSockets.append(tcpSocket);
+    } else if (serverType == HttpServer) {
+        QJsonRpcHttpClient *client = new QJsonRpcHttpClient;
+        client->setEndPoint("http://127.0.0.1:31337");
+        socket = client;
     }
 
     return socket;
@@ -179,11 +188,18 @@ void TestQJsonRpcServer::init()
         QVERIFY(tcpServer->listen(QHostAddress::LocalHost, quint16(91919)));
         tcpServer->moveToThread(&serverThread);
         server = tcpServer.data();
+    } else if (serverType == HttpServer) {
+        httpServer.reset(new QJsonRpcHttpServer);
+        QVERIFY(httpServer->listen(QHostAddress::LocalHost, quint16(31337)));
+        httpServer->moveToThread(&serverThread);
+        server = httpServer.data();
     }
 
     clientSocket.reset(createClient());
     QVERIFY(!clientSocket.isNull());
-    QCOMPARE(server->connectedClientCount(), 1);
+
+    if (serverType == LocalServer || serverType == TcpServer)
+        QCOMPARE(server->connectedClientCount(), 1);
 }
 
 void TestQJsonRpcServer::cleanup()
@@ -221,6 +237,8 @@ void TestQJsonRpcServer::cleanup()
 
         // close server
         localServer->close();
+    } else if (serverType == HttpServer) {
+        httpServer->close();
     }
 
     QCOMPARE(server->connectedClientCount(), 0);
@@ -457,8 +475,15 @@ void TestQJsonRpcServer::notifyConnectedClients()
     QFETCH(bool, sendAsMessage);
     QFETCH_GLOBAL(ServerType, serverType);
 
-    QVERIFY(server->addService(new TestService));
+    if (serverType == HttpServer) {
+#if QT_VERSION >= 0x050000
+        QSKIP("Not supported for HTTP connections");
+#else
+        QSKIP("Not supported for HTTP connections", SkipAll);
+#endif
+    }
 
+    QVERIFY(server->addService(new TestService));
     QEventLoop loop;
     connect(clientSocket.data(), SIGNAL(messageReceived(QJsonRpcMessage)),
             &loop, SLOT(quit()));
@@ -568,8 +593,15 @@ void TestQJsonRpcServer::defaultParameters()
 void TestQJsonRpcServer::notifyServiceSocket()
 {
     QFETCH_GLOBAL(ServerType, serverType);
-    QScopedPointer<QJsonRpcServiceSocket> serviceSocket;
+    if (serverType == HttpServer) {
+#if QT_VERSION >= 0x050000
+        QSKIP("Not supported for HTTP connections");
+#else
+        QSKIP("Not supported for HTTP connections", SkipAll);
+#endif
+    }
 
+    QScopedPointer<QJsonRpcServiceSocket> serviceSocket;
     clientSocket.reset();   // we only want a service socket, this would override that
     if (serverType == TcpServer) {
         serviceSocket.reset(new QJsonRpcServiceSocket(tcpSockets.first()));
@@ -694,6 +726,19 @@ void TestQJsonRpcServer::userDeletesReplyOnDelayedResponse()
             &QTestEventLoop::instance(), SLOT(exitLoop()));
     QJsonRpcServiceReply *reply = clientSocket->sendMessage(request);
     delete reply;
+
+    // While this is not applicable for HTTP connections, I've left the code
+    // up until this point to ensure that no memory is leaked
+
+    QFETCH_GLOBAL(ServerType, serverType);
+    if (serverType == HttpServer) {
+#if QT_VERSION >= 0x050000
+        QSKIP("Not applicable for HTTP connections");
+#else
+        QSKIP("Not applicable for HTTP connections", SkipAll);
+#endif
+    }
+
     QTestEventLoop::instance().enterLoop(5);
     QVERIFY(!QTestEventLoop::instance().timeout());
 }
@@ -765,6 +810,15 @@ private:
 
 void TestQJsonRpcServer::delayedResponseBasic()
 {
+    QFETCH_GLOBAL(ServerType, serverType);
+    if (serverType == HttpServer) {
+#if QT_VERSION >= 0x050000
+        QSKIP("QNAM makes deterministic order impossible here");
+#else
+        QSKIP("QNAM makes deterministic order impossible here", SkipAll);
+#endif
+    }
+
     QVERIFY(server->addService(new TestDelayedResponseService));
     QJsonRpcServiceReplySpy spy(6);
     connect(&spy, SIGNAL(finished()), &QTestEventLoop::instance(), SLOT(exitLoop()));
@@ -797,6 +851,14 @@ void TestQJsonRpcServer::delayedResponseBasic()
 void TestQJsonRpcServer::delayedResponseSocketClosed()
 {
     QFETCH_GLOBAL(ServerType, serverType);
+    if (serverType == HttpServer) {
+#if QT_VERSION >= 0x050000
+        QSKIP("Not applicable for HTTP connections");
+#else
+        QSKIP("Not applicable for HTTP connections", SkipAll);
+#endif
+    }
+
     TestDelayedResponseService *service = new TestDelayedResponseService;
     QVERIFY(server->addService(service));
 

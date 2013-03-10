@@ -43,7 +43,18 @@ public Q_SLOTS:
     virtual void notify(const QJsonRpcMessage &message) = 0;
     virtual QJsonRpcMessage sendMessageBlocking(const QJsonRpcMessage &message, int msecs = 30000) = 0;
     virtual QJsonRpcServiceReply *sendMessage(const QJsonRpcMessage &message) = 0;
-
+    virtual QJsonRpcMessage invokeRemoteMethodBlocking(const QString &method, const QVariant &arg1 = QVariant(),
+                                               const QVariant &arg2 = QVariant(), const QVariant &arg3 = QVariant(),
+                                               const QVariant &arg4 = QVariant(), const QVariant &arg5 = QVariant(),
+                                               const QVariant &arg6 = QVariant(), const QVariant &arg7 = QVariant(),
+                                               const QVariant &arg8 = QVariant(), const QVariant &arg9 = QVariant(),
+                                               const QVariant &arg10 = QVariant()) = 0;
+    virtual QJsonRpcServiceReply *invokeRemoteMethod(const QString &method, const QVariant &arg1 = QVariant(),
+                                             const QVariant &arg2 = QVariant(), const QVariant &arg3 = QVariant(),
+                                             const QVariant &arg4 = QVariant(), const QVariant &arg5 = QVariant(),
+                                             const QVariant &arg6 = QVariant(), const QVariant &arg7 = QVariant(),
+                                             const QVariant &arg8 = QVariant(), const QVariant &arg9 = QVariant(),
+                                             const QVariant &arg10 = QVariant()) = 0;
 protected:
     QJsonRpcAbstractSocket(QJsonRpcAbstractSocketPrivate &dd, QObject *parent = 0);
 

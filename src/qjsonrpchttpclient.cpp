@@ -52,6 +52,9 @@ public:
 
     virtual ~QJsonRpcHttpReply() {}
 
+Q_SIGNALS:
+    void messageReceived(const QJsonRpcMessage &message);
+
 private Q_SLOTS:
     void networkReplyFinished()
     {
@@ -75,6 +78,8 @@ private Q_SLOTS:
             } else {
                 qJsonRpcDebug() << "received: " << doc.toJson();
                 QJsonRpcMessage response = QJsonRpcMessage::fromObject(doc.object());
+                Q_EMIT messageReceived(response);
+
                 if (d->request.type() == QJsonRpcMessage::Request &&
                     d->request.id() != response.id()) {
                     d->response =
@@ -102,9 +107,16 @@ private Q_SLOTS:
         if (code == QNetworkReply::NoError)
             return;
 
-        d->response = d->request.createErrorResponse(QJsonRpc::InternalError,
-                                       "error with http request",
-                                       reply->errorString());
+        QJsonRpcMessage response = QJsonRpcMessage::fromJson(reply->readAll());
+        if (response.isValid()) {
+            d->response = response;
+            Q_EMIT messageReceived(response);
+        } else {
+            d->response = d->request.createErrorResponse(QJsonRpc::InternalError,
+                                           QString("error with http request: %1").arg(reply->error()),
+                                           reply->errorString());
+        }
+
         Q_EMIT finished();
     }
 
@@ -194,6 +206,12 @@ void QJsonRpcHttpClient::setEndPoint(const QString &endPoint)
     d->endPoint = QUrl::fromUserInput(endPoint);
 }
 
+QNetworkAccessManager *QJsonRpcHttpClient::networkAccessManager()
+{
+    Q_D(QJsonRpcHttpClient);
+    return d->networkAccessManager;
+}
+
 QSslConfiguration QJsonRpcHttpClient::sslConfiguration() const
 {
     Q_D(const QJsonRpcHttpClient);
@@ -204,12 +222,6 @@ void QJsonRpcHttpClient::setSslConfiguration(const QSslConfiguration &sslConfigu
 {
     Q_D(QJsonRpcHttpClient);
     d->sslConfiguration = sslConfiguration;
-}
-
-QNetworkAccessManager *QJsonRpcHttpClient::networkAccessManager()
-{
-    Q_D(QJsonRpcHttpClient);
-    return d->networkAccessManager;
 }
 
 void QJsonRpcHttpClient::notify(const QJsonRpcMessage &message)
@@ -237,7 +249,11 @@ QJsonRpcServiceReply *QJsonRpcHttpClient::sendMessage(const QJsonRpcMessage &mes
     }
 
     QNetworkReply *reply = d->writeMessage(message);
-    return new QJsonRpcHttpReply(message, reply);
+    QJsonRpcHttpReply *serviceReply = new QJsonRpcHttpReply(message, reply);
+    connect(serviceReply, SIGNAL(messageReceived(QJsonRpcMessage)),
+                    this, SIGNAL(messageReceived(QJsonRpcMessage)));
+
+    return serviceReply;
 }
 
 QJsonRpcMessage QJsonRpcHttpClient::sendMessageBlocking(const QJsonRpcMessage &message, int msecs)
@@ -253,6 +269,54 @@ QJsonRpcMessage QJsonRpcHttpClient::sendMessageBlocking(const QJsonRpcMessage &m
     if (!reply->response().isValid())
         return message.createErrorResponse(QJsonRpc::TimeoutError, "request timed out");
     return reply->response();
+}
+
+QJsonRpcMessage QJsonRpcHttpClient::invokeRemoteMethodBlocking(const QString &method, const QVariant &param1,
+                                                               const QVariant &param2, const QVariant &param3,
+                                                               const QVariant &param4, const QVariant &param5,
+                                                               const QVariant &param6, const QVariant &param7,
+                                                               const QVariant &param8, const QVariant &param9,
+                                                               const QVariant &param10)
+{
+    QVariantList params;
+    if (param1.isValid()) params.append(param1);
+    if (param2.isValid()) params.append(param2);
+    if (param3.isValid()) params.append(param3);
+    if (param4.isValid()) params.append(param4);
+    if (param5.isValid()) params.append(param5);
+    if (param6.isValid()) params.append(param6);
+    if (param7.isValid()) params.append(param7);
+    if (param8.isValid()) params.append(param8);
+    if (param9.isValid()) params.append(param9);
+    if (param10.isValid()) params.append(param10);
+
+    QJsonRpcMessage request =
+        QJsonRpcMessage::createRequest(method, QJsonArray::fromVariantList(params));
+    return sendMessageBlocking(request);
+}
+
+QJsonRpcServiceReply *QJsonRpcHttpClient::invokeRemoteMethod(const QString &method, const QVariant &param1,
+                                                             const QVariant &param2, const QVariant &param3,
+                                                             const QVariant &param4, const QVariant &param5,
+                                                             const QVariant &param6, const QVariant &param7,
+                                                             const QVariant &param8, const QVariant &param9,
+                                                             const QVariant &param10)
+{
+    QVariantList params;
+    if (param1.isValid()) params.append(param1);
+    if (param2.isValid()) params.append(param2);
+    if (param3.isValid()) params.append(param3);
+    if (param4.isValid()) params.append(param4);
+    if (param5.isValid()) params.append(param5);
+    if (param6.isValid()) params.append(param6);
+    if (param7.isValid()) params.append(param7);
+    if (param8.isValid()) params.append(param8);
+    if (param9.isValid()) params.append(param9);
+    if (param10.isValid()) params.append(param10);
+
+    QJsonRpcMessage request =
+        QJsonRpcMessage::createRequest(method, QJsonArray::fromVariantList(params));
+    return sendMessage(request);
 }
 
 void QJsonRpcHttpClient::handleAuthenticationRequired(QNetworkReply *reply, QAuthenticator *authenticator)

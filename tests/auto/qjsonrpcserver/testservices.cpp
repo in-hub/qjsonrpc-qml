@@ -142,14 +142,6 @@ bool TestService::stringListParameter(int one, const QString &two, const QString
     return true;
 }
 
-bool TestService::delayedResponse()
-{
-    QEventLoop loop;
-    QTimer::singleShot(100, &loop, SLOT(quit()));
-    loop.exec();
-    return true;
-}
-
 QJsonArray TestService::returnQJsonArray()
 {
     QJsonArray array;

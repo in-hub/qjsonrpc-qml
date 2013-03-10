@@ -4,7 +4,8 @@ SUBDIRS += \
     qjsonrpcsocket \
     qjsonrpcserver \
     qjsonrpcservice \
-    qjsonrpchttpclient
+    qjsonrpchttpclient \
+    qjsonrpchttpserver
 
 lessThan(QT_MAJOR_VERSION, 5) {
     SUBDIRS += json
