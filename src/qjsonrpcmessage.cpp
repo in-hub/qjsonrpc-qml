@@ -118,8 +118,12 @@ QJsonRpcMessage QJsonRpcMessagePrivate::createBasicRequest(const QString &method
     request.d->object = new QJsonObject;
     request.d->object->insert("jsonrpc", QLatin1String("2.0"));
     request.d->object->insert("method", method);
-    if (!params.isEmpty())
-        request.d->object->insert("params", QJsonArray::fromVariantList(params));
+    if (!params.isEmpty()) {
+        QJsonArray paramsArray;
+        paramsArray.append(QJsonArray::fromVariantList(params));
+        request.d->object->insert("params", paramsArray);
+    }
+
     return request;
 }
 

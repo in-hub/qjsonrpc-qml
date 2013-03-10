@@ -32,6 +32,7 @@ private slots:
     void testMessageTypes();
     void testPositionalParameters();
     void testEquivalence();
+    void testWithVariantListArgs();
 };
 
 void TestQJsonRpcMessage::testInvalidData()
@@ -98,9 +99,6 @@ void TestQJsonRpcMessage::testMessageTypes()
     QCOMPARE(notification.type(), QJsonRpcMessage::Notification);
 }
 
-
-
-
 // this is from the spec, I don't think it proves much..
 void TestQJsonRpcMessage::testPositionalParameters()
 {
@@ -141,6 +139,23 @@ void TestQJsonRpcMessage::testEquivalence()
     QVERIFY(secondNotification != invalid);
     QVERIFY(thirdNotification != invalid);
     QVERIFY(fourthNotification != invalid);
+}
+
+void TestQJsonRpcMessage::testWithVariantListArgs()
+{
+    const char *varListArgs = "{ " \
+            "\"id\": 5, " \                 // HMMMMMMMMMM
+            "\"jsonrpc\": \"2.0\", " \
+            "\"method\": \"service.variantListParameter\", " \
+            "\"params\": [[ 1, 20, \"hello\", false ]] " \
+            "}";
+
+    QJsonRpcMessage requestFromQJsonRpc =
+        QJsonRpcMessage::createRequest("service.variantListParameter", QVariantList() << 1 << 20 << "hello" << false);
+
+    QJsonDocument doc = QJsonDocument::fromJson(varListArgs);
+    QJsonRpcMessage requestFromData(doc.object());
+    QCOMPARE(requestFromQJsonRpc, requestFromData);
 }
 
 QTEST_MAIN(TestQJsonRpcMessage)
