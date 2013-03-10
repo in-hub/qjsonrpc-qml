@@ -144,7 +144,7 @@ void TestQJsonRpcMessage::testEquivalence()
 void TestQJsonRpcMessage::testWithVariantListArgs()
 {
     const char *varListArgs = "{ " \
-            "\"id\": 5, " \                 // HMMMMMMMMMM
+            "\"id\": 5, " \
             "\"jsonrpc\": \"2.0\", " \
             "\"method\": \"service.variantListParameter\", " \
             "\"params\": [[ 1, 20, \"hello\", false ]] " \

@@ -39,6 +39,7 @@ private Q_SLOTS:
     void testLocalSingleParameter();
     void testLocalMultiparameter();
     void testLocalVariantParameter();
+    void testLocalVariantListParameter();
     void testLocalVariantResult();
     void testLocalInvalidArgs();
     void testLocalMethodNotFound();
@@ -105,6 +106,10 @@ public Q_SLOTS:
     bool variantParameter(const QVariant &variantParam) const
     {
         return variantParam.toBool();
+    }
+
+    QVariantList variantListParameter(const QVariantList &data) {
+        return data;
     }
 
     QVariant variantStringResult() {
@@ -197,9 +202,7 @@ void TestQJsonRpcServer::testLocalSingleParameter()
     socket.connectToServer("test");
     QVERIFY(socket.waitForConnected());
     QJsonRpcSocket serviceSocket(&socket, this);
-    QSignalSpy spyMessageReceived(&serviceSocket,
-                                  SIGNAL(messageReceived(QJsonRpcMessage)));
-
+    QSignalSpy spyMessageReceived(&serviceSocket, SIGNAL(messageReceived(QJsonRpcMessage)));
     QJsonRpcMessage request = QJsonRpcMessage::createRequest("service.singleParam", QString("single"));
     QJsonRpcMessage response = serviceSocket.sendMessageBlocking(request);
     QCOMPARE(spyMessageReceived.count(), 1);
@@ -286,6 +289,32 @@ void TestQJsonRpcServer::testLocalVariantParameter()
     QVERIFY(response.errorCode() == QJsonRpc::NoError);
     QCOMPARE(request.id(), response.id());
     QVERIFY(response.result() == true);
+}
+
+void TestQJsonRpcServer::testLocalVariantListParameter()
+{
+    // Initialize the service provider.
+    QJsonRpcLocalServer serviceProvider;
+    serviceProvider.addService(new TestService);
+    QVERIFY(serviceProvider.listen("test"));
+
+    // Connect to the socket.
+    QLocalSocket socket;
+    socket.connectToServer("test");
+    QVERIFY(socket.waitForConnected());
+    QJsonRpcSocket serviceSocket(&socket, this);
+    QSignalSpy spyMessageReceived(&serviceSocket,
+                                  SIGNAL(messageReceived(QJsonRpcMessage)));
+
+    QVariantList data;
+    data << 1 << 20 << "hello" << false;
+    QJsonRpcMessage request = QJsonRpcMessage::createRequest("service.variantListParameter",
+                                                             QVariantList() << QVariant(data));
+    QJsonRpcMessage response = serviceSocket.sendMessageBlocking(request);
+    QCOMPARE(spyMessageReceived.count(), 1);
+    QVERIFY(response.errorCode() == QJsonRpc::NoError);
+    QCOMPARE(request.id(), response.id());
+    QCOMPARE(response.result().toList(), data);
 }
 
 void TestQJsonRpcServer::testLocalVariantResult()

@@ -162,7 +162,7 @@ void QJsonRpcServicePrivate::cacheInvokableInfo()
             parameterTypes << QMetaType::type(method.typeName());
             foreach(QByteArray parameterType, method.parameterTypes()) {
                 parameterTypes << QMetaType::type(parameterType);
-                jsParameterTypes << convertVariantTypeToJSType(QMetaType::type(parameterType));
+                jsParameterTypes << convertVariantTypeToJSType(QMetaType::type(parameterType));                
             }
 
             parameterTypeHash[idx] = parameterTypes;
@@ -197,6 +197,7 @@ bool QJsonRpcService::dispatch(const QJsonRpcMessage &request)
     QList<int> argumentTypes;
     foreach (QVariant argument, arguments)
         argumentTypes.append(static_cast<int>(argument.type()));
+
     foreach (int methodIndex, indexes) {
         if (argumentTypes == d->jsParameterTypeHash[methodIndex]) {
             parameterTypes = d->parameterTypeHash[methodIndex];
@@ -522,8 +523,8 @@ void QJsonRpcSocket::processIncomingData()
             }
             */
         } else if (document.isObject()){
-	    if (qgetenv("QJSONRPC_DEBUG").toInt())
-	        qDebug() << document.toJson();
+            if (qgetenv("QJSONRPC_DEBUG").toInt())
+                qDebug() << document.toJson();
 
             QJsonRpcMessage message(document.object());
             Q_EMIT messageReceived(message);
