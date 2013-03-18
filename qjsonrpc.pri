@@ -16,7 +16,7 @@ contains(QJSONRPC_LIBRARY_TYPE, staticlib) {
 
 isEmpty(PREFIX) {
     unix {
-        PREFIX = /usr/local
+        PREFIX = /usr
     } else {
         PREFIX = $$[QT_INSTALL_PREFIX]
     }
