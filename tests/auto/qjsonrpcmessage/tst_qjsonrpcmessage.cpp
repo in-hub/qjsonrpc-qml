@@ -150,8 +150,10 @@ void TestQJsonRpcMessage::testWithVariantListArgs()
             "\"params\": [[ 1, 20, \"hello\", false ]] " \
             "}";
 
+    QVariantList firstParameter;
+    firstParameter << 1 << 20 << "hello" << false;
     QJsonRpcMessage requestFromQJsonRpc =
-        QJsonRpcMessage::createRequest("service.variantListParameter", QVariantList() << 1 << 20 << "hello" << false);
+        QJsonRpcMessage::createRequest("service.variantListParameter", QVariant(firstParameter));
 
     QJsonDocument doc = QJsonDocument::fromJson(varListArgs);
     QJsonRpcMessage requestFromData(doc.object());
