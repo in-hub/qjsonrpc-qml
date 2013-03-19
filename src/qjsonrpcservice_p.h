@@ -22,6 +22,7 @@
 #include <QPointer>
 #include <QLocalSocket>
 #include <QTcpSocket>
+#include <QObjectCleanupHandler>
 
 #if QT_VERSION >= 0x050000
 #include <QJsonDocument>
@@ -58,6 +59,8 @@ class QJsonRpcServiceProviderPrivate
 {
 public:
     QHash<QString, QJsonRpcService*> services;
+    QObjectCleanupHandler cleanupHandler;
+
 };
 
 class QJsonRpcServiceReply;

@@ -300,11 +300,6 @@ QJsonRpcServiceProvider::QJsonRpcServiceProvider()
 
 QJsonRpcServiceProvider::~QJsonRpcServiceProvider()
 {
-    Q_D(QJsonRpcServiceProvider);
-    foreach (QJsonRpcService *service, d->services) {
-        if (!service->parent())
-            service->deleteLater();
-    }
 }
 
 void QJsonRpcServiceProvider::addService(QJsonRpcService *service)
@@ -316,6 +311,9 @@ void QJsonRpcServiceProvider::addService(QJsonRpcService *service)
         if (mci.name() == QLatin1String("serviceName")) {
             service->d_ptr->cacheInvokableInfo();
             d->services.insert(mci.value(), service);
+            if (!service->parent())
+                d->cleanupHandler.add(service);
+
             return;
         }
     }
