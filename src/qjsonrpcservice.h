@@ -83,7 +83,10 @@ public:
 protected:
     QJsonRpcServiceProvider();
     void processMessage(QJsonRpcSocket *socket, const QJsonRpcMessage &message);
-    QHash<QString, QJsonRpcService*> m_services;
+
+private:
+    Q_DECLARE_PRIVATE(QJsonRpcServiceProvider)
+    QScopedPointer<QJsonRpcServiceProviderPrivate> d_ptr;
 
 };
 

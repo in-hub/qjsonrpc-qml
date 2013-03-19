@@ -1,18 +1,3 @@
-#ifndef QJSONRPCSERVICE_P_H
-#define QJSONRPCSERVICE_P_H
-
-#include <QHash>
-#include <QHostAddress>
-#include <QPointer>
-#include <QLocalSocket>
-#include <QTcpSocket>
-
-#if QT_VERSION >= 0x050000
-#include <QJsonDocument>
-#else
-#include "qjsondocument.h"
-#endif
-
 /*
  * Copyright (C) 2012-2013 Matt Broadstone
  * Contact: http://bitbucket.org/devonit/qjsonrpc
@@ -29,6 +14,21 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  */
+#ifndef QJSONRPCSERVICE_P_H
+#define QJSONRPCSERVICE_P_H
+
+#include <QHash>
+#include <QHostAddress>
+#include <QPointer>
+#include <QLocalSocket>
+#include <QTcpSocket>
+
+#if QT_VERSION >= 0x050000
+#include <QJsonDocument>
+#else
+#include "qjsondocument.h"
+#endif
+
 #include "qjsonrpcservice.h"
 #include "qjsonrpcmessage.h"
 #include "qjsonrpc_export.h"
@@ -52,6 +52,12 @@ public:
 
     QJsonRpcService * const q_ptr;
     Q_DECLARE_PUBLIC(QJsonRpcService)
+};
+
+class QJsonRpcServiceProviderPrivate
+{
+public:
+    QHash<QString, QJsonRpcService*> services;
 };
 
 class QJsonRpcServiceReply;

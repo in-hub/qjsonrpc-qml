@@ -294,12 +294,14 @@ QJsonRpcMessage QJsonRpcServiceReply::response() const
 }
 
 QJsonRpcServiceProvider::QJsonRpcServiceProvider()
+    : d_ptr(new QJsonRpcServiceProviderPrivate)
 {
 }
 
 QJsonRpcServiceProvider::~QJsonRpcServiceProvider()
 {
-    foreach (QJsonRpcService *service, m_services) {
+    Q_D(QJsonRpcServiceProvider);
+    foreach (QJsonRpcService *service, d->services) {
         if (!service->parent())
             service->deleteLater();
     }
@@ -307,12 +309,13 @@ QJsonRpcServiceProvider::~QJsonRpcServiceProvider()
 
 void QJsonRpcServiceProvider::addService(QJsonRpcService *service)
 {
+    Q_D(QJsonRpcServiceProvider);
     const QMetaObject *mo = service->metaObject();
     for (int i = 0; i < mo->classInfoCount(); i++) {
         const QMetaClassInfo mci = mo->classInfo(i);
         if (mci.name() == QLatin1String("serviceName")) {
             service->d_ptr->cacheInvokableInfo();
-            m_services.insert(mci.value(), service);
+            d->services.insert(mci.value(), service);
             return;
         }
     }
@@ -322,18 +325,19 @@ void QJsonRpcServiceProvider::addService(QJsonRpcService *service)
 
 void QJsonRpcServiceProvider::processMessage(QJsonRpcSocket *socket, const QJsonRpcMessage &message)
 {
+    Q_D(QJsonRpcServiceProvider);
     switch (message.type()) {
         case QJsonRpcMessage::Request:
         case QJsonRpcMessage::Notification: {
             QString serviceName = message.method().section(".", 0, -2);
-            if (serviceName.isEmpty() || !m_services.contains(serviceName)) {
+            if (serviceName.isEmpty() || !d->services.contains(serviceName)) {
                 if (message.type() == QJsonRpcMessage::Request) {
                     QJsonRpcMessage error = message.createErrorResponse(QJsonRpc::MethodNotFound,
                                                                         QString("service '%1' not found").arg(serviceName));
                     socket->notify(error);
                 }
             } else {
-                QJsonRpcService *service = m_services.value(serviceName);
+                QJsonRpcService *service = d->services.value(serviceName);
                 service->d_ptr->socket = socket;
                 if (message.type() == QJsonRpcMessage::Request)
                     QObject::connect(service, SIGNAL(result(QJsonRpcMessage)), socket, SLOT(notify(QJsonRpcMessage)));
