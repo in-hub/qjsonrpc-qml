@@ -45,7 +45,11 @@
 #include <QtCore/qglobal.h>
 #include <QtCore/qstring.h>
 
-#include "qjsonrpc_export.h"
+#ifdef QJSONRPC_BUILD
+#   include "qjsonrpc_export.h"
+#else
+#   include <qjsonrpc/qjsonrpc_export.h>
+#endif
 
 QT_BEGIN_HEADER
 
