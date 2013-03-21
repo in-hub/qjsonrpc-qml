@@ -52,6 +52,8 @@ private Q_SLOTS:
     void testLocalNotifyServiceSocket();
     void testLocalNoWhitespace();
     void testLocalOverloadedMethod();
+    void testLocalQVariantMapInvalidParam();
+
 
     // TCP Server
     void testTcpNoParameter();
@@ -142,6 +144,10 @@ public Q_SLOTS:
         if (list.at(2) != 3)
             return false;
         return true;
+    }
+
+    QString variantMapInvalidParam(const QVariantMap &map) {
+        return map["foo"].toString();
     }
 
     bool overloadedMethod(int input) { Q_UNUSED(input) return true; }
@@ -438,6 +444,32 @@ void TestQJsonRpcServer::testLocalNoWhitespace()
     QCOMPARE(socket.write(multipleNoWhite), (qint64)multipleNoWhite.size());
     QTest::qWait(200);
     QCOMPARE(service->callCount(), 3);
+}
+
+void TestQJsonRpcServer::testLocalQVariantMapInvalidParam()
+{
+    QJsonRpcLocalServer serviceProvider;
+    TestService *service = new TestService;
+    serviceProvider.addService(service);
+    QVERIFY(serviceProvider.listen("test"));
+
+    QLocalSocket socket;
+    socket.connectToServer("test");
+    QVERIFY(socket.waitForConnected());
+    QJsonRpcSocket serviceSocket(&socket, this);
+    QSignalSpy spyMessageReceived(&serviceSocket,
+                                  SIGNAL(messageReceived(QJsonRpcMessage)));
+
+    QByteArray variantInvalidParam("{\"jsonrpc\": \"2.0\", \"id\": 0, \"method\": \"service.variantMapInvalidParam\",\"params\": [[{\"foo\":\"bar\",\"baz\":\"quux\"}, {\"foo\":\"bar\"}]]}");
+    QJsonDocument doc = QJsonDocument::fromJson(variantInvalidParam);
+    QJsonRpcMessage request(doc.object());
+    serviceSocket.sendMessageBlocking(request);
+
+    QCOMPARE(spyMessageReceived.count(), 1);
+    QVariant message = spyMessageReceived.takeFirst().at(0);
+    QJsonRpcMessage error = message.value<QJsonRpcMessage>();
+    QCOMPARE(request.id(), error.id());
+    QVERIFY(error.errorCode() == QJsonRpc::InvalidParams);
 }
 
 class ServerNotificationHelper : public QObject
