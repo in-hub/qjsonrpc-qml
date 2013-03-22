@@ -171,6 +171,23 @@ void QJsonRpcServicePrivate::cacheInvokableInfo()
     }
 }
 
+bool variantAwareCompare(const QList<int> &argumentTypes, const QList<int> &jsParameterTypes)
+{
+    if (argumentTypes.size() != jsParameterTypes.size())
+        return false;
+
+    for (int i = 0; i < argumentTypes.size(); ++i) {
+        if (argumentTypes.at(i) == jsParameterTypes.at(i))
+            continue;
+        else if (jsParameterTypes.at(i) == QMetaType::QVariant)
+            continue;
+        else
+            return false;
+    }
+
+    return true;
+}
+
 //QJsonRpcMessage QJsonRpcService::dispatch(const QJsonRpcMessage &request) const
 bool QJsonRpcService::dispatch(const QJsonRpcMessage &request)
 {
@@ -199,21 +216,10 @@ bool QJsonRpcService::dispatch(const QJsonRpcMessage &request)
         argumentTypes.append(static_cast<int>(argument.type()));
 
     foreach (int methodIndex, indexes) {
-        if (argumentTypes == d->jsParameterTypeHash[methodIndex]) {
+        if (variantAwareCompare(argumentTypes, d->jsParameterTypeHash[methodIndex])) {
             parameterTypes = d->parameterTypeHash[methodIndex];
             idx = methodIndex;
             break;
-        }
-    }
-
-    // fallback to old behavior if we found nothing, mostly to support QVariant parameters
-    if (idx == -1) {
-        foreach (int methodIndex, indexes) {
-            if (argumentTypes.size() == d->jsParameterTypeHash[methodIndex].size()) {
-                parameterTypes = d->parameterTypeHash[methodIndex];
-                idx = methodIndex;
-                break;
-            }
         }
     }
 
@@ -281,7 +287,6 @@ bool QJsonRpcService::dispatch(const QJsonRpcMessage &request)
     Q_EMIT result(request.createResponse(returnCopy));
     return true;
 }
-
 
 QJsonRpcServiceReply::QJsonRpcServiceReply(QObject *parent)
     : QObject(parent)

@@ -245,6 +245,17 @@ void TestQJsonRpcServer::testLocalOverloadedMethod()
     QVERIFY(intResponse.errorCode() == QJsonRpc::NoError);
     QCOMPARE(intRequest.id(), intResponse.id());
     QCOMPARE(intResponse.result().toBool(), true);
+
+    QVariantMap testMap;
+    testMap["one"] = 1;
+    testMap["two"] = 2;
+    testMap["three"] = 3;
+    QJsonRpcMessage mapRequest =
+        QJsonRpcMessage::createRequest("service.overloadedMethod", testMap);
+    QJsonRpcMessage mapResponse = serviceSocket.sendMessageBlocking(mapRequest);
+    QCOMPARE(spyMessageReceived.count(), 3);
+    QVERIFY(mapResponse.errorCode() == QJsonRpc::InvalidParams);
+    QCOMPARE(mapRequest.id(), mapResponse.id());
 }
 
 void TestQJsonRpcServer::testLocalMultiparameter()
