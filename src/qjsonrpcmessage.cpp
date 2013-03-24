@@ -31,6 +31,7 @@ public:
     QJsonRpcMessagePrivate();
     ~QJsonRpcMessagePrivate();
 
+    void initializeWithObject(const QJsonObject &message);
     static QJsonRpcMessage createBasicRequest(const QString &method, const QVariantList &params);
     QJsonRpcMessage::Type type;
     QJsonObject *object;
@@ -45,6 +46,26 @@ QJsonRpcMessagePrivate::QJsonRpcMessagePrivate()
       object(0)
 {
 }
+
+void QJsonRpcMessagePrivate::initializeWithObject(const QJsonObject &message)
+{
+    object = new QJsonObject(message);
+    if (message.contains("id")) {
+        if (message.contains("result") || message.contains("error")) {
+            if (message.contains("error"))
+                type = QJsonRpcMessage::Error;
+            else
+                type = QJsonRpcMessage::Response;
+        } else if (message.contains("method")) {
+            type = QJsonRpcMessage::Request;
+        }
+    } else {
+        if (message.contains("method")) {
+            type = QJsonRpcMessage::Notification;
+        }
+    }
+}
+
 
 QJsonRpcMessagePrivate::~QJsonRpcMessagePrivate()
 {
@@ -98,6 +119,7 @@ bool QJsonRpcMessage::operator==(const QJsonRpcMessage &message) const
 }
 
 QJsonRpcMessage::QJsonRpcMessage(const QByteArray &message)
+    : d(new QJsonRpcMessagePrivate)
 {
     QJsonParseError error;
     QJsonDocument document = QJsonDocument::fromJson(message, &error);
@@ -111,27 +133,13 @@ QJsonRpcMessage::QJsonRpcMessage(const QByteArray &message)
         return;
     }
 
-    QJsonRpcMessage::QJsonRpcMessage(document.object());
+    d->initializeWithObject(document.object());
 }
 
 QJsonRpcMessage::QJsonRpcMessage(const QJsonObject &message)
     : d(new QJsonRpcMessagePrivate)
 {
-    d->object = new QJsonObject(message);
-    if (message.contains("id")) {
-        if (message.contains("result") || message.contains("error")) {
-            if (message.contains("error"))
-                d->type = QJsonRpcMessage::Error;
-            else
-                d->type = QJsonRpcMessage::Response;
-        } else if (message.contains("method")) {
-            d->type = QJsonRpcMessage::Request;
-        }
-    } else {
-        if (message.contains("method")) {
-            d->type = QJsonRpcMessage::Notification;
-        }
-    }
+    d->initializeWithObject(message);
 }
 
 QJsonObject QJsonRpcMessage::toObject() const
