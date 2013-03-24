@@ -16,6 +16,13 @@
  */
 
 #include <QDebug>
+
+#if QT_VERSION >= 0x050000
+#   include <QJsonDocument>
+#else
+#   include "json/qjsondocument.h"
+#endif
+
 #include "qjsonrpcmessage.h"
 
 class QJsonRpcMessagePrivate : public QSharedData
@@ -88,6 +95,23 @@ bool QJsonRpcMessage::operator==(const QJsonRpcMessage &message) const
     }
 
     return false;
+}
+
+QJsonRpcMessage::QJsonRpcMessage(const QByteArray &message)
+{
+    QJsonParseError error;
+    QJsonDocument document = QJsonDocument::fromJson(message, &error);
+    if (error.error != QJsonParseError::NoError) {
+        qWarning() << Q_FUNC_INFO << error.errorString();
+        return;
+    }
+
+    if (!document.isObject()) {
+        qWarning() << Q_FUNC_INFO << "invalid message: " << message;
+        return;
+    }
+
+    QJsonRpcMessage::QJsonRpcMessage(document.object());
 }
 
 QJsonRpcMessage::QJsonRpcMessage(const QJsonObject &message)

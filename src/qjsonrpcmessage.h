@@ -54,6 +54,7 @@ class QJSONRPC_EXPORT QJsonRpcMessage
 public:
     QJsonRpcMessage();
     QJsonRpcMessage(const QJsonObject &message);
+    QJsonRpcMessage(const QByteArray &message);
     QJsonRpcMessage(const QJsonRpcMessage &other);
     QJsonRpcMessage &operator=(const QJsonRpcMessage &other);
     ~QJsonRpcMessage();
