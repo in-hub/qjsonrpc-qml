@@ -14,8 +14,23 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  */
+
 #include <QDebug>
-#include "qjsonrpcmessage_p.h"
+#include "qjsonrpcmessage.h"
+
+class QJsonRpcMessagePrivate : public QSharedData
+{
+public:
+    QJsonRpcMessagePrivate();
+    ~QJsonRpcMessagePrivate();
+
+    static QJsonRpcMessage createBasicRequest(const QString &method, const QVariantList &params);
+    QJsonRpcMessage::Type type;
+    QJsonObject *object;
+
+    static int uniqueRequestCounter;
+
+};
 
 int QJsonRpcMessagePrivate::uniqueRequestCounter = 0;
 QJsonRpcMessagePrivate::QJsonRpcMessagePrivate()
@@ -232,7 +247,7 @@ int QJsonRpcMessage::errorCode() const
 QString QJsonRpcMessage::errorMessage() const
 {
     if (d->type != QJsonRpcMessage::Error || !d->object)
-        return 0;
+        return QString();
 
     QJsonObject error = d->object->value("error").toObject();
     return error.value("message").toString();
@@ -241,7 +256,7 @@ QString QJsonRpcMessage::errorMessage() const
 QVariant QJsonRpcMessage::errorData() const
 {
     if (d->type != QJsonRpcMessage::Error || !d->object)
-        return 0;
+        return QVariant();
 
     QJsonObject error = d->object->value("error").toObject();
     return error.value("data").toVariant();

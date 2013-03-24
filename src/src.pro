@@ -17,8 +17,7 @@ lessThan(QT_VERSION_MAJOR, 5) {
 }
 
 PRIVATE_HEADERS += \
-    qjsonrpcservice_p.h \
-    qjsonrpcmessage_p.h \
+    qjsonrpcservice_p.h
 
 INSTALL_HEADERS += \
     qjsonrpcservice.h \
@@ -32,7 +31,6 @@ HEADERS += \
 SOURCES += \
     qjsonrpcservice.cpp \
     qjsonrpcmessage.cpp
-
 
 # install
 headers.files = $${INSTALL_HEADERS}
