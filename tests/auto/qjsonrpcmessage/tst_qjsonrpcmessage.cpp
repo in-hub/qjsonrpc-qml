@@ -46,8 +46,7 @@ void TestQJsonRpcMessage::testInvalidDataResponseWithId()
 {
     // invalid with id
     const char *invalid = "{\"jsonrpc\": \"2.0\", \"params\": [], \"id\": 666}";
-    QJsonDocument doc = QJsonDocument::fromJson(invalid);
-    QJsonRpcMessage request(doc.object());
+    QJsonRpcMessage request(invalid);
     QJsonRpcMessage error    = request.createErrorResponse(QJsonRpc::NoError, QString());
     QJsonRpcMessage response = request.createResponse(QString());
     QCOMPARE(request.type(), QJsonRpcMessage::Invalid);
@@ -59,8 +58,7 @@ void TestQJsonRpcMessage::testInvalidDataResponseWithoutId()
 {
     // invalid without id
     const char *invalid = "{\"jsonrpc\": \"2.0\", \"params\": []}";
-    QJsonDocument doc = QJsonDocument::fromJson(invalid);
-    QJsonRpcMessage request(doc.object());
+    QJsonRpcMessage request(invalid);
     QJsonRpcMessage error    = request.createErrorResponse(QJsonRpc::NoError, QString());
     QJsonRpcMessage response = request.createResponse(QString());
     QCOMPARE(request.type(), QJsonRpcMessage::Invalid);
@@ -111,7 +109,6 @@ void TestQJsonRpcMessage::testPositionalParameters()
 
 void TestQJsonRpcMessage::testEquivalence()
 {
-
     // request (same as error)
     QJsonRpcMessage firstRequest = QJsonRpcMessage::createRequest("testRequest");
     QJsonRpcMessage secondRequest(firstRequest);
@@ -155,8 +152,7 @@ void TestQJsonRpcMessage::testWithVariantListArgs()
     QJsonRpcMessage requestFromQJsonRpc =
         QJsonRpcMessage::createRequest("service.variantListParameter", QVariant(firstParameter));
 
-    QJsonDocument doc = QJsonDocument::fromJson(varListArgs);
-    QJsonRpcMessage requestFromData(doc.object());
+    QJsonRpcMessage requestFromData(varListArgs);
     QCOMPARE(requestFromQJsonRpc, requestFromData);
 }
 

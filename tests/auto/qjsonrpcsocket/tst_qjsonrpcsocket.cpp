@@ -77,10 +77,7 @@ void TestQJsonRpcSocket::testSocketNoParameters()
     reply = serviceSocket.sendMessage(request);
     Q_UNUSED(reply);
 
-    QJsonDocument document = QJsonDocument::fromJson(buffer.data());
-    QVERIFY(!document.isEmpty());
-    QJsonRpcMessage bufferMessage(document.object());
-
+    QJsonRpcMessage bufferMessage(buffer.data());
     QCOMPARE(request.id(), bufferMessage.id());
     QCOMPARE(request.type(), bufferMessage.type());
     QCOMPARE(request.method(), bufferMessage.method());
@@ -104,10 +101,7 @@ void TestQJsonRpcSocket::testSocketMultiparamter()
     reply = serviceSocket.sendMessage(request);
     Q_UNUSED(reply);
 
-    QJsonDocument document = QJsonDocument::fromJson(buffer.data());
-    QVERIFY(!document.isEmpty());
-    QJsonRpcMessage bufferMessage(document.object());
-
+    QJsonRpcMessage bufferMessage(buffer.data());
     QCOMPARE(request.id(), bufferMessage.id());
     QCOMPARE(request.type(), bufferMessage.type());
     QCOMPARE(request.method(), bufferMessage.method());
@@ -130,10 +124,7 @@ void TestQJsonRpcSocket::testSocketNotification()
     reply = serviceSocket.sendMessage(notification);
     Q_UNUSED(reply);
 
-    QJsonDocument document = QJsonDocument::fromJson(buffer.data());
-    QVERIFY(!document.isEmpty());
-    QJsonRpcMessage bufferMessage(document.object());
-
+    QJsonRpcMessage bufferMessage(buffer.data());
     QCOMPARE(notification.id(), bufferMessage.id());
     QCOMPARE(notification.type(), bufferMessage.type());
     QCOMPARE(notification.method(), bufferMessage.method());
@@ -157,10 +148,7 @@ void TestQJsonRpcSocket::testSocketResponse()
     reply = serviceSocket.sendMessage(response);
     Q_UNUSED(reply);
 
-    QJsonDocument document = QJsonDocument::fromJson(buffer.data());
-    QVERIFY(!document.isEmpty());
-    QJsonRpcMessage bufferMessage(document.object());
-
+    QJsonRpcMessage bufferMessage(buffer.data());
     QCOMPARE(response.id(), bufferMessage.id());
     QCOMPARE(response.type(), bufferMessage.type());
     QCOMPARE(response.method(), bufferMessage.method());

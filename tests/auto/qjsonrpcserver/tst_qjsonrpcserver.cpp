@@ -419,10 +419,7 @@ void TestQJsonRpcServer::testLocalInvalidRequest()
     QSignalSpy spyMessageReceived(&serviceSocket,
                                   SIGNAL(messageReceived(QJsonRpcMessage)));
 
-    const char *invalid = "{\"jsonrpc\": \"2.0\", \"id\": 666}";
-
-    QJsonDocument doc = QJsonDocument::fromJson(invalid);
-    QJsonRpcMessage request(doc.object());
+    QJsonRpcMessage request("{\"jsonrpc\": \"2.0\", \"id\": 666}");
     serviceSocket.sendMessageBlocking(request);
 
     QCOMPARE(spyMessageReceived.count(), 1);
@@ -471,9 +468,8 @@ void TestQJsonRpcServer::testLocalQVariantMapInvalidParam()
     QSignalSpy spyMessageReceived(&serviceSocket,
                                   SIGNAL(messageReceived(QJsonRpcMessage)));
 
-    QByteArray variantInvalidParam("{\"jsonrpc\": \"2.0\", \"id\": 0, \"method\": \"service.variantMapInvalidParam\",\"params\": [[{\"foo\":\"bar\",\"baz\":\"quux\"}, {\"foo\":\"bar\"}]]}");
-    QJsonDocument doc = QJsonDocument::fromJson(variantInvalidParam);
-    QJsonRpcMessage request(doc.object());
+    const char *invalid = "{\"jsonrpc\": \"2.0\", \"id\": 0, \"method\": \"service.variantMapInvalidParam\",\"params\": [[{\"foo\":\"bar\",\"baz\":\"quux\"}, {\"foo\":\"bar\"}]]}";
+    QJsonRpcMessage request(invalid);
     serviceSocket.sendMessageBlocking(request);
 
     QCOMPARE(spyMessageReceived.count(), 1);
@@ -934,10 +930,7 @@ void TestQJsonRpcServer::testTcpInvalidRequest()
     QSignalSpy spyMessageReceived(&serviceSocket,
                                   SIGNAL(messageReceived(QJsonRpcMessage)));
 
-    const char *invalid = "{\"jsonrpc\": \"2.0\", \"id\": 666}";
-
-    QJsonDocument doc = QJsonDocument::fromJson(invalid);
-    QJsonRpcMessage request(doc.object());
+    QJsonRpcMessage request("{\"jsonrpc\": \"2.0\", \"id\": 666}");
     serviceSocket.sendMessageBlocking(request);
     QCOMPARE(spyMessageReceived.count(), 1);
     QVariant message = spyMessageReceived.takeFirst().at(0);
