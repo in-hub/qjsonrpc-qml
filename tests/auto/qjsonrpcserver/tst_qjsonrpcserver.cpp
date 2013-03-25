@@ -21,9 +21,97 @@
 #include <QtCore/QVariant>
 #include <QtTest/QtTest>
 
+#include "qjsonrpcservice_p.h"
 #include "json/qjsondocument.h"
 #include "qjsonrpcservice.h"
 #include "qjsonrpcmessage.h"
+
+class FakeQJsonRpcSocket : public QJsonRpcSocket
+{
+    Q_OBJECT
+public:
+    FakeQJsonRpcSocket(QIODevice *device, QObject *parent = 0)
+        : QJsonRpcSocket(device, parent),
+          m_buffer(0)
+    {
+        m_buffer = new QBuffer(this);
+        m_buffer->open(QIODevice::ReadWrite);
+    }
+
+    QBuffer *buffer() { return m_buffer; }
+
+public Q_SLOTS:
+    virtual void notify(const QJsonRpcMessage &message) {
+        QJsonDocument doc = QJsonDocument(message.toObject());
+        QByteArray data = doc.toJson();
+        m_buffer->write(data);
+        m_buffer->seek(0);
+    }
+
+private:
+    QBuffer *m_buffer;
+
+};
+
+class FakeQJsonRpcServerSocket : public QJsonRpcSocket
+{
+    Q_OBJECT
+public:
+    FakeQJsonRpcServerSocket(QIODevice *device, QObject *parent = 0)
+        : QJsonRpcSocket(device, parent),
+          m_device(device) {}
+
+public Q_SLOTS:
+    virtual void notify(const QJsonRpcMessage &message) {
+        QJsonDocument doc = QJsonDocument(message.toObject());
+        QByteArray data = doc.toJson();
+        m_device->write(data);
+        m_device->seek(0);
+    }
+
+private:
+    QIODevice *m_device;
+
+};
+
+class FakeQJsonRpcServer : public QJsonRpcServer
+{
+    Q_OBJECT
+public:
+    FakeQJsonRpcServer(QObject *parent = 0)
+        : QJsonRpcServer(new QJsonRpcServerPrivate, parent),
+          m_buffer(0)
+    {
+        m_buffer = new QBuffer(this);
+        m_buffer->open(QIODevice::ReadWrite);
+    }
+
+    QBuffer *buffer() { return m_buffer; }
+    void addSocket(QJsonRpcSocket *socket) {
+        socket->setWireFormat(wireFormat());
+        connect(socket, SIGNAL(messageReceived(QJsonRpcMessage)),
+                  this, SLOT(received(QJsonRpcMessage)));
+    }
+
+private Q_SLOTS:
+    void received(const QJsonRpcMessage &message) {
+        FakeQJsonRpcSocket *socket = static_cast<FakeQJsonRpcSocket*>(sender());
+        if (!socket) {
+            qDebug() << Q_FUNC_INFO << "called without service socket";
+            return;
+        }
+
+        QJsonRpcSocket *returnSocket = new FakeQJsonRpcServerSocket(m_buffer, this);
+        QJsonRpcServiceProvider::processMessage(returnSocket, message);
+    }
+
+private:
+    virtual void processIncomingConnection() {}
+    virtual QString errorString() const { return QString(); }
+    virtual void clientDisconnected() {}
+
+    QBuffer *m_buffer;
+};
 
 class TestQJsonRpcServer: public QObject
 {
@@ -54,7 +142,6 @@ private Q_SLOTS:
     void testLocalOverloadedMethod();
     void testLocalQVariantMapInvalidParam();
 
-
     // TCP Server
     void testTcpNoParameter();
     void testTcpSingleParameter();
@@ -84,9 +171,7 @@ public:
     {}
 
     void resetCount() { m_called = 0; }
-    int callCount() const {
-        return m_called;
-    }
+    int callCount() const { return m_called; }
 
 public Q_SLOTS:
     void noParam() const {}
@@ -136,7 +221,6 @@ public Q_SLOTS:
     bool methodWithListOfInts(const QList<int> &list) {
         if (list.size() < 3)
             return false;
-
         if (list.at(0) != 300)
             return false;
         if (list.at(1) != 30)
@@ -155,6 +239,7 @@ public Q_SLOTS:
 
 private:
     int m_called;
+
 };
 
 void TestQJsonRpcServer::initTestCase()
