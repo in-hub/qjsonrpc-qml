@@ -116,11 +116,23 @@ private:
 class TestQJsonRpcServer: public QObject
 {
     Q_OBJECT
+public:
+    TestQJsonRpcServer();
+
 private Q_SLOTS:
     void initTestCase();
     void cleanupTestCase();
     void init();
     void cleanup();
+
+    void testNoParameter();
+
+private:
+    FakeQJsonRpcServer *m_server;
+    FakeQJsonRpcSocket *m_clientSocket;
+    FakeQJsonRpcSocket *m_serverSocket;
+
+private:
 
     // Local Server
     void testLocalNoParameter();
@@ -242,6 +254,13 @@ private:
 
 };
 
+TestQJsonRpcServer::TestQJsonRpcServer()
+    : m_server(0),
+      m_clientSocket(0),
+      m_serverSocket(0)
+{
+}
+
 void TestQJsonRpcServer::initTestCase()
 {
     qRegisterMetaType<QJsonRpcMessage>("QJsonRpcMessage");
@@ -253,32 +272,39 @@ void TestQJsonRpcServer::cleanupTestCase()
 
 void TestQJsonRpcServer::init()
 {
+    if (m_server)
+        m_server->deleteLater();
+    if (m_clientSocket)
+        m_clientSocket->deleteLater();
+    if (m_serverSocket)
+        m_serverSocket->deleteLater();
+
+    m_server = new FakeQJsonRpcServer(this);
+    m_clientSocket = new FakeQJsonRpcSocket(m_server->buffer());
+    m_serverSocket = new FakeQJsonRpcSocket(m_clientSocket->buffer());
+    m_server->addSocket(m_serverSocket);
 }
 
 void TestQJsonRpcServer::cleanup()
 {
+    if (m_server)
+        m_server->deleteLater();
+    if (m_clientSocket)
+        m_clientSocket->deleteLater();
+    if (m_serverSocket)
+        m_serverSocket->deleteLater();
 }
 
-void TestQJsonRpcServer::testLocalNoParameter()
+void TestQJsonRpcServer::testNoParameter()
 {
-    // Initialize the service provider.
-    QJsonRpcLocalServer serviceProvider;
-    serviceProvider.addService(new TestService);
-    QVERIFY(serviceProvider.listen("test"));
+    m_server->addService(new TestService);
 
-    // Connect to the socket.
-    QLocalSocket socket;
-    socket.connectToServer("test");
-    QVERIFY(socket.waitForConnected(1000));
-    QJsonRpcSocket serviceSocket(&socket, this);
-    QSignalSpy spyMessageReceived(&serviceSocket,
-                                  SIGNAL(messageReceived(QJsonRpcMessage)));
-
+    QSignalSpy spyMessageReceived(m_clientSocket, SIGNAL(messageReceived(QJsonRpcMessage)));
     QJsonRpcMessage request = QJsonRpcMessage::createRequest("service.noParam");
-    QJsonRpcMessage response = serviceSocket.sendMessageBlocking(request);
-    QCOMPARE(spyMessageReceived.count(), 1);
+    QJsonRpcMessage response = m_clientSocket->sendMessageBlocking(request);
     QVERIFY(response.errorCode() == QJsonRpc::NoError);
     QCOMPARE(request.id(), response.id());
+    QCOMPARE(spyMessageReceived.count(), 1);
 }
 
 void TestQJsonRpcServer::testLocalSingleParameter()
