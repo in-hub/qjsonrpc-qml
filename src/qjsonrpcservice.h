@@ -104,7 +104,7 @@ public:
     bool isValid() const;
 
 public Q_SLOTS:
-    void notify(const QJsonRpcMessage &message);
+    virtual void notify(const QJsonRpcMessage &message);
     QJsonRpcMessage sendMessageBlocking(const QJsonRpcMessage &message, int msecs = 30000);
     QJsonRpcServiceReply *sendMessage(const QJsonRpcMessage &message);
 //  void sendMessage(const QList<QJsonRpcMessage> &bulk);
@@ -151,7 +151,7 @@ private:
 
 class QJsonRpcServerPrivate;
 class QJSONRPC_EXPORT QJsonRpcServer : public QObject,
-                                        public QJsonRpcServiceProvider
+                                       public QJsonRpcServiceProvider
 {
     Q_OBJECT
 public:
@@ -166,7 +166,7 @@ public Q_SLOTS:
     void notifyConnectedClients(const QJsonRpcMessage &message);
     void notifyConnectedClients(const QString &method, const QVariantList &params = QVariantList());
 
-private Q_SLOTS:
+protected Q_SLOTS:
     virtual void processIncomingConnection() = 0;
     virtual void clientDisconnected() = 0;
     void processMessage(const QJsonRpcMessage &message);

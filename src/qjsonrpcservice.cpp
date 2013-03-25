@@ -93,7 +93,7 @@ void QJsonRpcSocketPrivate::writeData(const QJsonRpcMessage &message)
     QByteArray data = doc.toJson(format);
     device.data()->write(data);
     if (qgetenv("QJSONRPC_DEBUG").toInt())
-        qDebug() << data;
+        qDebug() << "sending: " << data;
 }
 
 QJsonRpcService::QJsonRpcService(QObject *parent)
@@ -531,7 +531,7 @@ void QJsonRpcSocket::processIncomingData()
             */
         } else if (document.isObject()){
             if (qgetenv("QJSONRPC_DEBUG").toInt())
-                qDebug() << document.toJson();
+                qDebug() << "received: " << document.toJson();
 
             QJsonRpcMessage message(document.object());
             Q_EMIT messageReceived(message);
