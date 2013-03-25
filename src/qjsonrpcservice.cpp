@@ -417,7 +417,7 @@ QJsonRpcServiceReply *QJsonRpcSocket::sendMessage(const QJsonRpcMessage &message
         return 0;
     }
 
-    d->writeData(message);
+    notify(message);
     QJsonRpcServiceReply *reply = new QJsonRpcServiceReply;
     d->replies.insert(message.id(), reply);
     return reply;
