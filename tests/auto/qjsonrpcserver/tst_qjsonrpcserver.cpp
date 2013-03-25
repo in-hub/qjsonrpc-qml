@@ -97,6 +97,9 @@ public:
         socket->setWireFormat(wireFormat());
         connect(socket, SIGNAL(messageReceived(QJsonRpcMessage)),
                   this, SLOT(received(QJsonRpcMessage)));
+
+        QJsonRpcSocket *tmpSocket = new FakeQJsonRpcServerSocket(m_buffer, this);
+        d_ptr->clients.append(tmpSocket);
     }
 
 private Q_SLOTS:
@@ -140,7 +143,7 @@ private Q_SLOTS:
     void testInvalidArgs();
     void testMethodNotFound();
     void testInvalidRequest();
-//    void testNotifyConnectedClients();
+    void testNotifyConnectedClients();
     void testNumberParameters();
     void testHugeResponse();
     void testComplexMethod();
@@ -492,25 +495,22 @@ private:
 
 };
 
-/*
 void TestQJsonRpcServer::testNotifyConnectedClients()
 {
     m_server->addService(new TestService);
 
-    QEventLoop firstLoop;
+    QEventLoop loop;
     QSignalSpy firstSpyMessageReceived(m_clientSocket, SIGNAL(messageReceived(QJsonRpcMessage)));
     QJsonRpcMessage notification = QJsonRpcMessage::createNotification("testNotification");
-    connect(m_clientSocket, SIGNAL(messageReceived(QJsonRpcMessage)), &firstLoop, SLOT(quit()));
-    ServerNotificationHelper helper(notification, m_server);
-    QTimer::singleShot(100, &helper, SLOT(activate()));
-    firstLoop.exec();
+    connect(m_clientSocket, SIGNAL(messageReceived(QJsonRpcMessage)), &loop, SLOT(quit()));
+    m_server->notifyConnectedClients(notification);
+    loop.exec();
 
     QCOMPARE(firstSpyMessageReceived.count(), 1);
     QVariant firstMessage = firstSpyMessageReceived.takeFirst().at(0);
     QJsonRpcMessage firstNotification = firstMessage.value<QJsonRpcMessage>();
     QCOMPARE(firstNotification, notification);
 }
-*/
 
 class TestNumberParamsService : public QJsonRpcService
 {

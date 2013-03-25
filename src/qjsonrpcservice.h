@@ -151,7 +151,7 @@ private:
 
 class QJsonRpcServerPrivate;
 class QJSONRPC_EXPORT QJsonRpcServer : public QObject,
-                                        public QJsonRpcServiceProvider
+                                       public QJsonRpcServiceProvider
 {
     Q_OBJECT
 public:
