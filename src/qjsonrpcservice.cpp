@@ -181,7 +181,15 @@ bool variantAwareCompare(const QList<int> &argumentTypes, const QList<int> &jsPa
             continue;
         else if (jsParameterTypes.at(i) == QMetaType::QVariant)
             continue;
-        else
+        else if (argumentTypes.at(i) == QMetaType::QVariantList) {
+            if (jsParameterTypes.at(i) == QMetaType::QStringList)
+                continue;
+
+            if (jsParameterTypes.at(i) == QMetaType::QVariantList)
+                continue;
+
+            return false;
+        } else
             return false;
     }
 
@@ -212,8 +220,9 @@ bool QJsonRpcService::dispatch(const QJsonRpcMessage &request)
     QList<int> indexes = d->invokableMethodHash.values(method);
     QVariantList arguments = request.params();
     QList<int> argumentTypes;
-    foreach (QVariant argument, arguments)
+    foreach (QVariant argument, arguments) {
         argumentTypes.append(static_cast<int>(argument.type()));
+    }
 
     foreach (int methodIndex, indexes) {
         if (variantAwareCompare(argumentTypes, d->jsParameterTypeHash[methodIndex])) {
