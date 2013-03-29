@@ -150,6 +150,7 @@ private Q_SLOTS:
     void testDefaultParameters();
     void testOverloadedMethod();
     void testQVariantMapInvalidParam();
+    void testStringListParameter();
 
 private:
     void clearBuffers();
@@ -254,6 +255,15 @@ public Q_SLOTS:
 
     bool overloadedMethod(int input) { Q_UNUSED(input) return true; }
     bool overloadedMethod(const QString &input) { Q_UNUSED(input) return false; }
+
+    bool stringListParameter(int one, const QString &two, const QString &three, const QStringList &list)
+    {
+        Q_UNUSED(one);
+        Q_UNUSED(two);
+        Q_UNUSED(three);
+        Q_UNUSED(list);
+        return true;
+    }
 
 private:
     int m_called;
@@ -690,6 +700,17 @@ void TestQJsonRpcServer::testListOfInts()
     QVariant variant = QVariant::fromValue(intList);
     QJsonRpcMessage intRequest = QJsonRpcMessage::createRequest("service.methodWithListOfInts", variant);
     QJsonRpcMessage response = m_clientSocket->sendMessageBlocking(intRequest);
+    QVERIFY(response.type() != QJsonRpcMessage::Error);
+    QVERIFY(response.result().toBool());
+}
+
+void TestQJsonRpcServer::testStringListParameter()
+{
+    m_server->addService(new TestService);
+    QStringList strings = QStringList() << "one" << "two" << "three";
+    QVariantList params =  QVariantList() << 1 << "A" << "B" << strings;
+    QJsonRpcMessage strRequest = QJsonRpcMessage::createRequest("service.stringListParameter", params);
+    QJsonRpcMessage response = m_clientSocket->sendMessageBlocking(strRequest);
     QVERIFY(response.type() != QJsonRpcMessage::Error);
     QVERIFY(response.result().toBool());
 }
