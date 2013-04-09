@@ -3,6 +3,7 @@ include(../qjsonrpc.pri)
 TEMPLATE = lib
 TARGET = qjsonrpc
 QT += core network
+QT -= gui
 DEFINES += QJSONRPC_BUILD
 CONFIG += $${QJSONRPC_LIBRARY_TYPE}
 VERSION = $${QJSONRPC_VERSION}
