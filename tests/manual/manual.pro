@@ -4,4 +4,5 @@ SUBDIRS += localserver \
            tcpserver \
            tcpclient \
            console \
+           asynclocalclient \
            qjsonrpc
