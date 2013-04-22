@@ -70,13 +70,20 @@ public:
     class ParsedObject
     {
     public:
-        ParsedObject(Parser *p, int pos) : parser(p), objectPosition(pos) {}
+        ParsedObject(Parser *p, int pos) : parser(p), objectPosition(pos) {
+#if QT_VERSION >= 0x040800
+            offsets.reserve(64); 
+#endif
+        }
         void insert(uint offset);
 
         Parser *parser;
         int objectPosition;
+#if QT_VERSION >= 0x040800
         QVarLengthArray<uint, 64> offsets;
-
+#else
+        QVector<uint> offsets;
+#endif
         inline QJsonPrivate::Entry *entryAt(int i) const {
             return reinterpret_cast<QJsonPrivate::Entry *>(parser->data + objectPosition + offsets[i]);
         }
