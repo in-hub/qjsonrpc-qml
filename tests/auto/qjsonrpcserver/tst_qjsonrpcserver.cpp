@@ -16,6 +16,7 @@
  */
 #include <QLocalSocket>
 #include <QTcpSocket>
+#include <QScopedPointer>
 
 #include <QtCore/QEventLoop>
 #include <QtCore/QVariant>
@@ -124,6 +125,14 @@ private:
     QBuffer *m_buffer;
 };
 
+struct QObjectDeleter
+{
+    static inline void cleanup(QObject *pointer) {
+        if (pointer)
+            pointer->deleteLater();
+    }
+};
+
 class TestQJsonRpcServer: public QObject
 {
     Q_OBJECT
@@ -156,9 +165,9 @@ private Q_SLOTS:
 
 private:
     void clearBuffers();
-    FakeQJsonRpcServer *m_server;
-    FakeQJsonRpcSocket *m_clientSocket;
-    FakeQJsonRpcSocket *m_serverSocket;
+    QScopedPointer<FakeQJsonRpcServer, QObjectDeleter> m_server;
+    QScopedPointer<FakeQJsonRpcSocket, QObjectDeleter> m_clientSocket;
+    QScopedPointer<FakeQJsonRpcSocket, QObjectDeleter> m_serverSocket;
 
 private:
     // fix later
@@ -290,34 +299,21 @@ void TestQJsonRpcServer::cleanupTestCase()
 
 void TestQJsonRpcServer::init()
 {
-    if (m_server)
-        m_server->deleteLater();
-    if (m_clientSocket)
-        m_clientSocket->deleteLater();
-    if (m_serverSocket)
-        m_serverSocket->deleteLater();
-
-    m_server = new FakeQJsonRpcServer(this);
-    m_clientSocket = new FakeQJsonRpcSocket(m_server->buffer());
-    m_serverSocket = new FakeQJsonRpcSocket(m_clientSocket->buffer());
-    m_server->addSocket(m_serverSocket);
+    m_server.reset(new FakeQJsonRpcServer(this));
+    m_clientSocket.reset(new FakeQJsonRpcSocket(m_server->buffer()));
+    m_serverSocket.reset(new FakeQJsonRpcSocket(m_clientSocket->buffer()));
+    m_server->addSocket(m_serverSocket.data());
 }
 
 void TestQJsonRpcServer::cleanup()
 {
-    if (m_server)
-        m_server->deleteLater();
-    if (m_clientSocket)
-        m_clientSocket->deleteLater();
-    if (m_serverSocket)
-        m_serverSocket->deleteLater();
 }
 
 void TestQJsonRpcServer::testNoParameter()
 {
     m_server->addService(new TestService);
 
-    QSignalSpy spyMessageReceived(m_clientSocket, SIGNAL(messageReceived(QJsonRpcMessage)));
+    QSignalSpy spyMessageReceived(m_clientSocket.data(), SIGNAL(messageReceived(QJsonRpcMessage)));
     QJsonRpcMessage request = QJsonRpcMessage::createRequest("service.noParam");
     QJsonRpcMessage response = m_clientSocket->sendMessageBlocking(request);
     QVERIFY(response.errorCode() == QJsonRpc::NoError);
@@ -329,7 +325,7 @@ void TestQJsonRpcServer::testSingleParameter()
 {
     m_server->addService(new TestService);
 
-    QSignalSpy spyMessageReceived(m_clientSocket, SIGNAL(messageReceived(QJsonRpcMessage)));
+    QSignalSpy spyMessageReceived(m_clientSocket.data(), SIGNAL(messageReceived(QJsonRpcMessage)));
     QJsonRpcMessage request = QJsonRpcMessage::createRequest("service.singleParam", QString("single"));
     QJsonRpcMessage response = m_clientSocket->sendMessageBlocking(request);
     QCOMPARE(spyMessageReceived.count(), 1);
@@ -341,7 +337,7 @@ void TestQJsonRpcServer::testSingleParameter()
 void TestQJsonRpcServer::testOverloadedMethod()
 {
     m_server->addService(new TestService);
-    QSignalSpy spyMessageReceived(m_clientSocket, SIGNAL(messageReceived(QJsonRpcMessage)));
+    QSignalSpy spyMessageReceived(m_clientSocket.data(), SIGNAL(messageReceived(QJsonRpcMessage)));
 
     QJsonRpcMessage stringRequest = QJsonRpcMessage::createRequest("service.overloadedMethod", QString("single"));
     QJsonRpcMessage stringResponse = m_clientSocket->sendMessageBlocking(stringRequest);
@@ -374,7 +370,7 @@ void TestQJsonRpcServer::testMultiparameter()
 {
     m_server->addService(new TestService);
 
-    QSignalSpy spyMessageReceived(m_clientSocket, SIGNAL(messageReceived(QJsonRpcMessage)));
+    QSignalSpy spyMessageReceived(m_clientSocket.data(), SIGNAL(messageReceived(QJsonRpcMessage)));
     QJsonRpcMessage request = QJsonRpcMessage::createRequest("service.multipleParam",
                                                              QVariantList() << QVariant(QString("a"))
                                                                             << QVariant(QString("b"))
@@ -390,7 +386,7 @@ void TestQJsonRpcServer::testVariantParameter()
 {
     m_server->addService(new TestService);
 
-    QSignalSpy spyMessageReceived(m_clientSocket, SIGNAL(messageReceived(QJsonRpcMessage)));
+    QSignalSpy spyMessageReceived(m_clientSocket.data(), SIGNAL(messageReceived(QJsonRpcMessage)));
     QJsonRpcMessage request = QJsonRpcMessage::createRequest("service.variantParameter",
                                                              QVariantList() << QVariant(true));
     QJsonRpcMessage response = m_clientSocket->sendMessageBlocking(request);
@@ -406,7 +402,7 @@ void TestQJsonRpcServer::testVariantListParameter()
 
     QVariantList data;
     data << 1 << 20 << "hello" << false;
-    QSignalSpy spyMessageReceived(m_clientSocket, SIGNAL(messageReceived(QJsonRpcMessage)));
+    QSignalSpy spyMessageReceived(m_clientSocket.data(), SIGNAL(messageReceived(QJsonRpcMessage)));
     QJsonRpcMessage request = QJsonRpcMessage::createRequest("service.variantListParameter",
                                                              QVariantList() << QVariant(data));
     QJsonRpcMessage response = m_clientSocket->sendMessageBlocking(request);
@@ -430,7 +426,7 @@ void TestQJsonRpcServer::testInvalidArgs()
 {
     m_server->addService(new TestService);
 
-    QSignalSpy spyMessageReceived(m_clientSocket, SIGNAL(messageReceived(QJsonRpcMessage)));
+    QSignalSpy spyMessageReceived(m_clientSocket.data(), SIGNAL(messageReceived(QJsonRpcMessage)));
     QJsonRpcMessage request = QJsonRpcMessage::createRequest("service.noParam",
                                                              QVariantList() << false);
     m_clientSocket->sendMessageBlocking(request);
@@ -445,7 +441,7 @@ void TestQJsonRpcServer::testMethodNotFound()
 {
     m_server->addService(new TestService);
 
-    QSignalSpy spyMessageReceived(m_clientSocket, SIGNAL(messageReceived(QJsonRpcMessage)));
+    QSignalSpy spyMessageReceived(m_clientSocket.data(), SIGNAL(messageReceived(QJsonRpcMessage)));
     QJsonRpcMessage request = QJsonRpcMessage::createRequest("service.doesNotExist");
     QJsonRpcMessage response = m_clientSocket->sendMessageBlocking(request);
     QCOMPARE(spyMessageReceived.count(), 1);
@@ -460,7 +456,7 @@ void TestQJsonRpcServer::testInvalidRequest()
 {
     m_server->addService(new TestService);
 
-    QSignalSpy spyMessageReceived(m_clientSocket, SIGNAL(messageReceived(QJsonRpcMessage)));
+    QSignalSpy spyMessageReceived(m_clientSocket.data(), SIGNAL(messageReceived(QJsonRpcMessage)));
     QJsonRpcMessage request("{\"jsonrpc\": \"2.0\", \"id\": 666}");
     m_clientSocket->sendMessageBlocking(request);
 
@@ -476,7 +472,7 @@ void TestQJsonRpcServer::testQVariantMapInvalidParam()
     TestService *service = new TestService;
     m_server->addService(service);
 
-    QSignalSpy spyMessageReceived(m_clientSocket, SIGNAL(messageReceived(QJsonRpcMessage)));
+    QSignalSpy spyMessageReceived(m_clientSocket.data(), SIGNAL(messageReceived(QJsonRpcMessage)));
     const char *invalid = "{\"jsonrpc\": \"2.0\", \"id\": 0, \"method\": \"service.variantMapInvalidParam\",\"params\": [[{\"foo\":\"bar\",\"baz\":\"quux\"}, {\"foo\":\"bar\"}]]}";
     QJsonRpcMessage request(invalid);
     m_clientSocket->sendMessageBlocking(request);
@@ -512,9 +508,9 @@ void TestQJsonRpcServer::testNotifyConnectedClients()
     m_server->addService(new TestService);
 
     QEventLoop loop;
-    QSignalSpy firstSpyMessageReceived(m_clientSocket, SIGNAL(messageReceived(QJsonRpcMessage)));
+    QSignalSpy firstSpyMessageReceived(m_clientSocket.data(), SIGNAL(messageReceived(QJsonRpcMessage)));
     QJsonRpcMessage notification = QJsonRpcMessage::createNotification("testNotification");
-    connect(m_clientSocket, SIGNAL(messageReceived(QJsonRpcMessage)), &loop, SLOT(quit()));
+    connect(m_clientSocket.data(), SIGNAL(messageReceived(QJsonRpcMessage)), &loop, SLOT(quit()));
     m_server->notifyConnectedClients(notification);
     loop.exec();
 
@@ -578,7 +574,7 @@ public Q_SLOTS:
 void TestQJsonRpcServer::testHugeResponse()
 {
     m_server->addService(new TestHugeResponseService);
-    QSignalSpy spyMessageReceived(m_clientSocket, SIGNAL(messageReceived(QJsonRpcMessage)));
+    QSignalSpy spyMessageReceived(m_clientSocket.data(), SIGNAL(messageReceived(QJsonRpcMessage)));
     QJsonRpcMessage request = QJsonRpcMessage::createRequest("service.hugeResponse");
     QJsonRpcMessage response = m_clientSocket->sendMessageBlocking(request);
     QCOMPARE(spyMessageReceived.count(), 1);
@@ -600,7 +596,7 @@ public Q_SLOTS:
 void TestQJsonRpcServer::testComplexMethod()
 {
     m_server->addService(new TestComplexMethodService);
-    QSignalSpy spyMessageReceived(m_clientSocket, SIGNAL(messageReceived(QJsonRpcMessage)));
+    QSignalSpy spyMessageReceived(m_clientSocket.data(), SIGNAL(messageReceived(QJsonRpcMessage)));
     QJsonRpcMessage request = QJsonRpcMessage::createRequest("service.complex.prefix.for.testMethod");
     QJsonRpcMessage response = m_clientSocket->sendMessageBlocking(request);
     QCOMPARE(spyMessageReceived.count(), 1);

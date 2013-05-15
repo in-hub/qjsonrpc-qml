@@ -363,8 +363,7 @@ void QJsonRpcServiceProvider::processMessage(QJsonRpcSocket *socket, const QJson
                 service->d_ptr->socket = socket;
                 if (message.type() == QJsonRpcMessage::Request)
                     QObject::connect(service, SIGNAL(result(QJsonRpcMessage)), socket, SLOT(notify(QJsonRpcMessage)));
-                if (!service->dispatch(message))
-                    qDebug() << Q_FUNC_INFO << "failed to dispatch";
+                service->dispatch(message);
             }
         }
         break;
