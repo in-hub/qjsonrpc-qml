@@ -94,7 +94,9 @@ public:
 
     QBuffer *buffer() { return m_buffer; }
     void addSocket(QJsonRpcSocket *socket) {
+#if QT_VERSION >= 0x050100 || QT_VERSION <= 0x050000
         socket->setWireFormat(wireFormat());
+#endif
         connect(socket, SIGNAL(messageReceived(QJsonRpcMessage)),
                   this, SLOT(received(QJsonRpcMessage)));
 

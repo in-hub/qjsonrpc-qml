@@ -98,8 +98,10 @@ public:
     explicit QJsonRpcSocket(QIODevice *device, QObject *parent = 0);
     ~QJsonRpcSocket();
 
+#if QT_VERSION >= 0x050100 || QT_VERSION <= 0x050000
     QJsonDocument::JsonFormat wireFormat() const;
     void setWireFormat(QJsonDocument::JsonFormat format);
+#endif
 
     bool isValid() const;
 
@@ -159,8 +161,10 @@ public:
     virtual QString errorString() const = 0;
     virtual void addService(QJsonRpcService *service);
 
+#if QT_VERSION >= 0x050100 || QT_VERSION <= 0x050000
     QJsonDocument::JsonFormat wireFormat() const;
     void setWireFormat(QJsonDocument::JsonFormat format);
+#endif
 
 public Q_SLOTS:
     void notifyConnectedClients(const QJsonRpcMessage &message);

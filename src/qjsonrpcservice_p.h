@@ -67,23 +67,34 @@ class QJsonRpcServiceReply;
 class QJSONRPC_EXPORT QJsonRpcSocketPrivate
 {
 public:
+#if QT_VERSION >= 0x050100 || QT_VERSION <= 0x050000
+    QJsonDocument::JsonFormat format;
     QJsonRpcSocketPrivate() : format(QJsonDocument::Compact) {}
+#else
+    QJsonRpcSocketPrivate() {}
+#endif
+
     int findJsonDocumentEnd(const QByteArray &jsonData);
     void writeData(const QJsonRpcMessage &message);
 
     QPointer<QIODevice> device;
     QByteArray buffer;
     QHash<int, QJsonRpcServiceReply*> replies;
-    QJsonDocument::JsonFormat format;
 
 };
 
 class QJsonRpcServerPrivate
 {
 public:
-    QJsonRpcServerPrivate() : format(QJsonDocument::Compact) {}
-    QList<QJsonRpcSocket*> clients;
+#if QT_VERSION >= 0x050100 || QT_VERSION <= 0x050000
     QJsonDocument::JsonFormat format;
+    QJsonRpcServerPrivate() : format(QJsonDocument::Compact) {}
+#else
+    QJsonRpcServerPrivate() {}
+#endif
+
+    QList<QJsonRpcSocket*> clients;
+
 };
 
 class QLocalServer;

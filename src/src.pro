@@ -13,6 +13,7 @@ win32:DESTDIR = $$OUT_PWD
 QT_VERSION = $$[QT_VERSION]
 QT_VERSION = $$split(QT_VERSION, ".")
 QT_VERSION_MAJOR = $$member(QT_VERSION, 0)
+QT_VERSION_MINOR = $$member(QT_VERSION, 1)
 lessThan(QT_VERSION_MAJOR, 5) {
     include(json/json.pri)
 }

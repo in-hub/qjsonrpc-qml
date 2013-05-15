@@ -1,4 +1,3 @@
-load(qttest_p4)
 DEPTH = ../../..
 include($${DEPTH}/qjsonrpc.pri)
 include($${DEPTH}/tests/tests.pri)

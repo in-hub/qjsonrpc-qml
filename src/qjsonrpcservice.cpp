@@ -90,7 +90,13 @@ int QJsonRpcSocketPrivate::findJsonDocumentEnd(const QByteArray &jsonData)
 void QJsonRpcSocketPrivate::writeData(const QJsonRpcMessage &message)
 {
     QJsonDocument doc = QJsonDocument(message.toObject());
+
+#if QT_VERSION >= 0x050100 || QT_VERSION <= 0x050000
     QByteArray data = doc.toJson(format);
+#else
+    QByteArray data = doc.toJson();
+#endif
+
     device.data()->write(data);
     if (qgetenv("QJSONRPC_DEBUG").toInt())
         qDebug() << "sending: " << data;
@@ -263,7 +269,11 @@ bool QJsonRpcService::dispatch(const QJsonRpcMessage &request)
         const QVariant &argument = arguments.at(i);
         if (!argument.isValid()) {
             // pass in a default constructed parameter in this case
+#if QT_VERSION >= 0x050000
+            void *value = QMetaType::create(parameterType);
+#else
             void *value = QMetaType::construct(parameterType);
+#endif
             parameters.append(value);
             cleanup.insert(value, static_cast<QMetaType::Type>(parameterType));
         } else {
@@ -495,6 +505,7 @@ QJsonRpcServiceReply *QJsonRpcSocket::invokeRemoteMethod(const QString &method, 
     return sendMessage(request);
 }
 
+#if QT_VERSION >= 0x050100 || QT_VERSION <= 0x050000
 QJsonDocument::JsonFormat QJsonRpcSocket::wireFormat() const
 {
     Q_D(const QJsonRpcSocket);
@@ -506,6 +517,7 @@ void QJsonRpcSocket::setWireFormat(QJsonDocument::JsonFormat format)
     Q_D(QJsonRpcSocket);
     d->format = format;
 }
+#endif
 
 void QJsonRpcSocket::processIncomingData()
 {
@@ -604,6 +616,7 @@ void QJsonRpcServer::addService(QJsonRpcService *service)
                this, SLOT(notifyConnectedClients(QString,QVariantList)));
 }
 
+#if QT_VERSION >= 0x050100 || QT_VERSION <= 0x050000
 QJsonDocument::JsonFormat QJsonRpcServer::wireFormat() const
 {
     Q_D(const QJsonRpcServer);
@@ -615,6 +628,7 @@ void QJsonRpcServer::setWireFormat(QJsonDocument::JsonFormat format)
     Q_D(QJsonRpcServer);
     d->format = format;
 }
+#endif
 
 void QJsonRpcServer::notifyConnectedClients(const QString &method, const QVariantList &params)
 {
@@ -679,7 +693,10 @@ void QJsonRpcLocalServer::processIncomingConnection()
 
     QIODevice *device = qobject_cast<QIODevice*>(localSocket);
     QJsonRpcSocket *socket = new QJsonRpcSocket(device, this);
+#if QT_VERSION >= 0x050100 || QT_VERSION <= 0x050000
     socket->setWireFormat(d->format);
+#endif
+
     connect(socket, SIGNAL(messageReceived(QJsonRpcMessage)), this, SLOT(processMessage(QJsonRpcMessage)));
     d->clients.append(socket);
     connect(localSocket, SIGNAL(disconnected()), this, SLOT(clientDisconnected()));
@@ -745,7 +762,10 @@ void QJsonRpcTcpServer::processIncomingConnection()
 
     QIODevice *device = qobject_cast<QIODevice*>(tcpSocket);
     QJsonRpcSocket *socket = new QJsonRpcSocket(device, this);
+#if QT_VERSION >= 0x050100 || QT_VERSION <= 0x050000
     socket->setWireFormat(d->format);
+#endif
+
     connect(socket, SIGNAL(messageReceived(QJsonRpcMessage)), this, SLOT(processMessage(QJsonRpcMessage)));
     d->clients.append(socket);
     connect(tcpSocket, SIGNAL(disconnected()), this, SLOT(clientDisconnected()));
