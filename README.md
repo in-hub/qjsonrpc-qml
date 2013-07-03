@@ -26,4 +26,4 @@ Building
 
     mkdir build
     cd build
-    qmake && make install
+    qmake .. && make install
