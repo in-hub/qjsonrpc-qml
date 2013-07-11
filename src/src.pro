@@ -1,5 +1,6 @@
 include(../qjsonrpc.pri)
 
+INCLUDEPATH += .
 TEMPLATE = lib
 TARGET = qjsonrpc
 QT += core network
