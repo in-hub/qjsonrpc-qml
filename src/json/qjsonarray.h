@@ -42,11 +42,7 @@
 #ifndef QJSONARRAY_H
 #define QJSONARRAY_H
 
-#ifdef QJSONRPC_BUILD
-#   include "qjsonvalue.h"
-#else
-#   include <qjsonrpc/json/qjsonvalue.h>
-#endif
+#include "qjsonvalue.h"
 
 #include <QtCore/qiterator.h>
 
