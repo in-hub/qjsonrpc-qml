@@ -8,6 +8,7 @@ PRIVATE_HEADERS += \
     $${PWD}/qjsonobject.h \
     $${PWD}/qjsonvalue.h \
     $${PWD}/qjsonarray.h \
+    $${PWD}/qjson_export.h
 
 SOURCES += \
     $${PWD}/qjson.cpp \
