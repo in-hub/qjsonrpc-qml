@@ -1,5 +1,8 @@
 INCLUDEPATH += $${PWD}
 
+QJSON_INSTALL_HEADERS += \
+    $${PWD}/qjson_export.h
+
 PRIVATE_HEADERS += \
     $${PWD}/qjson_p.h \
     $${PWD}/qjsonwriter_p.h \
@@ -7,8 +10,7 @@ PRIVATE_HEADERS += \
     $${PWD}/qjsondocument.h \
     $${PWD}/qjsonobject.h \
     $${PWD}/qjsonvalue.h \
-    $${PWD}/qjsonarray.h \
-    $${PWD}/qjson_export.h
+    $${PWD}/qjsonarray.h
 
 SOURCES += \
     $${PWD}/qjson.cpp \
