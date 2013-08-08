@@ -54,7 +54,7 @@ class QDebug;
 template <class Key, class T> class QMap;
 typedef QMap<QString, QVariant> QVariantMap;
 
-class QJSONRPC_EXPORT QJsonObject
+class QJSON_EXPORT QJsonObject
 {
 public:
     QJsonObject();
@@ -195,7 +195,7 @@ private:
     friend class QJsonDocument;
     friend class QJsonValueRef;
 
-    friend QJSONRPC_EXPORT QDebug operator<<(QDebug, const QJsonObject &);
+    friend QJSON_EXPORT QDebug operator<<(QDebug, const QJsonObject &);
 
     QJsonObject(QJsonPrivate::Data *data, QJsonPrivate::Object *object);
     void detach(uint reserve = 0);
@@ -210,7 +210,7 @@ private:
 };
 
 #ifndef QT_NO_DEBUG_STREAM
-QJSONRPC_EXPORT QDebug operator<<(QDebug, const QJsonObject &);
+QJSON_EXPORT QDebug operator<<(QDebug, const QJsonObject &);
 #endif
 
 QT_END_NAMESPACE
