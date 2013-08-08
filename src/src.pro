@@ -38,8 +38,10 @@ SOURCES += \
 # install
 headers.files = $${INSTALL_HEADERS}
 headers.path = $${PREFIX}/include/qjsonrpc
+qjson_headers.files = $${QJSON_INSTALL_HEADERS}
+qjson_headers.path = $${PREFIX}/include/qjsonrpc/json
 target.path = $${PREFIX}/$${LIBDIR}
-INSTALLS += headers target
+INSTALLS += headers qjson_headers target
 
 # pkg-config support
 CONFIG += create_pc create_prl no_install_prl
