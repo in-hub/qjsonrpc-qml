@@ -42,11 +42,7 @@
 #ifndef QJSONDOCUMENT_H
 #define QJSONDOCUMENT_H
 
-#ifdef QJSONRPC_BUILD
-#   include "qjsonvalue.h"
-#else
-#   include <qjsonrpc/json/qjsonvalue.h>
-#endif
+#include <qjsonvalue.h>
 
 QT_BEGIN_HEADER
 
