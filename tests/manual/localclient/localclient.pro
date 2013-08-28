@@ -7,3 +7,4 @@ HEADERS = localclient.h
 SOURCES = localclient.cpp \
           main.cpp
 
+QT *= gui
