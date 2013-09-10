@@ -25,15 +25,49 @@ class TestQJsonRpcService: public QObject
 {
     Q_OBJECT  
 private slots:
-    void invalidDispatch();
+    void testDispatch();
 
 };
 
-void TestQJsonRpcService::invalidDispatch()
+class TestService : public QJsonRpcService
 {
-    QVERIFY(false);
-}
+    Q_OBJECT
+    Q_CLASSINFO("serviceName", "service")
+public:
+    TestService(QObject *parent = 0)
+        : QJsonRpcService(parent)
+    {}
 
+    bool testDispatch(const QJsonRpcMessage &message) {
+        bool result = QJsonRpcService::dispatch(message);
+        return result;
+    }
+
+public Q_SLOTS:
+    QString testMethod(const QString &string) const {
+        return string;
+    }
+
+};
+
+void TestQJsonRpcService::testDispatch()
+{
+    TestService service;
+    QJsonRpcMessage validRequestDispatch =
+        QJsonRpcMessage::createRequest("testMethod", "testParam");
+    QVERIFY(service.testDispatch(validRequestDispatch));
+
+    QJsonRpcMessage validNotificationDispatch =
+            QJsonRpcMessage::createNotification("testMethod", "testParam");
+    QVERIFY(service.testDispatch(validNotificationDispatch));
+
+    QJsonRpcMessage invalidResponseDispatch =
+        validRequestDispatch.createResponse("testResult");
+    QVERIFY(!service.testDispatch(invalidResponseDispatch));
+
+    QJsonRpcMessage invalidDispatch;
+    QVERIFY(!service.testDispatch(invalidDispatch));
+}
 
 QTEST_MAIN(TestQJsonRpcService);
 #include "tst_qjsonrpcservice.moc"

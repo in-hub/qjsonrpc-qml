@@ -47,7 +47,7 @@ Q_SIGNALS:
 protected:
     QJsonRpcSocket *senderSocket();
 
-private Q_SLOTS:
+protected Q_SLOTS:
     bool dispatch(const QJsonRpcMessage &request);
 
 private:
