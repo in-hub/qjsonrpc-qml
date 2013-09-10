@@ -15,6 +15,13 @@
  * Lesser General Public License for more details.
  */
 #include <QLocalSocket>
+#include <QDir>
+
+#if QT_VERSION >= 0x050000
+#include <QStandardPaths>
+#else
+#include <QDesktopServices>
+#endif //QT_VERSION >= 0x050000
 
 #include "qjsonrpcservice.h"
 #include "json/qjsonvalue.h"
@@ -29,7 +36,15 @@ LocalClient::LocalClient(QObject *parent)
 void LocalClient::run()
 {
     QLocalSocket *socket = new QLocalSocket(this);
-    socket->connectToServer("/tmp/testservice");
+
+#if QT_VERSION >= 0x050000
+    QDir tempDirectory(QStandardPaths::writableLocation(QStandardPaths::TempLocation));
+#else
+    QDir tempDirectory(QDesktopServices::storageLocation(QDesktopServices::TempLocation));
+#endif //QT_VERSION >= 0x050000
+    QString serviceName = tempDirectory.absoluteFilePath("testservice");
+
+    socket->connectToServer(serviceName);
     if (!socket->waitForConnected()) {
         qDebug() << "could not connect to server: " << socket->errorString();
         return;

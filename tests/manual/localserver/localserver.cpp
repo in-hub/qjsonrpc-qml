@@ -15,23 +15,28 @@
  * Lesser General Public License for more details.
  */
 #include <QCoreApplication>
-#include <QDesktopServices>
 #include <QLocalServer>
 #include <QFile>
 #include <QDir>
+
+#if QT_VERSION >= 0x050000
+#include <QStandardPaths>
+#else
+#include <QDesktopServices>
+#endif //QT_VERSION >= 0x050000
 
 #include "testservice.h"
 
 int main(int argc, char **argv)
 {
     QCoreApplication app(argc, argv);
-    QString serviceName;
-#if defined(Q_OS_WIN)
-    QDir tempDirectory(QDesktopServices::storageLocation(QDesktopServices::TempLocation));
-    serviceName = tempDirectory.absoluteFilePath("testservice");
+
+#if QT_VERSION >= 0x050000
+    QDir tempDirectory(QStandardPaths::writableLocation(QStandardPaths::TempLocation));
 #else
-    serviceName = "/tmp/testservice";
-#endif
+    QDir tempDirectory(QDesktopServices::storageLocation(QDesktopServices::TempLocation));
+#endif //QT_VERSION >= 0x050000
+    QString serviceName = tempDirectory.absoluteFilePath("testservice");
 
     if (QFile::exists(serviceName)) {
         if (!QFile::remove(serviceName)) {
