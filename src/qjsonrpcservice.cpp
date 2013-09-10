@@ -206,7 +206,8 @@ bool variantAwareCompare(const QList<int> &argumentTypes, const QList<int> &jsPa
 bool QJsonRpcService::dispatch(const QJsonRpcMessage &request)
 {
     Q_D(QJsonRpcService);
-    if (!request.type() == QJsonRpcMessage::Request) {
+    if (request.type() != QJsonRpcMessage::Request &&
+        request.type() != QJsonRpcMessage::Notification) {
         QJsonRpcMessage error =
             request.createErrorResponse(QJsonRpc::InvalidRequest, "invalid request");
         Q_EMIT result(error);
