@@ -76,6 +76,7 @@ QJsonRpcMessagePrivate::~QJsonRpcMessagePrivate()
 QJsonRpcMessage::QJsonRpcMessage()
     : d(new QJsonRpcMessagePrivate)
 {
+    d->object = new QJsonObject;
 }
 
 QJsonRpcMessage::QJsonRpcMessage(const QJsonRpcMessage &other)
@@ -226,7 +227,7 @@ QJsonRpcMessage QJsonRpcMessage::createErrorResponse(QJsonRpc::ErrorCode code, c
     object->insert("jsonrpc", QLatin1String("2.0"));
 
     if (d->object->contains("id"))
-        object->insert("id", d->object->value("id"));        
+        object->insert("id", d->object->value("id"));
     else
         object->insert("id", 0);
     object->insert("error", error);
