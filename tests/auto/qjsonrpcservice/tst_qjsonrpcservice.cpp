@@ -39,26 +39,33 @@ public:
     {}
 
     bool testDispatch(const QJsonRpcMessage &message) {
-        bool result = QJsonRpcService::dispatch(message);
-        return result;
+        return QJsonRpcService::dispatch(message);
     }
 
 public Q_SLOTS:
     QString testMethod(const QString &string) const {
         return string;
     }
+};
 
+class TestServiceProvider : public QJsonRpcServiceProvider
+{
+public:
+    TestServiceProvider() {}
 };
 
 void TestQJsonRpcService::testDispatch()
 {
+    TestServiceProvider provider;
     TestService service;
+    provider.addService(&service);
+
     QJsonRpcMessage validRequestDispatch =
-        QJsonRpcMessage::createRequest("testMethod", "testParam");
+        QJsonRpcMessage::createRequest("service.testMethod", QString("testParam"));
     QVERIFY(service.testDispatch(validRequestDispatch));
 
     QJsonRpcMessage validNotificationDispatch =
-            QJsonRpcMessage::createNotification("testMethod", "testParam");
+            QJsonRpcMessage::createNotification("service.testMethod", "testParam");
     QVERIFY(service.testDispatch(validNotificationDispatch));
 
     QJsonRpcMessage invalidResponseDispatch =
