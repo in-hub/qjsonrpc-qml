@@ -14,7 +14,6 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  */
-#include "qglobal.h"
 #include <QLocalSocket>
 #include <QDir>
 
@@ -38,16 +37,12 @@ void LocalClient::run()
 {
     QLocalSocket *socket = new QLocalSocket(this);
 
-#if defined(Q_OS_WIN)
 #if QT_VERSION >= 0x050000
     QDir tempDirectory(QStandardPaths::writableLocation(QStandardPaths::TempLocation));
 #else
     QDir tempDirectory(QDesktopServices::storageLocation(QDesktopServices::TempLocation));
 #endif //QT_VERSION >= 0x050000
     QString serviceName = tempDirectory.absoluteFilePath("testservice");
-#else
-    QString serviceName = "/tmp/testservice";
-#endif //defined(Q_OS_WIN)
 
     socket->connectToServer(serviceName);
     if (!socket->waitForConnected()) {
