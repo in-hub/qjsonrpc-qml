@@ -26,6 +26,27 @@
 #include "qjsonrpcservice.h"
 #include "qjsonrpcmessage.h"
 
+class QBufferBackedQJsonRpcSocket : public QJsonRpcSocket
+{
+    Q_OBJECT
+public:
+    QBufferBackedQJsonRpcSocket(QBuffer *buffer, QObject *parent = 0)
+        : QJsonRpcSocket(buffer, parent),
+          m_buffer(buffer)
+    {
+    }
+
+protected Q_SLOTS:
+    virtual void processIncomingData() {
+        m_buffer->seek(0);
+        QJsonRpcSocket::processIncomingData();
+    }
+
+private:
+    QBuffer *m_buffer;
+
+};
+
 class TestQJsonRpcSocket: public QObject
 {
     Q_OBJECT  
@@ -39,6 +60,7 @@ private Q_SLOTS:
     void testSocketMultiparamter();
     void testSocketNotification();
     void testSocketResponse();
+    void testDelayedMessageReceive();
 
 private:
     // benchmark parsing speed
@@ -156,7 +178,6 @@ void TestQJsonRpcSocket::testSocketResponse()
     QCOMPARE(spyMessageReceived.count(), 0);
 }
 
-
 void TestQJsonRpcSocket::jsonParsingBenchmark()
 {
     QFile testData(":/testwire.json");
@@ -180,6 +201,35 @@ void TestQJsonRpcSocket::jsonParsingBenchmark()
     }
 
     QCOMPARE(messageCount, 8);
+}
+
+void TestQJsonRpcSocket::testDelayedMessageReceive()
+{
+    QBuffer buffer;
+    buffer.open(QIODevice::ReadWrite);
+    QBufferBackedQJsonRpcSocket serviceSocket(&buffer, this);
+    QSignalSpy spyMessageReceived(&serviceSocket,
+                                  SIGNAL(messageReceived(QJsonRpcMessage)));
+    QVERIFY(serviceSocket.isValid());
+
+    QJsonRpcMessage request =
+        QJsonRpcMessage::createRequest("test.multiParam");
+
+    QJsonRpcMessage response = serviceSocket.sendMessageBlocking(request, 1);
+    QVERIFY(response.type() == QJsonRpcMessage::Error);
+    spyMessageReceived.removeLast();
+
+    // this should cause a crash, before the fix
+    const char *fakeDelayedResult =
+        "{" \
+            "\"id\": %1," \
+            "\"jsonrpc\": \"2.0\"," \
+            "\"result\": true" \
+        "}";
+
+    buffer.write(QString(fakeDelayedResult).arg(request.id()).toLatin1());
+    while (!spyMessageReceived.size())
+        qApp->processEvents();
 }
 
 QTEST_MAIN(TestQJsonRpcSocket)
