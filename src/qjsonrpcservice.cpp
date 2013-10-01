@@ -416,6 +416,7 @@ void QJsonRpcSocket::sendMessage(const QList<QJsonRpcMessage> &messages)
 
 QJsonRpcMessage QJsonRpcSocket::sendMessageBlocking(const QJsonRpcMessage &message, int msecs)
 {
+    Q_D(QJsonRpcSocket);
     QJsonRpcServiceReply *reply = sendMessage(message);
     QScopedPointer<QJsonRpcServiceReply> replyPtr(reply);
 
@@ -424,8 +425,11 @@ QJsonRpcMessage QJsonRpcSocket::sendMessageBlocking(const QJsonRpcMessage &messa
     QTimer::singleShot(msecs, &responseLoop, SLOT(quit()));
     responseLoop.exec();
 
-    if (!reply->response().isValid())
+    if (!reply->response().isValid()) {
+        d->replies.remove(message.id());
         return message.createErrorResponse(QJsonRpc::TimeoutError, "request timed out");
+    }
+
     return reply->response();
 }
 
