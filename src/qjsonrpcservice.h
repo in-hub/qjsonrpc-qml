@@ -126,8 +126,8 @@ public Q_SLOTS:
 Q_SIGNALS:
     void messageReceived(const QJsonRpcMessage &message);
 
-private Q_SLOTS:
-    void processIncomingData();
+protected Q_SLOTS:
+    virtual void processIncomingData();
 
 protected:
     virtual void processRequestMessage(const QJsonRpcMessage &message);
@@ -139,7 +139,7 @@ private:
 };
 
 class QJSONRPC_EXPORT QJsonRpcServiceSocket : public QJsonRpcSocket,
-                                               public QJsonRpcServiceProvider
+                                              public QJsonRpcServiceProvider
 {
     Q_OBJECT
 public:
