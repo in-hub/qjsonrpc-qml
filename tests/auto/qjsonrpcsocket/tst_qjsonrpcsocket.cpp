@@ -95,9 +95,8 @@ void TestQJsonRpcSocket::testSocketNoParameters()
 
     QJsonRpcMessage request = QJsonRpcMessage::createRequest(QString("test.noParam"));
 
-    QJsonRpcServiceReply *reply;
-    reply = serviceSocket.sendMessage(request);
-    Q_UNUSED(reply);
+    QScopedPointer<QJsonRpcServiceReply> reply;
+    reply.reset(serviceSocket.sendMessage(request));
 
     QJsonRpcMessage bufferMessage(buffer.data());
     QCOMPARE(request.id(), bufferMessage.id());
@@ -119,9 +118,8 @@ void TestQJsonRpcSocket::testSocketMultiparamter()
     QJsonRpcMessage request = QJsonRpcMessage::createRequest(QString("test.multiParam"),
                                                              QVariantList() << false << true);
 
-    QJsonRpcServiceReply *reply;
-    reply = serviceSocket.sendMessage(request);
-    Q_UNUSED(reply);
+    QScopedPointer<QJsonRpcServiceReply> reply;
+    reply.reset(serviceSocket.sendMessage(request));
 
     QJsonRpcMessage bufferMessage(buffer.data());
     QCOMPARE(request.id(), bufferMessage.id());
@@ -142,9 +140,8 @@ void TestQJsonRpcSocket::testSocketNotification()
 
     QJsonRpcMessage notification = QJsonRpcMessage::createNotification("test.notify");
 
-    QJsonRpcServiceReply *reply;
-    reply = serviceSocket.sendMessage(notification);
-    Q_UNUSED(reply);
+    QScopedPointer<QJsonRpcServiceReply> reply;
+    reply.reset(serviceSocket.sendMessage(notification));
 
     QJsonRpcMessage bufferMessage(buffer.data());
     QCOMPARE(notification.id(), bufferMessage.id());
@@ -166,9 +163,8 @@ void TestQJsonRpcSocket::testSocketResponse()
     QJsonRpcMessage response = QJsonRpcMessage::createRequest(QString("test.response"));
     response = response.createResponse(QVariant());
 
-    QJsonRpcServiceReply *reply;
-    reply = serviceSocket.sendMessage(response);
-    Q_UNUSED(reply);
+    QScopedPointer<QJsonRpcServiceReply> reply;
+    reply.reset(serviceSocket.sendMessage(response));
 
     QJsonRpcMessage bufferMessage(buffer.data());
     QCOMPARE(response.id(), bufferMessage.id());
