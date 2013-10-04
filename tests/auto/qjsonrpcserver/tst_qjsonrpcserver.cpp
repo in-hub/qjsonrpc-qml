@@ -162,6 +162,7 @@ private Q_SLOTS:
     void testOverloadedMethod();
     void testQVariantMapInvalidParam();
     void testStringListParameter();
+    void testUserDeletedReplyOnDelayedResponse();
 
 private:
     void clearBuffers();
@@ -273,6 +274,12 @@ public Q_SLOTS:
         Q_UNUSED(two);
         Q_UNUSED(three);
         Q_UNUSED(list);
+        return true;
+    }
+
+    bool delayedResponse()
+    {
+        QTest::qSleep(100);
         return true;
     }
 
@@ -711,6 +718,19 @@ void TestQJsonRpcServer::testStringListParameter()
     QJsonRpcMessage response = m_clientSocket->sendMessageBlocking(strRequest);
     QVERIFY(response.type() != QJsonRpcMessage::Error);
     QVERIFY(response.result().toBool());
+}
+
+void TestQJsonRpcServer::testUserDeletedReplyOnDelayedResponse()
+{
+    m_server->addService(new TestService);
+    QJsonRpcMessage request =
+        QJsonRpcMessage::createRequest("service.delayedResponse");
+    QJsonRpcServiceReply *reply = m_clientSocket->sendMessage(request);
+    delete reply;
+
+    // this is cheesy...
+    for (int i = 0; i < 10; i++)
+        qApp->processEvents();
 }
 
 QTEST_MAIN(TestQJsonRpcServer)
