@@ -442,7 +442,7 @@ QJsonRpcServiceReply *QJsonRpcSocket::sendMessage(const QJsonRpcMessage &message
     }
 
     notify(message);
-    QPointer<QJsonRpcServiceReply> reply = new QJsonRpcServiceReply;
+    QPointer<QJsonRpcServiceReply> reply(new QJsonRpcServiceReply);
     d->replies.insert(message.id(), reply);
     return reply;
 }
