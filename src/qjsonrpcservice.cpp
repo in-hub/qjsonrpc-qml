@@ -442,7 +442,7 @@ QJsonRpcServiceReply *QJsonRpcSocket::sendMessage(const QJsonRpcMessage &message
     }
 
     notify(message);
-    QJsonRpcServiceReply *reply = new QJsonRpcServiceReply;
+    QPointer<QJsonRpcServiceReply> reply(new QJsonRpcServiceReply);
     d->replies.insert(message.id(), reply);
     return reply;
 }
@@ -545,7 +545,7 @@ void QJsonRpcSocket::processIncomingData()
 
         d->buffer = d->buffer.mid(dataSize + 1);
         if (document.isArray()) {
-            qDebug() << "bulk support is current disabled";
+            qDebug() << Q_FUNC_INFO << "bulk support is current disabled";
             /*
             for (int i = 0; i < document.array().size(); ++i) {
                 QJsonObject messageObject = document.array().at(i).toObject();
@@ -565,9 +565,11 @@ void QJsonRpcSocket::processIncomingData()
             if (message.type() == QJsonRpcMessage::Response ||
                 message.type() == QJsonRpcMessage::Error) {
                 if (d->replies.contains(message.id())) {
-                    QJsonRpcServiceReply *reply = d->replies.take(message.id());
-                    reply->m_response = message;
-                    reply->finished();
+                    QPointer<QJsonRpcServiceReply> reply = d->replies.take(message.id());
+                    if (!reply.isNull()) {
+                        reply->m_response = message;
+                        reply->finished();
+                    }
                 }
             } else {
                 processRequestMessage(message);
