@@ -79,7 +79,7 @@ public:
 
     QPointer<QIODevice> device;
     QByteArray buffer;
-    QHash<int, QJsonRpcServiceReply*> replies;
+    QHash<int, QPointer<QJsonRpcServiceReply> > replies;
 
 };
 
