@@ -140,8 +140,8 @@ void TestQJsonRpcMessage::testEquivalence()
 
 void TestQJsonRpcMessage::testWithVariantListArgs()
 {
-    const char *varListArgs = "{ " \
-            "\"id\": 5, " \
+    const char *varListArgsFormat = "{ " \
+            "\"id\": %1, " \
             "\"jsonrpc\": \"2.0\", " \
             "\"method\": \"service.variantListParameter\", " \
             "\"params\": [[ 1, 20, \"hello\", false ]] " \
@@ -151,6 +151,11 @@ void TestQJsonRpcMessage::testWithVariantListArgs()
     firstParameter << 1 << 20 << "hello" << false;
     QJsonRpcMessage requestFromQJsonRpc =
         QJsonRpcMessage::createRequest("service.variantListParameter", QVariant(firstParameter));
+
+    // QJsonRpcMessage::createRequest is creating objects with an unique id,
+    // and to allow a random test execution order - json data must have the same id
+    int id = requestFromQJsonRpc.id();
+    QByteArray varListArgs = QString(varListArgsFormat).arg(id).toLatin1();
 
     QJsonRpcMessage requestFromData(varListArgs);
     QCOMPARE(requestFromQJsonRpc, requestFromData);
