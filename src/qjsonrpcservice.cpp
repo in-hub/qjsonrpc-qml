@@ -157,11 +157,11 @@ void QJsonRpcServicePrivate::cacheInvokableInfo()
              method.access() == QMetaMethod::Public) ||
              method.methodType() == QMetaMethod::Signal) {
 #if QT_VERSION >= 0x050000
-            QByteArray signature = method.methodSignature();
+            QByteArray methodName = method.name();
 #else
             QByteArray signature = method.signature();
-#endif
             QByteArray methodName = signature.left(signature.indexOf('('));
+#endif
             invokableMethodHash.insert(methodName, idx);
 
             QList<int> parameterTypes;
