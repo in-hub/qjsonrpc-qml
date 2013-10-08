@@ -153,8 +153,9 @@ void QJsonRpcServicePrivate::cacheInvokableInfo()
     int startIdx = q->staticMetaObject.methodCount(); // skip QObject slots
     for (int idx = startIdx; idx < obj->methodCount(); ++idx) {
         const QMetaMethod method = obj->method(idx);
-        if (method.methodType() == QMetaMethod::Slot &&
-            method.access() == QMetaMethod::Public) {
+        if ((method.methodType() == QMetaMethod::Slot &&
+             method.access() == QMetaMethod::Public) ||
+             method.methodType() == QMetaMethod::Signal) {
 #if QT_VERSION >= 0x050000
             QByteArray signature = method.methodSignature();
 #else
