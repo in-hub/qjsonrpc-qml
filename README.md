@@ -9,6 +9,10 @@ the LGPLv2.1.
 - [JSON](http://www.json.org/) is a lightweight data interchange format.
 - [JSON-RPC](http://jsonrpc.org/) is lightweight remote procedure call protocol similar to XML-RPC.
 
+Help / Questions / Suggestions
+============
+[qjsonrpc-development](http://groups.google.com/group/qjsonrpc-development)
+
 Requirements
 ============
 
