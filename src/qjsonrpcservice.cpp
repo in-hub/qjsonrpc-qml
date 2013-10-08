@@ -166,7 +166,11 @@ void QJsonRpcServicePrivate::cacheInvokableInfo()
 
             QList<int> parameterTypes;
             QList<int> jsParameterTypes;
+#if QT_VERSION >= 0x050000
+            parameterTypes << method.returnType();
+#else
             parameterTypes << QMetaType::type(method.typeName());
+#endif
             foreach(QByteArray parameterType, method.parameterTypes()) {
                 parameterTypes << QMetaType::type(parameterType);
                 jsParameterTypes << convertVariantTypeToJSType(QMetaType::type(parameterType));                
