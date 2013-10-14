@@ -78,7 +78,8 @@ class QJSONRPC_EXPORT QJsonRpcServiceProvider
 {
 public:
     ~QJsonRpcServiceProvider();
-    virtual void addService(QJsonRpcService *service);
+    virtual bool addService(QJsonRpcService *service);
+    virtual bool removeService(QJsonRpcService *service);
 
 protected:
     QJsonRpcServiceProvider();
@@ -159,7 +160,8 @@ class QJSONRPC_EXPORT QJsonRpcServer : public QObject,
 public:
     virtual ~QJsonRpcServer();
     virtual QString errorString() const = 0;
-    virtual void addService(QJsonRpcService *service);
+    virtual bool addService(QJsonRpcService *service);
+    virtual bool removeService(QJsonRpcService *service);
 
 #if QT_VERSION >= 0x050100 || QT_VERSION <= 0x050000
     QJsonDocument::JsonFormat wireFormat() const;

@@ -332,23 +332,39 @@ QJsonRpcServiceProvider::~QJsonRpcServiceProvider()
 {
 }
 
-void QJsonRpcServiceProvider::addService(QJsonRpcService *service)
+bool QJsonRpcServiceProvider::addService(QJsonRpcService *service)
 {
     Q_D(QJsonRpcServiceProvider);
-    const QMetaObject *mo = service->metaObject();
-    for (int i = 0; i < mo->classInfoCount(); i++) {
-        const QMetaClassInfo mci = mo->classInfo(i);
-        if (mci.name() == QLatin1String("serviceName")) {
-            service->d_ptr->cacheInvokableInfo();
-            d->services.insert(mci.value(), service);
-            if (!service->parent())
-                d->cleanupHandler.add(service);
-
-            return;
-        }
+    QString serviceName = service->name();
+    if (serviceName.isEmpty()) {
+        qDebug() << Q_FUNC_INFO << "service added without serviceName classinfo, aborting";
+        return false;
     }
 
-    qDebug() << Q_FUNC_INFO << "service added without serviceName classinfo, aborting";
+    if (d->services.contains(serviceName)) {
+        qDebug() << Q_FUNC_INFO << "service with name " << serviceName << " already exist";
+        return false;
+    }
+
+    service->d_ptr->cacheInvokableInfo();
+    d->services.insert(serviceName, service);
+    if (!service->parent())
+        d->cleanupHandler.add(service);
+    return true;
+}
+
+bool QJsonRpcServiceProvider::removeService(QJsonRpcService *service)
+{
+    Q_D(QJsonRpcServiceProvider);
+    QString serviceName = service->name();
+    if (!d->services.contains(serviceName)) {
+        qDebug() << Q_FUNC_INFO << "can nof find service with name " << serviceName;
+        return false;
+    }
+
+    d->cleanupHandler.remove(d->services.value(serviceName));
+    d->services.remove(serviceName);
+    return true;
 }
 
 void QJsonRpcServiceProvider::processMessage(QJsonRpcSocket *socket, const QJsonRpcMessage &message)
@@ -618,13 +634,28 @@ QJsonRpcServer::~QJsonRpcServer()
     d->clients.clear();
 }
 
-void QJsonRpcServer::addService(QJsonRpcService *service)
+bool QJsonRpcServer::addService(QJsonRpcService *service)
 {
-    QJsonRpcServiceProvider::addService(service);
+    if (!QJsonRpcServiceProvider::addService(service))
+        return false;
+
     connect(service, SIGNAL(notifyConnectedClients(QJsonRpcMessage)),
                this, SLOT(notifyConnectedClients(QJsonRpcMessage)));
     connect(service, SIGNAL(notifyConnectedClients(QString,QVariantList)),
                this, SLOT(notifyConnectedClients(QString,QVariantList)));
+    return true;
+}
+
+bool QJsonRpcServer::removeService(QJsonRpcService *service)
+{
+    if (!QJsonRpcServiceProvider::removeService(service))
+        return false;
+
+    disconnect(service, SIGNAL(notifyConnectedClients(QJsonRpcMessage)),
+               this, SLOT(notifyConnectedClients(QJsonRpcMessage)));
+    disconnect(service, SIGNAL(notifyConnectedClients(QString,QVariantList)),
+               this, SLOT(notifyConnectedClients(QString,QVariantList)));
+    return true;
 }
 
 #if QT_VERSION >= 0x050100 || QT_VERSION <= 0x050000
