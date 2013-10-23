@@ -24,6 +24,7 @@
 #endif //QT_VERSION >= 0x050000
 
 #include "qjsonrpcservice.h"
+#include "qjsonrpcservicereply.h"
 #include "json/qjsonvalue.h"
 #include "localclient.h"
 

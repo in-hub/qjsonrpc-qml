@@ -25,6 +25,7 @@
 #include "qjsonrpcservice_p.h"
 #include "qjsonrpcservice.h"
 #include "qjsonrpcmessage.h"
+#include "qjsonrpcservicereply.h"
 
 class QBufferBackedQJsonRpcSocket : public QJsonRpcSocket
 {

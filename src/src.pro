@@ -25,7 +25,8 @@ PRIVATE_HEADERS += \
 INSTALL_HEADERS += \
     qjsonrpcservice.h \
     qjsonrpcmessage.h \
-    qjsonrpc_export.h
+    qjsonrpc_export.h \
+    qjsonrpcservicereply.h
 
 HEADERS += \
     $${INSTALL_HEADERS} \
@@ -33,7 +34,8 @@ HEADERS += \
        
 SOURCES += \
     qjsonrpcservice.cpp \
-    qjsonrpcmessage.cpp
+    qjsonrpcmessage.cpp \
+    qjsonrpcservicereply.cpp
 
 # install
 headers.files = $${INSTALL_HEADERS}

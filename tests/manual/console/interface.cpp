@@ -20,6 +20,7 @@
 #include <QScriptContext>
 
 #include "qjsonrpcservice.h"
+#include "qjsonrpcservicereply.h"
 #include "interface.h"
 
 QJsonRpcServiceSocketPrototype::QJsonRpcServiceSocketPrototype(QObject *parent)

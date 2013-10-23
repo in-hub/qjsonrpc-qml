@@ -32,6 +32,7 @@
 
 #include "qjsonrpcservice_p.h"
 #include "qjsonrpcservice.h"
+#include "qjsonrpcservicereply.h"
 
 int QJsonRpcSocketPrivate::findJsonDocumentEnd(const QByteArray &jsonData)
 {
@@ -311,16 +312,6 @@ bool QJsonRpcService::dispatch(const QJsonRpcMessage &request)
 
     Q_EMIT result(request.createResponse(returnCopy));
     return true;
-}
-
-QJsonRpcServiceReply::QJsonRpcServiceReply(QObject *parent)
-    : QObject(parent)
-{
-}
-
-QJsonRpcMessage QJsonRpcServiceReply::response() const
-{
-    return m_response;
 }
 
 QJsonRpcServiceProvider::QJsonRpcServiceProvider()

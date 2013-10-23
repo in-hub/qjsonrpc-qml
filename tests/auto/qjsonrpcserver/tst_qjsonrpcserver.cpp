@@ -26,6 +26,7 @@
 #include "json/qjsondocument.h"
 #include "qjsonrpcservice.h"
 #include "qjsonrpcmessage.h"
+#include "qjsonrpcservicereply.h"
 
 class FakeQJsonRpcSocket : public QJsonRpcSocket
 {

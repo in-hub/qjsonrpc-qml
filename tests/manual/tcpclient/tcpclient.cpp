@@ -18,6 +18,7 @@
 #include <QTcpSocket>
 
 #include "qjsonrpcservice.h"
+#include "qjsonrpcservicereply.h"
 #include "json/qjsonvalue.h"
 #include "tcpclient.h"
 

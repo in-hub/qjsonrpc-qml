@@ -57,21 +57,6 @@ private:
 
 };
 
-class QJSONRPC_EXPORT QJsonRpcServiceReply : public QObject
-{
-    Q_OBJECT
-public:
-    explicit QJsonRpcServiceReply(QObject *parent = 0);
-    QJsonRpcMessage response() const;
-
-Q_SIGNALS:
-    void finished();
-
-private:
-    QJsonRpcMessage m_response;
-    friend class QJsonRpcSocket;
-};
-
 class QJsonRpcSocket;
 class QJsonRpcServiceProviderPrivate;
 class QJSONRPC_EXPORT QJsonRpcServiceProvider
@@ -92,6 +77,7 @@ private:
 };
 
 class QJsonRpcSocketPrivate;
+class QJsonRpcServiceReply;
 class QJSONRPC_EXPORT QJsonRpcSocket : public QObject
 {
     Q_OBJECT
