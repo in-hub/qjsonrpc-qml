@@ -1,2 +1,5 @@
-QJsonRpc 1.0 (UNRELEASED)
+qjsonrpc 1.0 (10-29-2013)
  * added support for Compact wire format
+ * various fixes for stability/performance improvements
+ * eliminate use of QMetaObject::invokeMethod leading to unexpected timeouts
+ * improve unit tests to use QBuffer-backed jsonrpc sockets
