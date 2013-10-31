@@ -332,10 +332,22 @@ QJsonRpcServiceProvider::~QJsonRpcServiceProvider()
 {
 }
 
+QByteArray QJsonRpcServiceProviderPrivate::serviceName(QJsonRpcService *service)
+{
+    const QMetaObject *mo = service->metaObject();
+    for (int i = 0; i < mo->classInfoCount(); i++) {
+        const QMetaClassInfo mci = mo->classInfo(i);
+        if (mci.name() == QLatin1String("serviceName"))
+	    return mci.value();
+    }
+
+    return QByteArray();
+}
+
 bool QJsonRpcServiceProvider::addService(QJsonRpcService *service)
 {
     Q_D(QJsonRpcServiceProvider);
-    QString serviceName = service->name();
+    QByteArray serviceName = d->serviceName(service);
     if (serviceName.isEmpty()) {
         qDebug() << Q_FUNC_INFO << "service added without serviceName classinfo, aborting";
         return false;
@@ -356,7 +368,7 @@ bool QJsonRpcServiceProvider::addService(QJsonRpcService *service)
 bool QJsonRpcServiceProvider::removeService(QJsonRpcService *service)
 {
     Q_D(QJsonRpcServiceProvider);
-    QString serviceName = service->name();
+    QByteArray serviceName = d->serviceName(service);
     if (!d->services.contains(serviceName)) {
         qDebug() << Q_FUNC_INFO << "can nof find service with name " << serviceName;
         return false;
@@ -373,18 +385,20 @@ void QJsonRpcServiceProvider::processMessage(QJsonRpcSocket *socket, const QJson
     switch (message.type()) {
         case QJsonRpcMessage::Request:
         case QJsonRpcMessage::Notification: {
-            QString serviceName = message.method().section(".", 0, -2);
+            QByteArray serviceName = message.method().section(".", 0, -2).toLatin1();
             if (serviceName.isEmpty() || !d->services.contains(serviceName)) {
                 if (message.type() == QJsonRpcMessage::Request) {
-                    QJsonRpcMessage error = message.createErrorResponse(QJsonRpc::MethodNotFound,
-                                                                        QString("service '%1' not found").arg(serviceName));
+                    QJsonRpcMessage error =
+                        message.createErrorResponse(QJsonRpc::MethodNotFound,
+                            QString("service '%1' not found").arg(serviceName.constData()));
                     socket->notify(error);
                 }
             } else {
                 QJsonRpcService *service = d->services.value(serviceName);
                 service->d_ptr->socket = socket;
                 if (message.type() == QJsonRpcMessage::Request)
-                    QObject::connect(service, SIGNAL(result(QJsonRpcMessage)), socket, SLOT(notify(QJsonRpcMessage)));
+                    QObject::connect(service, SIGNAL(result(QJsonRpcMessage)),
+                                      socket, SLOT(notify(QJsonRpcMessage)));
                 service->dispatch(message);
             }
         }
@@ -395,8 +409,8 @@ void QJsonRpcServiceProvider::processMessage(QJsonRpcSocket *socket, const QJson
             break;
 
         default: {
-            QJsonRpcMessage error = message.createErrorResponse(QJsonRpc::InvalidRequest,
-                                                                QString("invalid request"));
+            QJsonRpcMessage error =
+                message.createErrorResponse(QJsonRpc::InvalidRequest, QString("invalid request"));
             socket->notify(error);
             break;
         }
