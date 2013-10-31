@@ -164,6 +164,8 @@ private Q_SLOTS:
     void testStringListParameter();
     void testUserDeletedReplyOnDelayedResponse();
 
+    void testAddRemoveService();
+
 private:
     void clearBuffers();
     QScopedPointer<FakeQJsonRpcServer, QObjectDeleter> m_server;
@@ -731,6 +733,22 @@ void TestQJsonRpcServer::testUserDeletedReplyOnDelayedResponse()
     // this is cheesy...
     for (int i = 0; i < 10; i++)
         qApp->processEvents();
+}
+
+void TestQJsonRpcServer::testAddRemoveService()
+{
+    QVERIFY(m_server->addService(new TestService));
+
+    QSignalSpy spyMessageReceived(m_clientSocket.data(), SIGNAL(messageReceived(QJsonRpcMessage)));
+    QJsonRpcMessage request = QJsonRpcMessage::createRequest("service.noParam");
+    QJsonRpcMessage response = m_clientSocket->sendMessageBlocking(request);
+    QVERIFY(response.errorCode() == QJsonRpc::NoError);
+    QCOMPARE(request.id(), response.id());
+    QCOMPARE(spyMessageReceived.count(), 1);
+
+    QVERIFY(m_server->removeService(new TestService));
+    response = m_clientSocket->sendMessageBlocking(request);
+    QVERIFY(response.errorCode() == QJsonRpc::MethodNotFound);
 }
 
 QTEST_MAIN(TestQJsonRpcServer)
