@@ -8,3 +8,4 @@ qjsonrpc 1.1 (UNRELEASED)
  * allow calling of Q_SIGNALS on service objects
  * allow for removal of services from QJsonRpcServiceProvider
  * qt5 cleanups
+ * split most classes out into their own headers/source files 
