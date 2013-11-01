@@ -14,21 +14,29 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  */
-#include <QCoreApplication>
+#ifndef QJSONRPCLOCALSERVER_H
+#define QJSONRPCLOCALSERVER_H
 
-#include "qjsonrpctcpserver.h"
-#include "testservice.h"
+#include "qjsonrpcabstractserver.h"
 
-int main(int argc, char **argv)
+class QJsonRpcLocalServerPrivate;
+class QJSONRPC_EXPORT QJsonRpcLocalServer : public QJsonRpcAbstractServer
 {
-    QCoreApplication app(argc, argv);
-    TestService service;
-    QJsonRpcTcpServer rpcServer;
-    rpcServer.addService(&service);
-    if (!rpcServer.listen(QHostAddress::LocalHost, 5555)) {
-        qDebug() << "can't start tcp server: " << rpcServer.errorString();
-        return -1;
-    }
+    Q_OBJECT
+public:
+    explicit QJsonRpcLocalServer(QObject *parent = 0);
+    ~QJsonRpcLocalServer();
 
-    return app.exec();
-}
+    QString errorString() const;
+    bool listen(const QString &service);
+
+private Q_SLOTS:
+    void processIncomingConnection();
+    void clientDisconnected();
+
+private:
+    Q_DECLARE_PRIVATE(QJsonRpcLocalServer)
+
+};
+
+#endif

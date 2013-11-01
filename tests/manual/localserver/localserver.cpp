@@ -25,6 +25,7 @@
 #include <QDesktopServices>
 #endif //QT_VERSION >= 0x050000
 
+#include "qjsonrpclocalserver.h"
 #include "testservice.h"
 
 int main(int argc, char **argv)

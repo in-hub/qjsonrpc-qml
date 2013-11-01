@@ -55,22 +55,4 @@ public:
     Q_DECLARE_PUBLIC(QJsonRpcService)
 };
 
-class QLocalServer;
-class QJsonRpcLocalServerPrivate : public QJsonRpcAbstractServerPrivate
-{
-public:
-    QJsonRpcLocalServerPrivate() : server(0) {}
-    QLocalServer *server;
-    QHash<QLocalSocket*, QJsonRpcSocket*> socketLookup;
-};
-
-class QTcpServer;
-class QJsonRpcTcpServerPrivate : public QJsonRpcAbstractServerPrivate
-{
-public:
-    QJsonRpcTcpServerPrivate() : server(0) {}
-    QTcpServer *server;
-    QHash<QTcpSocket*, QJsonRpcSocket*> socketLookup;
-};
-
 #endif

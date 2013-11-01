@@ -28,6 +28,8 @@ INSTALL_HEADERS += \
     qjsonrpcservice.h \
     qjsonrpcsocket.h \
     qjsonrpcabstractserver.h \
+    qjsonrpclocalserver.h \
+    qjsonrpctcpserver.h \
     qjsonrpcmessage.h \
     qjsonrpc_export.h \
     qjsonrpcservicereply.h
@@ -40,6 +42,8 @@ SOURCES += \
     qjsonrpcservice.cpp \
     qjsonrpcsocket.cpp \
     qjsonrpcabstractserver.cpp \
+    qjsonrpclocalserver.cpp \
+    qjsonrpctcpserver.cpp \
     qjsonrpcmessage.cpp \
     qjsonrpcservicereply.cpp
 

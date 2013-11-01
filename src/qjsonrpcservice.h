@@ -58,45 +58,5 @@ private:
 
 };
 
-class QJsonRpcLocalServerPrivate;
-class QJSONRPC_EXPORT QJsonRpcLocalServer : public QJsonRpcAbstractServer
-{
-    Q_OBJECT
-public:
-    explicit QJsonRpcLocalServer(QObject *parent = 0);
-    ~QJsonRpcLocalServer();
-
-    QString errorString() const;
-    bool listen(const QString &service);
-
-private Q_SLOTS:
-    void processIncomingConnection();
-    void clientDisconnected();
-
-private:
-    Q_DECLARE_PRIVATE(QJsonRpcLocalServer)
-
-};
-
-class QJsonRpcTcpServerPrivate;
-class QJSONRPC_EXPORT QJsonRpcTcpServer : public QJsonRpcAbstractServer
-{
-    Q_OBJECT
-public:
-    explicit QJsonRpcTcpServer(QObject *parent = 0);
-    ~QJsonRpcTcpServer();
-
-    QString errorString() const;
-    bool listen(const QHostAddress &address, quint16 port);
-
-private Q_SLOTS:
-    void processIncomingConnection();
-    void clientDisconnected();
-
-private:
-    Q_DECLARE_PRIVATE(QJsonRpcTcpServer)
-
-};
-
 #endif
 
