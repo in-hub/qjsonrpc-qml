@@ -27,6 +27,7 @@
 #include "json/qjsondocument.h"
 #endif
 
+#include "qjsonrpcabstractserver.h"
 #include "qjsonrpcmessage.h"
 
 class QJsonRpcSocket;
@@ -57,59 +58,8 @@ private:
 
 };
 
-class QJsonRpcSocket;
-class QJsonRpcServiceProviderPrivate;
-class QJSONRPC_EXPORT QJsonRpcServiceProvider
-{
-public:
-    ~QJsonRpcServiceProvider();
-    virtual bool addService(QJsonRpcService *service);
-    virtual bool removeService(QJsonRpcService *service);
-
-protected:
-    QJsonRpcServiceProvider();
-    void processMessage(QJsonRpcSocket *socket, const QJsonRpcMessage &message);
-
-private:
-    Q_DECLARE_PRIVATE(QJsonRpcServiceProvider)
-    QScopedPointer<QJsonRpcServiceProviderPrivate> d_ptr;
-
-};
-
-class QJsonRpcServerPrivate;
-class QJSONRPC_EXPORT QJsonRpcServer : public QObject,
-                                       public QJsonRpcServiceProvider
-{
-    Q_OBJECT
-public:
-    virtual ~QJsonRpcServer();
-    virtual QString errorString() const = 0;
-    virtual bool addService(QJsonRpcService *service);
-    virtual bool removeService(QJsonRpcService *service);
-
-#if QT_VERSION >= 0x050100 || QT_VERSION <= 0x050000
-    QJsonDocument::JsonFormat wireFormat() const;
-    void setWireFormat(QJsonDocument::JsonFormat format);
-#endif
-
-public Q_SLOTS:
-    void notifyConnectedClients(const QJsonRpcMessage &message);
-    void notifyConnectedClients(const QString &method, const QVariantList &params = QVariantList());
-
-protected Q_SLOTS:
-    virtual void processIncomingConnection() = 0;
-    virtual void clientDisconnected() = 0;
-    void processMessage(const QJsonRpcMessage &message);
-
-protected:
-    explicit QJsonRpcServer(QJsonRpcServerPrivate *dd, QObject *parent);
-    Q_DECLARE_PRIVATE(QJsonRpcServer)
-    QScopedPointer<QJsonRpcServerPrivate> d_ptr;
-
-};
-
 class QJsonRpcLocalServerPrivate;
-class QJSONRPC_EXPORT QJsonRpcLocalServer : public QJsonRpcServer
+class QJSONRPC_EXPORT QJsonRpcLocalServer : public QJsonRpcAbstractServer
 {
     Q_OBJECT
 public:
@@ -129,7 +79,7 @@ private:
 };
 
 class QJsonRpcTcpServerPrivate;
-class QJSONRPC_EXPORT QJsonRpcTcpServer : public QJsonRpcServer
+class QJSONRPC_EXPORT QJsonRpcTcpServer : public QJsonRpcAbstractServer
 {
     Q_OBJECT
 public:

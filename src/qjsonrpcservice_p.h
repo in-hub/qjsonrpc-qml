@@ -30,6 +30,7 @@
 #include "qjsondocument.h"
 #endif
 
+#include "qjsonrpcabstractserver_p.h"
 #include "qjsonrpcservice.h"
 #include "qjsonrpcmessage.h"
 
@@ -54,32 +55,8 @@ public:
     Q_DECLARE_PUBLIC(QJsonRpcService)
 };
 
-class QJsonRpcServiceProviderPrivate
-{
-public:
-    QByteArray serviceName(QJsonRpcService *service);
-
-    QHash<QByteArray, QJsonRpcService*> services;
-    QObjectCleanupHandler cleanupHandler;
-
-};
-
-class QJsonRpcServerPrivate
-{
-public:
-#if QT_VERSION >= 0x050100 || QT_VERSION <= 0x050000
-    QJsonDocument::JsonFormat format;
-    QJsonRpcServerPrivate() : format(QJsonDocument::Compact) {}
-#else
-    QJsonRpcServerPrivate() {}
-#endif
-
-    QList<QJsonRpcSocket*> clients;
-
-};
-
 class QLocalServer;
-class QJsonRpcLocalServerPrivate : public QJsonRpcServerPrivate
+class QJsonRpcLocalServerPrivate : public QJsonRpcAbstractServerPrivate
 {
 public:
     QJsonRpcLocalServerPrivate() : server(0) {}
@@ -88,7 +65,7 @@ public:
 };
 
 class QTcpServer;
-class QJsonRpcTcpServerPrivate : public QJsonRpcServerPrivate
+class QJsonRpcTcpServerPrivate : public QJsonRpcAbstractServerPrivate
 {
 public:
     QJsonRpcTcpServerPrivate() : server(0) {}

@@ -24,6 +24,8 @@
 
 #include "json/qjsondocument.h"
 
+#include "qjsonrpcabstractserver_p.h"
+#include "qjsonrpcabstractserver.h"
 #include "qjsonrpcsocket.h"
 #include "qjsonrpcservice_p.h"
 #include "qjsonrpcservice.h"
@@ -84,12 +86,12 @@ private:
 
 };
 
-class FakeQJsonRpcServer : public QJsonRpcServer
+class FakeQJsonRpcServer : public QJsonRpcAbstractServer
 {
     Q_OBJECT
 public:
     FakeQJsonRpcServer(QObject *parent = 0)
-        : QJsonRpcServer(new QJsonRpcServerPrivate, parent),
+        : QJsonRpcAbstractServer(new QJsonRpcAbstractServerPrivate, parent),
           m_buffer(0)
     {
         m_buffer = new QBuffer(this);
@@ -501,7 +503,7 @@ class ServerNotificationHelper : public QObject
 {
     Q_OBJECT
 public:
-    ServerNotificationHelper(const QJsonRpcMessage &message, QJsonRpcServer *provider)
+    ServerNotificationHelper(const QJsonRpcMessage &message, QJsonRpcAbstractServer *provider)
         : m_provider(provider),
           m_notification(message) {}
 
@@ -511,7 +513,7 @@ public Q_SLOTS:
     }
 
 private:
-    QJsonRpcServer *m_provider;
+    QJsonRpcAbstractServer *m_provider;
     QJsonRpcMessage m_notification;
 
 };
