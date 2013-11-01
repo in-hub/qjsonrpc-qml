@@ -338,10 +338,10 @@ QByteArray QJsonRpcServiceProviderPrivate::serviceName(QJsonRpcService *service)
     for (int i = 0; i < mo->classInfoCount(); i++) {
         const QMetaClassInfo mci = mo->classInfo(i);
         if (mci.name() == QLatin1String("serviceName"))
-	    return mci.value();
+            return mci.value();
     }
 
-    return QByteArray();
+    return QByteArray(mo->className()).toLower();
 }
 
 bool QJsonRpcServiceProvider::addService(QJsonRpcService *service)
