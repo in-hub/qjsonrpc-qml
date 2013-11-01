@@ -17,7 +17,11 @@
 #include <QtCore/QVariant>
 #include <QtTest/QtTest>
 
+#if QT_VERSION >= 0x050000
+#include <QJsonDocument>
+#else
 #include "json/qjsondocument.h"
+#endif
 
 #include "qjsonrpcabstractserver.h"
 #include "qjsonrpcmessage.h"
