@@ -18,6 +18,8 @@
 #include <QtTest/QtTest>
 
 #include "json/qjsondocument.h"
+
+#include "qjsonrpcabstractserver.h"
 #include "qjsonrpcmessage.h"
 #include "qjsonrpcservice.h"
 

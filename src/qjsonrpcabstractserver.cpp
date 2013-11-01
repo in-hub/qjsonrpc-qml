@@ -1,5 +1,6 @@
 #include <QMetaObject>
 #include <QMetaClassInfo>
+#include <QDebug>
 
 #include "qjsonrpcservice_p.h"
 #include "qjsonrpcservice.h"

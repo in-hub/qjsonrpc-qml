@@ -20,6 +20,7 @@
 #include <QTcpSocket>
 #include <QScopedPointer>
 #include <QUrl>
+#include <QHostAddress>
 
 #include "qjsonrpcsocket.h"
 #include "qjsonrpcservice.h"

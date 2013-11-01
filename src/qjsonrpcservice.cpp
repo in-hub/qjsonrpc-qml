@@ -14,25 +14,11 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  */
-#include <QLocalSocket>
-#include <QLocalServer>
-#include <QTcpServer>
-#include <QTcpSocket>
 #include <QVarLengthArray>
-#include <QStringList>
 #include <QMetaMethod>
 #include <QEventLoop>
-#include <QTimer>
 
-#if QT_VERSION >= 0x050000
-#include <QJsonDocument>
-#else
-#include "json/qjsondocument.h"
-#endif
-
-#include "qjsonrpcabstractserver_p.h"
 #include "qjsonrpcsocket.h"
-#include "qjsonrpcservicereply.h"
 #include "qjsonrpcservice_p.h"
 #include "qjsonrpcservice.h"
 

@@ -18,21 +18,7 @@
 #define QJSONRPCSERVICE_P_H
 
 #include <QHash>
-#include <QHostAddress>
 #include <QPointer>
-#include <QLocalSocket>
-#include <QTcpSocket>
-#include <QObjectCleanupHandler>
-
-#if QT_VERSION >= 0x050000
-#include <QJsonDocument>
-#else
-#include "qjsondocument.h"
-#endif
-
-#include "qjsonrpcabstractserver_p.h"
-#include "qjsonrpcservice.h"
-#include "qjsonrpcmessage.h"
 
 class QJsonRpcSocket;
 class QJsonRpcService;

@@ -20,6 +20,7 @@
 #include <QObject>
 #include <QScopedPointer>
 
+#include "qjsonrpcabstractserver.h"
 #include "qjsonrpcservice.h"
 #include "qjsonrpcmessage.h"
 #include "qjsonrpc_export.h"
