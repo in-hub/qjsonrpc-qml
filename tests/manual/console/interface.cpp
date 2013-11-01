@@ -19,6 +19,7 @@
 #include <QTimer>
 #include <QScriptContext>
 
+#include "qjsonrpcsocket.h"
 #include "qjsonrpcservice.h"
 #include "qjsonrpcservicereply.h"
 #include "interface.h"

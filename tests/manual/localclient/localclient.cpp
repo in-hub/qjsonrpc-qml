@@ -23,9 +23,11 @@
 #include <QDesktopServices>
 #endif //QT_VERSION >= 0x050000
 
+#include "json/qjsonvalue.h"
+
+#include "qjsonrpcsocket.h"
 #include "qjsonrpcservice.h"
 #include "qjsonrpcservicereply.h"
-#include "json/qjsonvalue.h"
 #include "localclient.h"
 
 LocalClient::LocalClient(QObject *parent)

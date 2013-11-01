@@ -22,10 +22,13 @@
 #include <QtTest/QtTest>
 
 #include "json/qjsondocument.h"
+
 #include "qjsonrpcservice_p.h"
 #include "qjsonrpcservice.h"
 #include "qjsonrpcmessage.h"
 #include "qjsonrpcservicereply.h"
+#include "qjsonrpcsocket_p.h"
+#include "qjsonrpcsocket.h"
 
 class QBufferBackedQJsonRpcSocket : public QJsonRpcSocket
 {

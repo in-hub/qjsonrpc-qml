@@ -76,68 +76,6 @@ private:
 
 };
 
-class QJsonRpcSocketPrivate;
-class QJsonRpcServiceReply;
-class QJSONRPC_EXPORT QJsonRpcSocket : public QObject
-{
-    Q_OBJECT
-public:
-    explicit QJsonRpcSocket(QIODevice *device, QObject *parent = 0);
-    ~QJsonRpcSocket();
-
-#if QT_VERSION >= 0x050100 || QT_VERSION <= 0x050000
-    QJsonDocument::JsonFormat wireFormat() const;
-    void setWireFormat(QJsonDocument::JsonFormat format);
-#endif
-
-    bool isValid() const;
-
-public Q_SLOTS:
-    virtual void notify(const QJsonRpcMessage &message);
-    QJsonRpcMessage sendMessageBlocking(const QJsonRpcMessage &message, int msecs = 30000);
-    QJsonRpcServiceReply *sendMessage(const QJsonRpcMessage &message);
-//  void sendMessage(const QList<QJsonRpcMessage> &bulk);
-    QJsonRpcMessage invokeRemoteMethodBlocking(const QString &method, const QVariant &arg1 = QVariant(),
-                                               const QVariant &arg2 = QVariant(), const QVariant &arg3 = QVariant(),
-                                               const QVariant &arg4 = QVariant(), const QVariant &arg5 = QVariant(),
-                                               const QVariant &arg6 = QVariant(), const QVariant &arg7 = QVariant(),
-                                               const QVariant &arg8 = QVariant(), const QVariant &arg9 = QVariant(),
-                                               const QVariant &arg10 = QVariant());
-    QJsonRpcServiceReply *invokeRemoteMethod(const QString &method, const QVariant &arg1 = QVariant(),
-                                             const QVariant &arg2 = QVariant(), const QVariant &arg3 = QVariant(),
-                                             const QVariant &arg4 = QVariant(), const QVariant &arg5 = QVariant(),
-                                             const QVariant &arg6 = QVariant(), const QVariant &arg7 = QVariant(),
-                                             const QVariant &arg8 = QVariant(), const QVariant &arg9 = QVariant(),
-                                             const QVariant &arg10 = QVariant());
-
-Q_SIGNALS:
-    void messageReceived(const QJsonRpcMessage &message);
-
-protected Q_SLOTS:
-    virtual void processIncomingData();
-
-protected:
-    virtual void processRequestMessage(const QJsonRpcMessage &message);
-
-private:
-    Q_DECLARE_PRIVATE(QJsonRpcSocket)
-    QScopedPointer<QJsonRpcSocketPrivate> d_ptr;
-
-};
-
-class QJSONRPC_EXPORT QJsonRpcServiceSocket : public QJsonRpcSocket,
-                                              public QJsonRpcServiceProvider
-{
-    Q_OBJECT
-public:
-    explicit QJsonRpcServiceSocket(QIODevice *device, QObject *parent = 0);
-    ~QJsonRpcServiceSocket();
-
-private:
-    virtual void processRequestMessage(const QJsonRpcMessage &message);
-
-};
-
 class QJsonRpcServerPrivate;
 class QJSONRPC_EXPORT QJsonRpcServer : public QObject,
                                        public QJsonRpcServiceProvider

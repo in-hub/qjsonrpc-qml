@@ -17,9 +17,11 @@
 #include <QHostAddress>
 #include <QTcpSocket>
 
+#include "json/qjsonvalue.h"
+
+#include "qjsonrpcsocket.h"
 #include "qjsonrpcservice.h"
 #include "qjsonrpcservicereply.h"
-#include "json/qjsonvalue.h"
 #include "tcpclient.h"
 
 TcpClient::TcpClient(QObject *parent)

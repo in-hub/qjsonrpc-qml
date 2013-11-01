@@ -22,8 +22,10 @@
 #include <QtCore/QVariant>
 #include <QtTest/QtTest>
 
-#include "qjsonrpcservice_p.h"
 #include "json/qjsondocument.h"
+
+#include "qjsonrpcsocket.h"
+#include "qjsonrpcservice_p.h"
 #include "qjsonrpcservice.h"
 #include "qjsonrpcmessage.h"
 #include "qjsonrpcservicereply.h"

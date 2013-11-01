@@ -21,6 +21,7 @@
 #include <QScopedPointer>
 #include <QUrl>
 
+#include "qjsonrpcsocket.h"
 #include "qjsonrpcservice.h"
 
 int main(int argc, char **argv)

@@ -32,7 +32,6 @@
 
 #include "qjsonrpcservice.h"
 #include "qjsonrpcmessage.h"
-#include "qjsonrpc_export.h"
 
 class QJsonRpcSocket;
 class QJsonRpcService;
@@ -62,26 +61,6 @@ public:
 
     QHash<QByteArray, QJsonRpcService*> services;
     QObjectCleanupHandler cleanupHandler;
-
-};
-
-class QJsonRpcServiceReply;
-class QJSONRPC_EXPORT QJsonRpcSocketPrivate
-{
-public:
-#if QT_VERSION >= 0x050100 || QT_VERSION <= 0x050000
-    QJsonDocument::JsonFormat format;
-    QJsonRpcSocketPrivate() : format(QJsonDocument::Compact) {}
-#else
-    QJsonRpcSocketPrivate() {}
-#endif
-
-    int findJsonDocumentEnd(const QByteArray &jsonData);
-    void writeData(const QJsonRpcMessage &message);
-
-    QPointer<QIODevice> device;
-    QByteArray buffer;
-    QHash<int, QPointer<QJsonRpcServiceReply> > replies;
 
 };
 

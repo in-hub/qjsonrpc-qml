@@ -20,10 +20,12 @@ lessThan(QT_VERSION_MAJOR, 5) {
 }
 
 PRIVATE_HEADERS += \
-    qjsonrpcservice_p.h
+    qjsonrpcservice_p.h \
+    qjsonrpcsocket_p.h
 
 INSTALL_HEADERS += \
     qjsonrpcservice.h \
+    qjsonrpcsocket.h \
     qjsonrpcmessage.h \
     qjsonrpc_export.h \
     qjsonrpcservicereply.h
@@ -34,6 +36,7 @@ HEADERS += \
        
 SOURCES += \
     qjsonrpcservice.cpp \
+    qjsonrpcsocket.cpp \
     qjsonrpcmessage.cpp \
     qjsonrpcservicereply.cpp
 
