@@ -19,6 +19,7 @@
 
 #include <QObject>
 #include <QScopedPointer>
+#include <QIODevice>
 
 #include "qjsonrpcabstractserver.h"
 #include "qjsonrpcservice.h"
