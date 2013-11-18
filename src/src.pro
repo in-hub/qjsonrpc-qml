@@ -32,7 +32,8 @@ INSTALL_HEADERS += \
     qjsonrpctcpserver.h \
     qjsonrpcmessage.h \
     qjsonrpc_export.h \
-    qjsonrpcservicereply.h
+    qjsonrpcservicereply.h \
+    qjsonrpchttpclient.h 
 
 HEADERS += \
     $${INSTALL_HEADERS} \
@@ -45,7 +46,8 @@ SOURCES += \
     qjsonrpclocalserver.cpp \
     qjsonrpctcpserver.cpp \
     qjsonrpcmessage.cpp \
-    qjsonrpcservicereply.cpp
+    qjsonrpcservicereply.cpp \
+    qjsonrpchttpclient.cpp
 
 # install
 headers.files = $${INSTALL_HEADERS}
