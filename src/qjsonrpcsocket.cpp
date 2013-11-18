@@ -3,6 +3,7 @@
 #include <QDebug>
 
 #include "qjsonrpcservice.h"
+#include "qjsonrpcservicereply_p.h"
 #include "qjsonrpcservicereply.h"
 #include "qjsonrpcsocket_p.h"
 #include "qjsonrpcsocket.h"
@@ -261,7 +262,7 @@ void QJsonRpcSocket::processIncomingData()
                 if (d->replies.contains(message.id())) {
                     QPointer<QJsonRpcServiceReply> reply = d->replies.take(message.id());
                     if (!reply.isNull()) {
-                        reply->m_response = message;
+                        reply->d_ptr->response = message;
                         reply->finished();
                     }
                 }
