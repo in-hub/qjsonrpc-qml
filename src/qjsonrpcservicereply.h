@@ -52,7 +52,8 @@ class QJSONRPC_EXPORT QJsonRpcHttpReply : public QJsonRpcServiceReply
 {
     Q_OBJECT
 public:
-    explicit QJsonRpcHttpReply(const QJsonRpcMessage &message, QNetworkReply *reply, QObject *parent = 0);
+    explicit QJsonRpcHttpReply(const QJsonRpcMessage &request, QNetworkReply *reply,
+                               QObject *parent = 0);
     virtual ~QJsonRpcHttpReply();
 
 private Q_SLOTS:
