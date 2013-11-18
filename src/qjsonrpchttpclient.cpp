@@ -14,21 +14,26 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  */
+#include <QDebug>
+#if QT_VERSION >= 0x050000
+#include <QJsonDocument>
+#else
+#include "json/qjsondocument.h"
+#endif
+
+#include "qjsonrpcservicereply_p.h"
 #include "qjsonrpchttpclient.h"
 
-class QJsonRpcHttpReplyPrivate
-{
-public:
-    QNetworkReply *reply;
-
-};
-
-QJsonRpcHttpReply::QJsonRpcHttpReply(QNetworkReply *reply, QObject *parent)
+QJsonRpcHttpReply::QJsonRpcHttpReply(const QJsonRpcMessage &message, QNetworkReply *reply, QObject *parent)
     : QJsonRpcServiceReply(parent),
       d_ptr(new QJsonRpcHttpReplyPrivate)
 {
     Q_D(QJsonRpcHttpReply);
+    d->message = message;
     d->reply = reply;
+    connect(d->reply, SIGNAL(finished()), this, SLOT(networkReplyFinished()));
+    connect(d->reply, SIGNAL(error(QNetworkReply::NetworkError)),
+                this, SLOT(networkReplyerror(QNetworkReply::NetworkError)));
 }
 
 QJsonRpcHttpReply::~QJsonRpcHttpReply()
@@ -37,20 +42,62 @@ QJsonRpcHttpReply::~QJsonRpcHttpReply()
 
 void QJsonRpcHttpReply::networkReplyFinished()
 {
-    // parse result of QNetworkReply, then
+    Q_D(QJsonRpcHttpReply);
+    QNetworkReply *reply = qobject_cast<QNetworkReply*>(sender());
+    if (!reply) {
+        qDebug() << Q_FUNC_INFO << "invalid reply";
+        return;
+    }
+
+    if (reply->error() != QNetworkReply::NoError) {
+        // this should be handled by the networkReplyError slot
+    } else {
+        QByteArray data = reply->readAll();
+        QJsonDocument doc = QJsonDocument::fromJson(data);
+        if (doc.isEmpty() || doc.isNull() || !doc.isObject()) {
+            d->response =
+                d->message.createErrorResponse(QJsonRpc::ParseError,
+                                               "unable to process incoming JSON data",
+                                               data);
+        } else {
+            d->response = QJsonRpcMessage(doc.object());
+        }
+    }
+
     Q_EMIT finished();
 }
 
 void QJsonRpcHttpReply::networkReplyerror(QNetworkReply::NetworkError code)
 {
-    Q_UNUSED(code)
-    // set result to some error, then
+    Q_D(QJsonRpcHttpReply);
+    QNetworkReply *reply = qobject_cast<QNetworkReply*>(sender());
+    if (!reply) {
+        qDebug() << Q_FUNC_INFO << "invalid reply";
+        return;
+    }
+
+    if (code == QNetworkReply::NoError)
+        return;
+
+    d->response = d->message.createErrorResponse(QJsonRpc::InternalError,
+                                   "error with http request",
+                                   reply->errorString());
     Q_EMIT finished();
 }
 
 class QJsonRpcHttpClientPrivate
 {
 public:
+    QNetworkReply *writeMessage(const QJsonRpcMessage &message) {
+        QNetworkRequest request(endPoint);
+        request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+        QByteArray data = QJsonDocument(message.toObject()).toJson();
+        if (qgetenv("QJSONRPC_DEBUG").toInt())
+            qDebug() << "sending: " << data;
+        return networkAccessManager->post(request, data);
+    }
+
+    QUrl endPoint;
     QNetworkAccessManager *networkAccessManager;
 };
 
@@ -83,6 +130,24 @@ QJsonRpcHttpClient::~QJsonRpcHttpClient()
 {
 }
 
+QUrl QJsonRpcHttpClient::endPoint() const
+{
+    Q_D(const QJsonRpcHttpClient);
+    return d->endPoint;
+}
+
+void QJsonRpcHttpClient::setEndPoint(const QUrl &endPoint)
+{
+    Q_D(QJsonRpcHttpClient);
+    d->endPoint = endPoint;
+}
+
+void QJsonRpcHttpClient::setEndPoint(const QString &endPoint)
+{
+    Q_D(QJsonRpcHttpClient);
+    d->endPoint = QUrl::fromUserInput(endPoint);
+}
+
 QNetworkAccessManager *QJsonRpcHttpClient::networkAccessManager()
 {
     Q_D(QJsonRpcHttpClient);
@@ -91,8 +156,30 @@ QNetworkAccessManager *QJsonRpcHttpClient::networkAccessManager()
 
 void QJsonRpcHttpClient::notify(const QJsonRpcMessage &message)
 {
-    Q_UNUSED(message)
-    // TODO
+    Q_D(QJsonRpcHttpClient);
+    if (d->endPoint.isEmpty()) {
+        qDebug() << Q_FUNC_INFO << "invalid endpoint specified";
+        return;
+    }
+
+    QNetworkReply *reply = d->writeMessage(message);
+    connect(reply, SIGNAL(finished()), reply, SLOT(deleteLater()));
+
+    // NOTE: we might want to connect this to a local slot to track errors
+    //       for debugging later?
+    connect(reply, SIGNAL(error(QNetworkReply::NetworkError)), reply, SLOT(deleteLater()));
+}
+
+QJsonRpcServiceReply *QJsonRpcHttpClient::sendMessage(const QJsonRpcMessage &message)
+{
+    Q_D(QJsonRpcHttpClient);
+    if (d->endPoint.isEmpty()) {
+        qDebug() << Q_FUNC_INFO << "invalid endpoint specified";
+        return 0;
+    }
+
+    QNetworkReply *reply = d->writeMessage(message);
+    return new QJsonRpcHttpReply(message, reply);
 }
 
 QJsonRpcMessage QJsonRpcHttpClient::sendMessageBlocking(const QJsonRpcMessage &message, int msecs)
@@ -104,13 +191,7 @@ QJsonRpcMessage QJsonRpcHttpClient::sendMessageBlocking(const QJsonRpcMessage &m
     return QJsonRpcMessage();
 }
 
-QJsonRpcServiceReply *QJsonRpcHttpClient::sendMessage(const QJsonRpcMessage &message)
-{
-    Q_UNUSED(message)
-    // TODO
 
-    return 0;
-}
 
 void QJsonRpcHttpClient::handleAuthenticationRequired(QNetworkReply *reply, QAuthenticator *authenticator)
 {

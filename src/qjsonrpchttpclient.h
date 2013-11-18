@@ -23,24 +23,7 @@
 #include "qjsonrpcmessage.h"
 #include "qjsonrpcservicereply.h"
 
-class QJsonRpcHttpReplyPrivate;
-class QJsonRpcHttpReply : QJsonRpcServiceReply
-{
-    Q_OBJECT
-public:
-    explicit QJsonRpcHttpReply(QNetworkReply *reply, QObject *parent = 0);
-    ~QJsonRpcHttpReply();
-
-private Q_SLOTS:
-    void networkReplyFinished();
-    void networkReplyerror(QNetworkReply::NetworkError code);
-
-private:
-    Q_DECLARE_PRIVATE(QJsonRpcHttpReply)
-    QScopedPointer<QJsonRpcHttpReplyPrivate> d_ptr;
-
-};
-
+class QNetwokReply;
 class QAuthenticator;
 class QSslError;
 class QNetworkAccessManager;
@@ -52,6 +35,10 @@ public:
     QJsonRpcHttpClient(QObject *parent = 0);
     QJsonRpcHttpClient(QNetworkAccessManager *manager, QObject *parent = 0);
     ~QJsonRpcHttpClient();
+
+    QUrl endPoint() const;
+    void setEndPoint(const QUrl &endPoint);
+    void setEndPoint(const QString &endPoint);
 
     QNetworkAccessManager *networkAccessManager();
 
