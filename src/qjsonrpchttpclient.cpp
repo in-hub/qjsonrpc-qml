@@ -24,12 +24,13 @@
 #include "qjsonrpcservicereply_p.h"
 #include "qjsonrpchttpclient.h"
 
-QJsonRpcHttpReply::QJsonRpcHttpReply(const QJsonRpcMessage &message, QNetworkReply *reply, QObject *parent)
+QJsonRpcHttpReply::QJsonRpcHttpReply(const QJsonRpcMessage &request,
+                                     QNetworkReply *reply, QObject *parent)
     : QJsonRpcServiceReply(parent),
       d_ptr(new QJsonRpcHttpReplyPrivate)
 {
     Q_D(QJsonRpcHttpReply);
-    d->message = message;
+    d->request = request;
     d->reply = reply;
     connect(d->reply, SIGNAL(finished()), this, SLOT(networkReplyFinished()));
     connect(d->reply, SIGNAL(error(QNetworkReply::NetworkError)),
@@ -56,11 +57,22 @@ void QJsonRpcHttpReply::networkReplyFinished()
         QJsonDocument doc = QJsonDocument::fromJson(data);
         if (doc.isEmpty() || doc.isNull() || !doc.isObject()) {
             d->response =
-                d->message.createErrorResponse(QJsonRpc::ParseError,
+                d->request.createErrorResponse(QJsonRpc::ParseError,
                                                "unable to process incoming JSON data",
                                                data);
         } else {
-            d->response = QJsonRpcMessage(doc.object());
+            if (qgetenv("QJSONRPC_DEBUG").toInt())
+                qDebug() << "received: " << doc.toJson();
+
+            QJsonRpcMessage response = QJsonRpcMessage(doc.object());
+            if (d->request.type() == QJsonRpcMessage::Request &&
+                d->request.id() != response.id()) {
+                d->response =
+                    d->request.createErrorResponse(QJsonRpc::InternalError,
+                                                   "invalid response id", data);
+            } else {
+                d->response = response;
+            }
         }
     }
 

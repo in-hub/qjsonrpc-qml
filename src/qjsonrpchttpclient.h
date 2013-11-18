@@ -52,6 +52,7 @@ private Q_SLOTS:
     virtual void handleSslErrors( QNetworkReply * reply, const QList<QSslError> &errors);
 
 private:
+    Q_DISABLE_COPY(QJsonRpcHttpClient)
     Q_DECLARE_PRIVATE(QJsonRpcHttpClient)
     QScopedPointer<QJsonRpcHttpClientPrivate> d_ptr;
 
