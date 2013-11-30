@@ -19,6 +19,12 @@
 #include <QStringList>
 #include <QDebug>
 
+#if QT_VERSION >= 0x050000
+#include <QJsonDocument>
+#else
+#include "json/qjsondocument.h"
+#endif
+
 #include "qjsonrpchttpclient.h"
 
 class HttpClient : public QJsonRpcHttpClient
@@ -28,31 +34,63 @@ public:
     HttpClient(const QString &endpoint, QObject *parent = 0)
         : QJsonRpcHttpClient(endpoint, parent)
     {
+        // defaults added for my local test server
+        m_username = "bitcoinrpc";
+        m_password = "232fb3276bbb7437d265298ea48bdc46";
+    }
+
+    void setUsername(const QString &username) {
+        m_username = username;
+    }
+
+    void setPassword(const QString &password) {
+        m_password = password;
     }
 
 private Q_SLOTS:
     virtual void handleAuthenticationRequired(QNetworkReply *reply, QAuthenticator * authenticator)
     {
         Q_UNUSED(reply)
-        authenticator->setUser("bitcoinrpc");
-        authenticator->setPassword("232fb3276bbb7437d265298ea48bdc46");
+        authenticator->setUser(m_username);
+        authenticator->setPassword(m_password);
     }
+
+private:
+    QString m_username;
+    QString m_password;
+
 };
 
 int main(int argc, char **argv)
 {
     QCoreApplication app(argc, argv);
     if (app.arguments().size() < 2) {
-        qDebug() << "usage: " << argv[0] << " <command> <arguments>";
+        qDebug() << "usage: " << argv[0] << "[-u username] [-p password] <command> <arguments>";
         return -1;
     }
 
     HttpClient client("http://127.0.0.1:8332");
+    if (app.arguments().contains("-u")) {
+        int idx = app.arguments().indexOf("-u");
+        app.arguments().removeAt(idx);
+        client.setUsername(app.arguments().takeAt(idx));
+    }
+
+    if (app.arguments().contains("-p")) {
+        int idx = app.arguments().indexOf("-p");
+        app.arguments().removeAt(idx);
+        client.setPassword(app.arguments().takeAt(idx));
+    }
+
     QJsonRpcMessage message = QJsonRpcMessage::createRequest(app.arguments().at(1));
     QJsonRpcMessage response = client.sendMessageBlocking(message);
-    qDebug() << response;
-    if (response.type() == QJsonRpcMessage::Error)
+    if (response.type() == QJsonRpcMessage::Error) {
         qDebug() << response.errorData();
+        return -1;
+    }
+
+    QJsonDocument doc(response.toObject());
+    qDebug() << doc.toJson();
 }
 
 #include "main.moc"
