@@ -10,3 +10,4 @@ qjsonrpc 1.1 (UNRELEASED)
  * qt5 cleanups
  * split most classes out into their own headers/source files 
  * added ObjectCreator for handling object cleanup in dispatch through RAII (Alex Skorodumov)
+ * added QJsonRpcHttpClient for easy access to web services using jsonrpc
