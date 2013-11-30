@@ -45,23 +45,4 @@ protected:
 
 };
 
-class QJsonRpcHttpReplyPrivate;
-class QJSONRPC_EXPORT QJsonRpcHttpReply : public QJsonRpcServiceReply
-{
-    Q_OBJECT
-public:
-    explicit QJsonRpcHttpReply(const QJsonRpcMessage &request, QNetworkReply *reply,
-                               QObject *parent = 0);
-    virtual ~QJsonRpcHttpReply();
-
-private Q_SLOTS:
-    void networkReplyFinished();
-    void networkReplyerror(QNetworkReply::NetworkError code);
-
-private:
-    Q_DISABLE_COPY(QJsonRpcHttpReply)
-    Q_DECLARE_PRIVATE(QJsonRpcHttpReply)
-
-};
-
 #endif // QJSONRPCSERVICEREPLY_H
