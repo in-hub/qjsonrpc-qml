@@ -118,6 +118,13 @@ private:
 class QJsonRpcHttpClientPrivate
 {
 public:
+    void initializeNetworkAccessManager(QJsonRpcHttpClient *client) {
+        QObject::connect(networkAccessManager, SIGNAL(authenticationRequired(QNetworkReply*,QAuthenticator*)),
+                client, SLOT(handleAuthenticationRequired(QNetworkReply*,QAuthenticator*)));
+        QObject::connect(networkAccessManager, SIGNAL(sslErrors(QNetworkReply*,QList<QSslError>)),
+                client, SLOT(handleSslErrors(QNetworkReply*,QList<QSslError>)));
+    }
+
     QNetworkReply *writeMessage(const QJsonRpcMessage &message) {
         QNetworkRequest request(endPoint);
         request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
@@ -137,10 +144,16 @@ QJsonRpcHttpClient::QJsonRpcHttpClient(QObject *parent)
 {
     Q_D(QJsonRpcHttpClient);
     d->networkAccessManager = new QNetworkAccessManager(this);
-    connect(d->networkAccessManager, SIGNAL(authenticationRequired(QNetworkReply*,QAuthenticator*)),
-            this, SLOT(handleAuthenticationRequired(QNetworkReply*,QAuthenticator*)));
-    connect(d->networkAccessManager, SIGNAL(sslErrors(QNetworkReply*,QList<QSslError>)),
-            this, SLOT(handleSslErrors(QNetworkReply*,QList<QSslError>)));
+    d->initializeNetworkAccessManager(this);
+}
+
+QJsonRpcHttpClient::QJsonRpcHttpClient(QNetworkAccessManager *manager, QObject *parent)
+    : QObject(parent),
+      d_ptr(new QJsonRpcHttpClientPrivate)
+{
+    Q_D(QJsonRpcHttpClient);
+    d->networkAccessManager = manager;
+    d->initializeNetworkAccessManager(this);
 }
 
 QJsonRpcHttpClient::QJsonRpcHttpClient(const QString &endPoint, QObject *parent)
@@ -150,23 +163,7 @@ QJsonRpcHttpClient::QJsonRpcHttpClient(const QString &endPoint, QObject *parent)
     Q_D(QJsonRpcHttpClient);
     d->endPoint = QUrl::fromUserInput(endPoint);
     d->networkAccessManager = new QNetworkAccessManager(this);
-    connect(d->networkAccessManager, SIGNAL(authenticationRequired(QNetworkReply*,QAuthenticator*)),
-            this, SLOT(handleAuthenticationRequired(QNetworkReply*,QAuthenticator*)));
-    connect(d->networkAccessManager, SIGNAL(sslErrors(QNetworkReply*,QList<QSslError>)),
-            this, SLOT(handleSslErrors(QNetworkReply*,QList<QSslError>)));
-}
-
-QJsonRpcHttpClient::QJsonRpcHttpClient(QNetworkAccessManager *manager, QObject *parent)
-    : QObject(parent),
-      d_ptr(new QJsonRpcHttpClientPrivate)
-{
-    Q_D(QJsonRpcHttpClient);
-    d->networkAccessManager = manager;
-    connect(d->networkAccessManager, SIGNAL(authenticationRequired(QNetworkReply*,QAuthenticator*)),
-            this, SLOT(handleAuthenticationRequired(QNetworkReply*,QAuthenticator*)));
-    connect(d->networkAccessManager, SIGNAL(sslErrors(QNetworkReply*,QList<QSslError>)),
-            this, SLOT(handleSslErrors(QNetworkReply*,QList<QSslError>)));
-
+    d->initializeNetworkAccessManager(this);
 }
 
 QJsonRpcHttpClient::~QJsonRpcHttpClient()
