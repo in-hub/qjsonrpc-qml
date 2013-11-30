@@ -27,9 +27,9 @@ QJsonRpcServiceReply::~QJsonRpcServiceReply()
 {
 }
 
-QJsonRpcServiceReply::QJsonRpcServiceReply(QJsonRpcServiceReplyPrivate *d, QObject *parent)
+QJsonRpcServiceReply::QJsonRpcServiceReply(QJsonRpcServiceReplyPrivate &dd, QObject *parent)
     : QObject(parent),
-      d_ptr(d)
+      d_ptr(&dd)
 {
 }
 

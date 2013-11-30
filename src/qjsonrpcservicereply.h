@@ -37,11 +37,9 @@ Q_SIGNALS:
     void finished();
 
 protected:
-    QJsonRpcServiceReply(QJsonRpcServiceReplyPrivate *dd, QObject *parent = 0);
-
-private:
     Q_DISABLE_COPY(QJsonRpcServiceReply)
     Q_DECLARE_PRIVATE(QJsonRpcServiceReply)
+    QJsonRpcServiceReply(QJsonRpcServiceReplyPrivate &dd, QObject *parent = 0);
     QScopedPointer<QJsonRpcServiceReplyPrivate> d_ptr;
     friend class QJsonRpcSocket;
 
@@ -63,7 +61,6 @@ private Q_SLOTS:
 private:
     Q_DISABLE_COPY(QJsonRpcHttpReply)
     Q_DECLARE_PRIVATE(QJsonRpcHttpReply)
-    QScopedPointer<QJsonRpcHttpReplyPrivate> d_ptr;
 
 };
 
