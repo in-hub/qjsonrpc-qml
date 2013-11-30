@@ -14,7 +14,10 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  */
+#include <QEventLoop>
+#include <QTimer>
 #include <QDebug>
+
 #if QT_VERSION >= 0x050000
 #include <QJsonDocument>
 #else
@@ -26,8 +29,7 @@
 
 QJsonRpcHttpReply::QJsonRpcHttpReply(const QJsonRpcMessage &request,
                                      QNetworkReply *reply, QObject *parent)
-    : QJsonRpcServiceReply(parent),
-      d_ptr(new QJsonRpcHttpReplyPrivate)
+    : QJsonRpcServiceReply(*new QJsonRpcHttpReplyPrivate, parent)
 {
     Q_D(QJsonRpcHttpReply);
     d->request = request;
@@ -91,7 +93,7 @@ void QJsonRpcHttpReply::networkReplyerror(QNetworkReply::NetworkError code)
     if (code == QNetworkReply::NoError)
         return;
 
-    d->response = d->message.createErrorResponse(QJsonRpc::InternalError,
+    d->response = d->request.createErrorResponse(QJsonRpc::InternalError,
                                    "error with http request",
                                    reply->errorString());
     Q_EMIT finished();
@@ -118,6 +120,19 @@ QJsonRpcHttpClient::QJsonRpcHttpClient(QObject *parent)
       d_ptr(new QJsonRpcHttpClientPrivate)
 {
     Q_D(QJsonRpcHttpClient);
+    d->networkAccessManager = new QNetworkAccessManager(this);
+    connect(d->networkAccessManager, SIGNAL(authenticationRequired(QNetworkReply*,QAuthenticator*)),
+            this, SLOT(handleAuthenticationRequired(QNetworkReply*,QAuthenticator*)));
+    connect(d->networkAccessManager, SIGNAL(sslErrors(QNetworkReply*,QList<QSslError>)),
+            this, SLOT(handleSslErrors(QNetworkReply*,QList<QSslError>)));
+}
+
+QJsonRpcHttpClient::QJsonRpcHttpClient(const QString &endPoint, QObject *parent)
+    : QObject(parent),
+      d_ptr(new QJsonRpcHttpClientPrivate)
+{
+    Q_D(QJsonRpcHttpClient);
+    d->endPoint = QUrl::fromUserInput(endPoint);
     d->networkAccessManager = new QNetworkAccessManager(this);
     connect(d->networkAccessManager, SIGNAL(authenticationRequired(QNetworkReply*,QAuthenticator*)),
             this, SLOT(handleAuthenticationRequired(QNetworkReply*,QAuthenticator*)));
@@ -196,14 +211,18 @@ QJsonRpcServiceReply *QJsonRpcHttpClient::sendMessage(const QJsonRpcMessage &mes
 
 QJsonRpcMessage QJsonRpcHttpClient::sendMessageBlocking(const QJsonRpcMessage &message, int msecs)
 {
-    Q_UNUSED(message)
-    Q_UNUSED(msecs)
-    // TODO
+    QJsonRpcServiceReply *reply = sendMessage(message);
+    QScopedPointer<QJsonRpcServiceReply> replyPtr(reply);
 
-    return QJsonRpcMessage();
+    QEventLoop responseLoop;
+    connect(reply, SIGNAL(finished()), &responseLoop, SLOT(quit()));
+    QTimer::singleShot(msecs, &responseLoop, SLOT(quit()));
+    responseLoop.exec();
+
+    if (!reply->response().isValid())
+        return message.createErrorResponse(QJsonRpc::TimeoutError, "request timed out");
+    return reply->response();
 }
-
-
 
 void QJsonRpcHttpClient::handleAuthenticationRequired(QNetworkReply *reply, QAuthenticator *authenticator)
 {
@@ -216,4 +235,3 @@ void QJsonRpcHttpClient::handleSslErrors(QNetworkReply *reply, const QList<QSslE
     Q_UNUSED(errors)
     reply->ignoreSslErrors();
 }
-

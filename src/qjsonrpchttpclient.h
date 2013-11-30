@@ -33,6 +33,7 @@ class QJsonRpcHttpClient : public QObject
     Q_OBJECT
 public:
     QJsonRpcHttpClient(QObject *parent = 0);
+    QJsonRpcHttpClient(const QString &endPoint, QObject *parent = 0);
     QJsonRpcHttpClient(QNetworkAccessManager *manager, QObject *parent = 0);
     ~QJsonRpcHttpClient();
 
@@ -47,7 +48,7 @@ public Q_SLOTS:
     QJsonRpcMessage sendMessageBlocking(const QJsonRpcMessage &message, int msecs = 30000);
     QJsonRpcServiceReply *sendMessage(const QJsonRpcMessage &message);
 
-private Q_SLOTS:
+protected Q_SLOTS:
     virtual void handleAuthenticationRequired(QNetworkReply *reply, QAuthenticator * authenticator);
     virtual void handleSslErrors( QNetworkReply * reply, const QList<QSslError> &errors);
 
