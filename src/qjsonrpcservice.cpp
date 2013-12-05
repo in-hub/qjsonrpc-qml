@@ -174,34 +174,24 @@ bool QJsonRpcService::dispatch(const QJsonRpcMessage &request)
     QVarLengthArray<void *, 10> parameters;
     parameters.reserve(parameterTypes.count());
 
+    ObjectCreator objectCreator;
     // first argument to metacall is the return value
     QMetaType::Type returnType = static_cast<QMetaType::Type>(parameterTypes[0]);
-#if QT_VERSION >= 0x050000
-    void *returnData = QMetaType::create(returnType);
-#else
-    void *returnData = QMetaType::construct(returnType);
-#endif
+    QVariant returnValue(returnType == QMetaType::Void ?
+                             QVariant() : QVariant(returnType, objectCreator.create(returnType)));
 
-    QVariant returnValue(returnType, returnData);
     if (returnType == QMetaType::QVariant)
         parameters.append(&returnValue);
     else
         parameters.append(returnValue.data());
 
     // compile arguments
-    QHash<void*, QMetaType::Type> cleanup;
     for (int i = 0; i < parameterTypes.size() - 1; ++i) {
         int parameterType = parameterTypes[i + 1];
         const QVariant &argument = arguments.at(i);
         if (!argument.isValid()) {
             // pass in a default constructed parameter in this case
-#if QT_VERSION >= 0x050000
-            void *value = QMetaType::create(parameterType);
-#else
-            void *value = QMetaType::construct(parameterType);
-#endif
-            parameters.append(value);
-            cleanup.insert(value, static_cast<QMetaType::Type>(parameterType));
+            parameters.append(objectCreator.create(parameterType));
         } else {
             if (argument.userType() != parameterType &&
                 parameterType != QMetaType::QVariant &&
@@ -221,14 +211,24 @@ bool QJsonRpcService::dispatch(const QJsonRpcMessage &request)
         return false;
     }
 
-    // cleanup and result
-    QVariant returnCopy(returnValue);
-    QMetaType::destroy(returnType, returnData);
-    foreach (void *value, cleanup.keys()) {
-        cleanup.remove(value);
-        QMetaType::destroy(cleanup.value(value), value);
-    }
-
-    Q_EMIT result(request.createResponse(returnCopy));
+    Q_EMIT result(request.createResponse(returnValue));
     return true;
+}
+
+void *ObjectCreator::create(int type)
+{
+#if QT_VERSION >= 0x050000
+    void *value = QMetaType::create(type);
+#else
+    void *value = QMetaType::construct(type);
+#endif
+
+    objects.push_back(qMakePair(value, type));
+    return value;
+}
+
+ObjectCreator::~ObjectCreator()
+{
+    for (QPair<void *, int> object = objects.first(); object != objects.end(); ++object)
+        QMetaType::destroy(object.second, object.first);
 }

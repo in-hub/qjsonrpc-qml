@@ -41,4 +41,12 @@ public:
     Q_DECLARE_PUBLIC(QJsonRpcService)
 };
 
+class ObjectCreator
+{
+    QVarLengthArray<QPair<void*, int>, 10>  objects;
+public:
+    void              *create(int type);
+    ~ObjectCreator();
+};
+
 #endif
