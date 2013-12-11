@@ -223,15 +223,14 @@ void *ObjectCreator::create(int type)
     void *value = QMetaType::construct(type);
 #endif
 
-    objects.append(qMakePair(value, type));
+    m_objects.append(qMakePair(value, type));
     return value;
 }
 
 ObjectCreator::~ObjectCreator()
 {
-    QVarLengthArray<QPair<void*, int>, prealloc>::const_iterator it = objects.begin();
-    while (it != objects.constEnd()) {
+    QVarLengthArray<QPair<void*, int>, prealloc>::const_iterator it;
+    for (it = m_objects.constBegin(); it != m_objects.constEnd(); ++it)
         QMetaType::destroy(it->second, it->first);
-        ++it;
-    }
+    m_objects.clear();
 }

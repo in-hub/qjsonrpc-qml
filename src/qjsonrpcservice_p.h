@@ -44,11 +44,14 @@ public:
 
 class ObjectCreator
 {
-    static const int prealloc = 10;
-    QVarLengthArray<QPair<void*, int>, prealloc>  objects;
 public:
-    void              *create(int type);
+    void *create(int type);
     ~ObjectCreator();
+
+private:
+    static const int prealloc = 10;
+    QVarLengthArray<QPair<void*, int>, prealloc> m_objects;
+
 };
 
 #endif
