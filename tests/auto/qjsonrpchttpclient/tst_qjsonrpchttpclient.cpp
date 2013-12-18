@@ -14,27 +14,34 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  */
-#include "qjsonrpcservicereply_p.h"
-#include "qjsonrpcservicereply.h"
+#include <QtTest/QtTest>
 
-QJsonRpcServiceReply::QJsonRpcServiceReply(QObject *parent)
-    : QObject(parent),
-      d_ptr(new QJsonRpcServiceReplyPrivate)
+class TestQJsonRpcHttpClient : public QObject
+{
+    Q_OBJECT
+private Q_SLOTS:
+    void initTestCase();
+    void cleanupTestCase();
+    void init();
+    void cleanup();
+
+};
+
+void TestQJsonRpcHttpClient::initTestCase()
 {
 }
 
-QJsonRpcServiceReply::~QJsonRpcServiceReply()
+void TestQJsonRpcHttpClient::cleanupTestCase()
 {
 }
 
-QJsonRpcServiceReply::QJsonRpcServiceReply(QJsonRpcServiceReplyPrivate &dd, QObject *parent)
-    : QObject(parent),
-      d_ptr(&dd)
+void TestQJsonRpcHttpClient::init()
 {
 }
 
-QJsonRpcMessage QJsonRpcServiceReply::response() const
+void TestQJsonRpcHttpClient::cleanup()
 {
-    Q_D(const QJsonRpcServiceReply);
-    return d->response;
 }
+
+QTEST_MAIN(TestQJsonRpcHttpClient);
+#include "tst_qjsonrpchttpclient.moc"

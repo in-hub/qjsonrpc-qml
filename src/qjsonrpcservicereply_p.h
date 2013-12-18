@@ -14,35 +14,15 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  */
-#ifndef QJSONRPCSERVICEREPLY_H
-#define QJSONRPCSERVICEREPLY_H
+#ifndef QJSONRPCSERVICEREPLY_P_H
+#define QJSONRPCSERVICEREPLY_P_H
 
-#include <QObject>
-#include <QNetworkReply>
-
-#include "qjsonrpc_export.h"
 #include "qjsonrpcmessage.h"
 
-class QJsonRpcServiceReplyPrivate;
-class QJSONRPC_EXPORT QJsonRpcServiceReply : public QObject
+class QJsonRpcServiceReplyPrivate
 {
-    Q_OBJECT
 public:
-    explicit QJsonRpcServiceReply(QObject *parent = 0);
-    virtual ~QJsonRpcServiceReply();
-
-    QJsonRpcMessage response() const;
-
-Q_SIGNALS:
-    void finished();
-
-protected:
-    Q_DISABLE_COPY(QJsonRpcServiceReply)
-    Q_DECLARE_PRIVATE(QJsonRpcServiceReply)
-    QJsonRpcServiceReply(QJsonRpcServiceReplyPrivate &dd, QObject *parent = 0);
-    QScopedPointer<QJsonRpcServiceReplyPrivate> d_ptr;
-    friend class QJsonRpcSocket;
-
+    QJsonRpcMessage response;
 };
 
-#endif // QJSONRPCSERVICEREPLY_H
+#endif

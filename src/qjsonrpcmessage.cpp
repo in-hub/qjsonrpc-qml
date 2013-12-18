@@ -52,7 +52,7 @@ void QJsonRpcMessagePrivate::initializeWithObject(const QJsonObject &message)
     object = new QJsonObject(message);
     if (message.contains("id")) {
         if (message.contains("result") || message.contains("error")) {
-            if (message.contains("error"))
+            if (message.contains("error") && !message.value("error").isNull())
                 type = QJsonRpcMessage::Error;
             else
                 type = QJsonRpcMessage::Response;
@@ -60,12 +60,10 @@ void QJsonRpcMessagePrivate::initializeWithObject(const QJsonObject &message)
             type = QJsonRpcMessage::Request;
         }
     } else {
-        if (message.contains("method")) {
+        if (message.contains("method"))
             type = QJsonRpcMessage::Notification;
-        }
     }
 }
-
 
 QJsonRpcMessagePrivate::~QJsonRpcMessagePrivate()
 {
