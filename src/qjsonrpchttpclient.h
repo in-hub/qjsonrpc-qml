@@ -20,6 +20,7 @@
 #include <QObject>
 #include <QNetworkReply>
 
+#include "qjsonrpc_export.h"
 #include "qjsonrpcmessage.h"
 #include "qjsonrpcservicereply.h"
 
@@ -28,7 +29,7 @@ class QAuthenticator;
 class QSslError;
 class QNetworkAccessManager;
 class QJsonRpcHttpClientPrivate;
-class QJsonRpcHttpClient : public QObject
+class QJSONRPC_EXPORT QJsonRpcHttpClient : public QObject
 {
     Q_OBJECT
 public:
