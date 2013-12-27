@@ -52,7 +52,8 @@ void TestQJsonRpcMessage::testInvalidDataResponseWithId()
     // invalid with id
     const char *invalid = "{\"jsonrpc\": \"2.0\", \"params\": [], \"id\": 666}";
     QJsonRpcMessage request(invalid);
-    QJsonRpcMessage error    = request.createErrorResponse(QJsonRpc::NoError, QString());
+    QJsonRpcMessage error =
+        request.createErrorResponse(QJsonRpc::NoError, QString());
     QJsonRpcMessage response = request.createResponse(QString());
     QCOMPARE(request.type(), QJsonRpcMessage::Invalid);
     QCOMPARE(response.id(), request.id());
@@ -64,7 +65,8 @@ void TestQJsonRpcMessage::testInvalidDataResponseWithoutId()
     // invalid without id
     const char *invalid = "{\"jsonrpc\": \"2.0\", \"params\": []}";
     QJsonRpcMessage request(invalid);
-    QJsonRpcMessage error    = request.createErrorResponse(QJsonRpc::NoError, QString());
+    QJsonRpcMessage error =
+        request.createErrorResponse(QJsonRpc::NoError, QString());
     QJsonRpcMessage response = request.createResponse(QString());
     QCOMPARE(request.type(), QJsonRpcMessage::Invalid);
     QCOMPARE(response.type(), QJsonRpcMessage::Invalid);    
@@ -73,14 +75,17 @@ void TestQJsonRpcMessage::testInvalidDataResponseWithoutId()
 
 void TestQJsonRpcMessage::testResponseSameId()
 {
-    QJsonRpcMessage request = QJsonRpcMessage::createRequest("testMethod");
-    QJsonRpcMessage response = request.createResponse("testResponse");
+    QJsonRpcMessage request =
+        QJsonRpcMessage::createRequest("testMethod");
+    QJsonRpcMessage response =
+        request.createResponse(QLatin1String("testResponse"));
     QCOMPARE(response.id(), request.id());
 }
 
 void TestQJsonRpcMessage::testNotificationNoId()
 {
-    QJsonRpcMessage notification = QJsonRpcMessage::createNotification("testNotification");
+    QJsonRpcMessage notification =
+        QJsonRpcMessage::createNotification("testNotification");
     QCOMPARE(notification.id(), -1);
 }
 
@@ -89,16 +94,19 @@ void TestQJsonRpcMessage::testMessageTypes()
     QJsonRpcMessage invalid;
     QCOMPARE(invalid.type(), QJsonRpcMessage::Invalid);
 
-    QJsonRpcMessage request = QJsonRpcMessage::createRequest("testMethod");
+    QJsonRpcMessage request =
+        QJsonRpcMessage::createRequest("testMethod");
     QCOMPARE(request.type(), QJsonRpcMessage::Request);
 
-    QJsonRpcMessage response = request.createResponse("testResponse");
+    QJsonRpcMessage response =
+        request.createResponse(QLatin1String("testResponse"));
     QCOMPARE(response.type(), QJsonRpcMessage::Response);
 
     QJsonRpcMessage error = request.createErrorResponse(QJsonRpc::NoError);
     QCOMPARE(error.type(), QJsonRpcMessage::Error);
 
-    QJsonRpcMessage notification = QJsonRpcMessage::createNotification("testNotification");
+    QJsonRpcMessage notification =
+        QJsonRpcMessage::createNotification("testNotification");
     QCOMPARE(notification.type(), QJsonRpcMessage::Notification);
 }
 
@@ -115,19 +123,32 @@ void TestQJsonRpcMessage::testPositionalParameters()
 void TestQJsonRpcMessage::testEquivalence()
 {
     // request (same as error)
-    QJsonRpcMessage firstRequest = QJsonRpcMessage::createRequest("testRequest");
+    QJsonRpcMessage firstRequest =
+        QJsonRpcMessage::createRequest("testRequest");
     QJsonRpcMessage secondRequest(firstRequest);
-    QJsonRpcMessage thirdRequest = QJsonRpcMessage::createRequest("testRequest", QVariantList() << "with" << "parameters");
+
+    QJsonArray params;
+    params.append(QLatin1String("with"));
+    params.append(QLatin1String("parameters"));
+    QJsonRpcMessage thirdRequest =
+        QJsonRpcMessage::createRequest("testRequest", params);
     QJsonRpcMessage fourthRequest = thirdRequest;
     QCOMPARE(firstRequest, secondRequest);
     QVERIFY(secondRequest != thirdRequest);
     QCOMPARE(thirdRequest, fourthRequest);
 
     // notification (no id)
-    QJsonRpcMessage firstNotification = QJsonRpcMessage::createNotification("testNotification");
-    QJsonRpcMessage secondNotification = QJsonRpcMessage::createNotification("testNotification");
-    QJsonRpcMessage thirdNotification = QJsonRpcMessage::createNotification("testNotification", QVariantList() << "first");
-    QJsonRpcMessage fourthNotification = QJsonRpcMessage::createNotification("testNotification", QVariantList() << "first");
+    QJsonRpcMessage firstNotification =
+        QJsonRpcMessage::createNotification("testNotification");
+    QJsonRpcMessage secondNotification =
+        QJsonRpcMessage::createNotification("testNotification");
+
+    QJsonArray params2;
+    params2.append(QLatin1String("first"));
+    QJsonRpcMessage thirdNotification =
+        QJsonRpcMessage::createNotification("testNotification", params2);
+    QJsonRpcMessage fourthNotification =
+        QJsonRpcMessage::createNotification("testNotification", params2);
     QCOMPARE(firstNotification, secondNotification);
     QVERIFY(firstNotification != thirdNotification);
     QCOMPARE(thirdNotification, fourthNotification);
@@ -154,8 +175,11 @@ void TestQJsonRpcMessage::testWithVariantListArgs()
 
     QVariantList firstParameter;
     firstParameter << 1 << 20 << "hello" << false;
+
+    QJsonArray params;
+    params.append(QJsonArray::fromVariantList(firstParameter));
     QJsonRpcMessage requestFromQJsonRpc =
-        QJsonRpcMessage::createRequest("service.variantListParameter", QVariant(firstParameter));
+        QJsonRpcMessage::createRequest("service.variantListParameter", params);
 
     // QJsonRpcMessage::createRequest is creating objects with an unique id,
     // and to allow a random test execution order - json data must have the same id

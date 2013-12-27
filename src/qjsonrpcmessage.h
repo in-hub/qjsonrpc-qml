@@ -18,7 +18,7 @@
 #define QJSONRPCMESSAGE_H
 
 #include <QSharedDataPointer>
-#include <QVariant>
+#include <QMetaType>
 
 #if QT_VERSION >= 0x050000
 #include <QJsonValue>
@@ -67,13 +67,16 @@ public:
         Error
     };
 
-    static QJsonRpcMessage createRequest(const QString &method, const QVariantList &params = QVariantList());
-    static QJsonRpcMessage createRequest(const QString &method, const QVariant &param);
-    static QJsonRpcMessage createNotification(const QString &method, const QVariantList &params = QVariantList());
-    static QJsonRpcMessage createNotification(const QString &method, const QVariant &param);
-    QJsonRpcMessage createResponse(const QVariant &result) const;
-    QJsonRpcMessage createErrorResponse(QJsonRpc::ErrorCode code, const QString &message = QString(),
-                                        const QVariant &data = QVariant()) const;
+    static QJsonRpcMessage createRequest(const QString &method,
+                                         const QJsonArray &params = QJsonArray());
+    static QJsonRpcMessage createRequest(const QString &method, const QJsonValue &param);
+    static QJsonRpcMessage createNotification(const QString &method,
+                                              const QJsonArray &params = QJsonArray());
+    static QJsonRpcMessage createNotification(const QString &method, const QJsonValue &param);
+    QJsonRpcMessage createResponse(const QJsonValue &result) const;
+    QJsonRpcMessage createErrorResponse(QJsonRpc::ErrorCode code,
+                                        const QString &message = QString(),
+                                        const QJsonValue &data = QJsonValue()) const;
 
     QJsonRpcMessage::Type type() const;
     bool isValid() const;
@@ -84,12 +87,12 @@ public:
     QJsonArray params() const;
 
     // response
-    QVariant result() const;
+    QJsonValue result() const;
 
     // error
     int errorCode() const;
     QString errorMessage() const;
-    QVariant errorData() const;
+    QJsonValue errorData() const;
 
     QJsonObject toObject() const;
     bool operator==(const QJsonRpcMessage &message) const;
