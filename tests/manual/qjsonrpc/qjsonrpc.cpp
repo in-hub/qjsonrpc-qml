@@ -71,8 +71,9 @@ int main(int argc, char **argv)
     foreach (QString arg, args)
         arguments.append(arg);
 
-    QJsonRpcMessage request = notification ? QJsonRpcMessage::createNotification(method, arguments) :
-                                             QJsonRpcMessage::createRequest(method, arguments);
+    QJsonRpcMessage request = notification ?
+        QJsonRpcMessage::createNotification(method, QJsonArray::fromVariantList(arguments)) :
+        QJsonRpcMessage::createRequest(method, QJsonArray::fromVariantList(arguments));
     QJsonRpcMessage response = socket.sendMessageBlocking(request, 5000);
     if (response.type() == QJsonRpcMessage::Error) {
         qDebug("error(%d): %s", response.errorCode(), response.errorMessage().toLocal8Bit().data());

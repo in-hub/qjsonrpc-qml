@@ -123,6 +123,8 @@ bool QJsonRpcAbstractServer::addService(QJsonRpcService *service)
 
     connect(service, SIGNAL(notifyConnectedClients(QJsonRpcMessage)),
                this, SLOT(notifyConnectedClients(QJsonRpcMessage)));
+    connect(service, SIGNAL(notifyConnectedClients(QString,QJsonArray)),
+               this, SLOT(notifyConnectedClients(QString,QJsonArray)));
     connect(service, SIGNAL(notifyConnectedClients(QString,QVariantList)),
                this, SLOT(notifyConnectedClients(QString,QVariantList)));
     return true;
@@ -134,9 +136,11 @@ bool QJsonRpcAbstractServer::removeService(QJsonRpcService *service)
         return false;
 
     disconnect(service, SIGNAL(notifyConnectedClients(QJsonRpcMessage)),
-               this, SLOT(notifyConnectedClients(QJsonRpcMessage)));
+                  this, SLOT(notifyConnectedClients(QJsonRpcMessage)));
+    disconnect(service, SIGNAL(notifyConnectedClients(QString,QJsonArray)),
+                  this, SLOT(notifyConnectedClients(QString,QJsonArray)));
     disconnect(service, SIGNAL(notifyConnectedClients(QString,QVariantList)),
-               this, SLOT(notifyConnectedClients(QString,QVariantList)));
+                  this, SLOT(notifyConnectedClients(QString,QVariantList)));
     return true;
 }
 
@@ -154,9 +158,17 @@ void QJsonRpcAbstractServer::setWireFormat(QJsonDocument::JsonFormat format)
 }
 #endif
 
-void QJsonRpcAbstractServer::notifyConnectedClients(const QString &method, const QVariantList &params)
+void QJsonRpcAbstractServer::notifyConnectedClients(const QString &method,
+                                                    const QVariantList &params)
 {
-    QJsonRpcMessage notification = QJsonRpcMessage::createNotification(method, params);
+    notifyConnectedClients(method, QJsonArray::fromVariantList(params));
+}
+
+void QJsonRpcAbstractServer::notifyConnectedClients(const QString &method,
+                                                    const QJsonArray &params)
+{
+    QJsonRpcMessage notification =
+        QJsonRpcMessage::createNotification(method, params);
     notifyConnectedClients(notification);
 }
 

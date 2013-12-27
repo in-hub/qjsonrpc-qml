@@ -26,12 +26,12 @@ PRIVATE_HEADERS += \
     qjsonrpcservicereply_p.h
 
 INSTALL_HEADERS += \
+    qjsonrpcmessage.h \
     qjsonrpcservice.h \
     qjsonrpcsocket.h \
     qjsonrpcabstractserver.h \
     qjsonrpclocalserver.h \
     qjsonrpctcpserver.h \
-    qjsonrpcmessage.h \
     qjsonrpc_export.h \
     qjsonrpcservicereply.h \
     qjsonrpchttpclient.h
@@ -41,12 +41,12 @@ HEADERS += \
     $${PRIVATE_HEADERS}
        
 SOURCES += \
+    qjsonrpcmessage.cpp \
     qjsonrpcservice.cpp \
     qjsonrpcsocket.cpp \
     qjsonrpcabstractserver.cpp \
     qjsonrpclocalserver.cpp \
     qjsonrpctcpserver.cpp \
-    qjsonrpcmessage.cpp \
     qjsonrpcservicereply.cpp \
     qjsonrpchttpclient.cpp
 

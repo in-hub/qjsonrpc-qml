@@ -123,8 +123,11 @@ void TestQJsonRpcSocket::testSocketMultiparamter()
                                   SIGNAL(messageReceived(QJsonRpcMessage)));
     QVERIFY(serviceSocket.isValid());
 
-    QJsonRpcMessage request = QJsonRpcMessage::createRequest(QString("test.multiParam"),
-                                                             QVariantList() << false << true);
+    QJsonArray params;
+    params.append(false);
+    params.append(true);
+    QJsonRpcMessage request =
+        QJsonRpcMessage::createRequest("test.multiParam", params);
 
     QScopedPointer<QJsonRpcServiceReply> reply;
     reply.reset(serviceSocket.sendMessage(request));
@@ -146,7 +149,8 @@ void TestQJsonRpcSocket::testSocketNotification()
                                   SIGNAL(messageReceived(QJsonRpcMessage)));
     QVERIFY(serviceSocket.isValid());
 
-    QJsonRpcMessage notification = QJsonRpcMessage::createNotification("test.notify");
+    QJsonRpcMessage notification =
+        QJsonRpcMessage::createNotification("test.notify");
 
     QScopedPointer<QJsonRpcServiceReply> reply;
     reply.reset(serviceSocket.sendMessage(notification));
@@ -168,8 +172,8 @@ void TestQJsonRpcSocket::testSocketResponse()
                                   SIGNAL(messageReceived(QJsonRpcMessage)));
     QVERIFY(serviceSocket.isValid());
 
-    QJsonRpcMessage response = QJsonRpcMessage::createRequest(QString("test.response"));
-    response = response.createResponse(QVariant());
+    QJsonRpcMessage response = QJsonRpcMessage::createRequest("test.response");
+    response = response.createResponse(QJsonValue());
 
     QScopedPointer<QJsonRpcServiceReply> reply;
     reply.reset(serviceSocket.sendMessage(response));

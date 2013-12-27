@@ -177,7 +177,8 @@ QJsonRpcMessage QJsonRpcSocket::invokeRemoteMethodBlocking(const QString &method
     if (param9.isValid()) params.append(param9);
     if (param10.isValid()) params.append(param10);
 
-    QJsonRpcMessage request = QJsonRpcMessage::createRequest(method, params);
+    QJsonRpcMessage request =
+        QJsonRpcMessage::createRequest(method, QJsonArray::fromVariantList(params));
     return sendMessageBlocking(request);
 }
 
@@ -200,7 +201,8 @@ QJsonRpcServiceReply *QJsonRpcSocket::invokeRemoteMethod(const QString &method, 
     if (param9.isValid()) params.append(param9);
     if (param10.isValid()) params.append(param10);
 
-    QJsonRpcMessage request = QJsonRpcMessage::createRequest(method, params);
+    QJsonRpcMessage request =
+        QJsonRpcMessage::createRequest(method, QJsonArray::fromVariantList(params));
     return sendMessage(request);
 }
 

@@ -211,7 +211,7 @@ bool QJsonRpcService::dispatch(const QJsonRpcMessage &request)
         return false;
     }
 
-    Q_EMIT result(request.createResponse(returnValue));
+    Q_EMIT result(request.createResponse(QJsonValue::fromVariant(returnValue)));
     return true;
 }
 

@@ -71,7 +71,7 @@ private Q_SLOTS:
                 d->response =
                     d->request.createErrorResponse(QJsonRpc::ParseError,
                                                    "unable to process incoming JSON data",
-                                                   data);
+                                                   QString::fromUtf8(data));
             } else {
                 if (qgetenv("QJSONRPC_DEBUG").toInt())
                     qDebug() << "received: " << doc.toJson();
@@ -81,7 +81,8 @@ private Q_SLOTS:
                     d->request.id() != response.id()) {
                     d->response =
                         d->request.createErrorResponse(QJsonRpc::InternalError,
-                                                       "invalid response id", data);
+                                                       "invalid response id",
+                                                       QString::fromUtf8(data));
                 } else {
                     d->response = response;
                 }
