@@ -50,17 +50,19 @@ QJsonRpcMessagePrivate::QJsonRpcMessagePrivate()
 void QJsonRpcMessagePrivate::initializeWithObject(const QJsonObject &message)
 {
     object = new QJsonObject(message);
-    if (message.contains("id")) {
-        if (message.contains("result") || message.contains("error")) {
-            if (message.contains("error") && !message.value("error").isNull())
+    if (message.contains(QLatin1String("id"))) {
+        if (message.contains(QLatin1String("result")) ||
+            message.contains(QLatin1String("error"))) {
+            if (message.contains(QLatin1String("error")) &&
+                !message.value(QLatin1String("error")).isNull())
                 type = QJsonRpcMessage::Error;
             else
                 type = QJsonRpcMessage::Response;
-        } else if (message.contains("method")) {
+        } else if (message.contains(QLatin1String("method"))) {
             type = QJsonRpcMessage::Request;
         }
     } else {
-        if (message.contains("method"))
+        if (message.contains(QLatin1String("method")))
             type = QJsonRpcMessage::Notification;
     }
 }
@@ -162,10 +164,10 @@ QJsonRpcMessage QJsonRpcMessagePrivate::createBasicRequest(const QString &method
 {
     QJsonRpcMessage request;
     request.d->object = new QJsonObject;
-    request.d->object->insert("jsonrpc", QLatin1String("2.0"));
-    request.d->object->insert("method", method);
+    request.d->object->insert(QLatin1String("jsonrpc"), QLatin1String("2.0"));
+    request.d->object->insert(QLatin1String("method"), method);
     if (!params.isEmpty())
-        request.d->object->insert("params", params);
+        request.d->object->insert(QLatin1String("params"), params);
     return request;
 }
 
@@ -174,7 +176,7 @@ QJsonRpcMessage QJsonRpcMessage::createRequest(const QString &method, const QJso
     QJsonRpcMessage request = QJsonRpcMessagePrivate::createBasicRequest(method, params);
     request.d->type = QJsonRpcMessage::Request;
     QJsonRpcMessagePrivate::uniqueRequestCounter++;
-    request.d->object->insert("id", QJsonRpcMessagePrivate::uniqueRequestCounter);
+    request.d->object->insert(QLatin1String("id"), QJsonRpcMessagePrivate::uniqueRequestCounter);
     return request;
 }
 
@@ -202,11 +204,11 @@ QJsonRpcMessage QJsonRpcMessage::createNotification(const QString &method, const
 QJsonRpcMessage QJsonRpcMessage::createResponse(const QJsonValue &result) const
 {
     QJsonRpcMessage response;
-    if (d->object->contains("id")) {
+    if (d->object->contains(QLatin1String("id"))) {
         QJsonObject *object = new QJsonObject;
-        object->insert("jsonrpc", QLatin1String("2.0"));
-        object->insert("id", d->object->value("id"));
-        object->insert("result", result);
+        object->insert(QLatin1String("jsonrpc"), QLatin1String("2.0"));
+        object->insert(QLatin1String("id"), d->object->value(QLatin1String("id")));
+        object->insert(QLatin1String("result"), result);
         response.d->type = QJsonRpcMessage::Response;
         response.d->object = object;
     }
@@ -220,21 +222,21 @@ QJsonRpcMessage QJsonRpcMessage::createErrorResponse(QJsonRpc::ErrorCode code,
 {
     QJsonRpcMessage response;
     QJsonObject error;
-    error.insert("code", code);
+    error.insert(QLatin1String("code"), code);
     if (!message.isEmpty())
-        error.insert("message", message);
+        error.insert(QLatin1String("message"), message);
     if (!data.isUndefined())
-        error.insert("data", data);
+        error.insert(QLatin1String("data"), data);
 
     response.d->type = QJsonRpcMessage::Error;
     QJsonObject *object = new QJsonObject;
-    object->insert("jsonrpc", QLatin1String("2.0"));
+    object->insert(QLatin1String("jsonrpc"), QLatin1String("2.0"));
 
-    if (d->object->contains("id"))
-        object->insert("id", d->object->value("id"));
+    if (d->object->contains(QLatin1String("id")))
+        object->insert(QLatin1String("id"), d->object->value(QLatin1String("id")));
     else
-        object->insert("id", 0);
-    object->insert("error", error);
+        object->insert(QLatin1String("id"), 0);
+    object->insert(QLatin1String("error"), error);
     response.d->object = object;
     return response;
 }
@@ -243,7 +245,7 @@ int QJsonRpcMessage::id() const
 {
     if (d->type == QJsonRpcMessage::Notification || !d->object)
         return -1;
-    return d->object->value("id").toVariant().toInt();
+    return d->object->value(QLatin1String("id")).toInt();
 }
 
 QString QJsonRpcMessage::method() const
@@ -251,7 +253,7 @@ QString QJsonRpcMessage::method() const
     if (d->type == QJsonRpcMessage::Response || !d->object)
         return QString();
 
-    return d->object->value("method").toString();
+    return d->object->value(QLatin1String("method")).toString();
 }
 
 QJsonArray QJsonRpcMessage::params() const
@@ -261,7 +263,7 @@ QJsonArray QJsonRpcMessage::params() const
     if (!d->object)
         return QJsonArray();
 
-    return d->object->value("params").toArray();
+    return d->object->value(QLatin1String("params")).toArray();
 }
 
 QJsonValue QJsonRpcMessage::result() const
@@ -269,7 +271,7 @@ QJsonValue QJsonRpcMessage::result() const
     if (d->type != QJsonRpcMessage::Response || !d->object)
         return QJsonValue();
 
-    return d->object->value("result");
+    return d->object->value(QLatin1String("result"));
 }
 
 int QJsonRpcMessage::errorCode() const
@@ -277,8 +279,9 @@ int QJsonRpcMessage::errorCode() const
     if (d->type != QJsonRpcMessage::Error || !d->object)
         return 0;
 
-    QJsonObject error = d->object->value("error").toObject();
-    return static_cast<int>(error.value("code").toDouble());
+    QJsonObject error =
+        d->object->value(QLatin1String("error")).toObject();
+    return error.value(QLatin1String("code")).toInt();
 }
 
 QString QJsonRpcMessage::errorMessage() const
@@ -286,8 +289,9 @@ QString QJsonRpcMessage::errorMessage() const
     if (d->type != QJsonRpcMessage::Error || !d->object)
         return QString();
 
-    QJsonObject error = d->object->value("error").toObject();
-    return error.value("message").toString();
+    QJsonObject error =
+        d->object->value(QLatin1String("error")).toObject();
+    return error.value(QLatin1String("message")).toString();
 }
 
 QJsonValue QJsonRpcMessage::errorData() const
@@ -295,8 +299,9 @@ QJsonValue QJsonRpcMessage::errorData() const
     if (d->type != QJsonRpcMessage::Error || !d->object)
         return QJsonValue();
 
-    QJsonObject error = d->object->value("error").toObject();
-    return error.value("error");
+    QJsonObject error =
+        d->object->value(QLatin1String("error")).toObject();
+    return error.value(QLatin1String("data"));
 }
 
 static QDebug operator<<(QDebug dbg, QJsonRpcMessage::Type type)
