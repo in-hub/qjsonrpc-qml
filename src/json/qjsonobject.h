@@ -46,8 +46,6 @@
 
 #include <QtCore/qiterator.h>
 
-QT_BEGIN_HEADER
-
 QT_BEGIN_NAMESPACE
 
 class QDebug;
@@ -209,12 +207,10 @@ private:
     QJsonPrivate::Object *o;
 };
 
-#ifndef QT_NO_DEBUG_STREAM
+#if !defined(QT_NO_DEBUG_STREAM) && !defined(QT_JSON_READONLY)
 QJSON_EXPORT QDebug operator<<(QDebug, const QJsonObject &);
 #endif
 
 QT_END_NAMESPACE
-
-QT_END_HEADER
 
 #endif // QJSONOBJECT_H

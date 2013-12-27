@@ -47,8 +47,6 @@
 #include <QtCore/qglobal.h>
 #include <QtCore/qstring.h>
 
-QT_BEGIN_HEADER
-
 QT_BEGIN_NAMESPACE
 
 class QDebug;
@@ -83,8 +81,9 @@ public:
     QJsonValue(bool b);
     QJsonValue(double n);
     QJsonValue(int n);
+    QJsonValue(qint64 n);
     QJsonValue(const QString &s);
-    QJsonValue(const QLatin1String &s);
+    QJsonValue(QLatin1String s);
     QJsonValue(const QJsonArray &a);
     QJsonValue(const QJsonObject &o);
 
@@ -106,6 +105,7 @@ public:
     inline bool isUndefined() const { return type() == Undefined; }
 
     bool toBool(bool defaultValue = false) const;
+    int toInt(int defaultValue = 0) const;
     double toDouble(double defaultValue = 0) const;
     QString toString(const QString &defaultValue = QString()) const;
     QJsonArray toArray() const;
@@ -164,6 +164,7 @@ public:
     inline bool isUndefined() const { return type() == QJsonValue::Undefined; }
 
     inline bool toBool() const { return toValue().toBool(); }
+    inline int toInt() const { return toValue().toInt(); }
     inline double toDouble() const { return toValue().toDouble(); }
     inline QString toString() const { return toValue().toString(); }
     QJsonArray toArray() const;
@@ -183,12 +184,10 @@ private:
     uint index : 31;
 };
 
-#ifndef QT_NO_DEBUG_STREAM
+#if !defined(QT_NO_DEBUG_STREAM) && !defined(QT_JSON_READONLY)
 QJSON_EXPORT QDebug operator<<(QDebug, const QJsonValue &);
 #endif
 
 QT_END_NAMESPACE
-
-QT_END_HEADER
 
 #endif // QJSONVALUE_H
