@@ -81,7 +81,7 @@ public:
 
     // request
     QString method() const;
-    QVariantList params() const;
+    QJsonArray params() const;
 
     // response
     QVariant result() const;

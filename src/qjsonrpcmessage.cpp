@@ -248,14 +248,14 @@ QString QJsonRpcMessage::method() const
     return d->object->value("method").toString();
 }
 
-QVariantList QJsonRpcMessage::params() const
+QJsonArray QJsonRpcMessage::params() const
 {
     if (d->type == QJsonRpcMessage::Response || d->type == QJsonRpcMessage::Error)
-        return QVariantList();
+        return QJsonArray();
     if (!d->object)
-        return QVariantList();
+        return QJsonArray();
 
-    return d->object->value("params").toVariant().toList();
+    return d->object->value("params").toArray();
 }
 
 QVariant QJsonRpcMessage::result() const
