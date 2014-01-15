@@ -728,7 +728,7 @@ void TestQJsonRpcServer::testNotifyServiceSocket()
     QEventLoop test;
     QTimer::singleShot(10, &test, SLOT(quit()));
     test.exec();
-    serviceProvider.notifyConnectedClients("service.numberParameters", QVariantList() << 10 << 3.14159);
+    serviceProvider.notifyConnectedClients("service.numberParameters", QJsonArray() << 10 << 3.14159);
     QTimer::singleShot(10, &test, SLOT(quit()));
     test.exec();
 

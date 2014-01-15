@@ -33,8 +33,7 @@ public:
 Q_SIGNALS:
     void result(const QJsonRpcMessage &result);
     void notifyConnectedClients(const QJsonRpcMessage &message);
-    void notifyConnectedClients(const QString &method, const QJsonArray &params);
-    void notifyConnectedClients(const QString &method, const QVariantList &params);
+    void notifyConnectedClients(const QString &method, const QJsonArray &params = QJsonArray());
 
 protected:
     QJsonRpcSocket *senderSocket();
