@@ -123,8 +123,8 @@ bool QJsonRpcAbstractServer::addService(QJsonRpcService *service)
 
     connect(service, SIGNAL(notifyConnectedClients(QJsonRpcMessage)),
                this, SLOT(notifyConnectedClients(QJsonRpcMessage)));
-    connect(service, SIGNAL(notifyConnectedClients(QString,QVariantList)),
-               this, SLOT(notifyConnectedClients(QString,QVariantList)));
+    connect(service, SIGNAL(notifyConnectedClients(QString,QJsonArray)),
+               this, SLOT(notifyConnectedClients(QString,QJsonArray)));
     return true;
 }
 
@@ -134,9 +134,9 @@ bool QJsonRpcAbstractServer::removeService(QJsonRpcService *service)
         return false;
 
     disconnect(service, SIGNAL(notifyConnectedClients(QJsonRpcMessage)),
-               this, SLOT(notifyConnectedClients(QJsonRpcMessage)));
-    disconnect(service, SIGNAL(notifyConnectedClients(QString,QVariantList)),
-               this, SLOT(notifyConnectedClients(QString,QVariantList)));
+                  this, SLOT(notifyConnectedClients(QJsonRpcMessage)));
+    disconnect(service, SIGNAL(notifyConnectedClients(QString,QJsonArray)),
+                  this, SLOT(notifyConnectedClients(QString,QJsonArray)));
     return true;
 }
 
@@ -154,9 +154,11 @@ void QJsonRpcAbstractServer::setWireFormat(QJsonDocument::JsonFormat format)
 }
 #endif
 
-void QJsonRpcAbstractServer::notifyConnectedClients(const QString &method, const QVariantList &params)
+void QJsonRpcAbstractServer::notifyConnectedClients(const QString &method,
+                                                    const QJsonArray &params)
 {
-    QJsonRpcMessage notification = QJsonRpcMessage::createNotification(method, params);
+    QJsonRpcMessage notification =
+        QJsonRpcMessage::createNotification(method, params);
     notifyConnectedClients(notification);
 }
 

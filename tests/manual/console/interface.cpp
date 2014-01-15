@@ -70,7 +70,8 @@ QVariant QJsonRpcServiceSocketPrototype::invokeRemoteMethod(const QString &metho
     if (param9.isValid()) params.append(param9);
     if (param10.isValid()) params.append(param10);
 
-    QJsonRpcMessage request = QJsonRpcMessage::createRequest(method, params);
+    QJsonRpcMessage request =
+        QJsonRpcMessage::createRequest(method, QJsonArray::fromVariantList(params));
     QJsonRpcServiceReply *reply = m_socket->sendMessage(request);
     QEventLoop loop;
     connect(m_socket, SIGNAL(messageReceived(QJsonRpcMessage)), &loop, SLOT(quit()));
@@ -81,5 +82,5 @@ QVariant QJsonRpcServiceSocketPrototype::invokeRemoteMethod(const QString &metho
         context()->throwError("request timed out");
         return QVariant();
     }
-    return reply->response().result();
+    return reply->response().result().toVariant();
 }

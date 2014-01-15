@@ -71,6 +71,8 @@ QT_BEGIN_NAMESPACE
     it has been created from as long as it is not being modified.
 
     You can convert the array to and from text based JSON through QJsonDocument.
+
+    \sa {JSON Support in Qt}, {JSON Save Game Example}
 */
 
 /*!
@@ -391,9 +393,10 @@ QJsonValue QJsonArray::takeAt(int i)
 void QJsonArray::insert(int i, const QJsonValue &value)
 {
     Q_ASSERT (i >= 0 && i <= (a ? (int)a->length : 0));
+    QJsonValue val = value;
 
     bool compressed;
-    int valueSize = QJsonPrivate::Value::requiredStorage(value, &compressed);
+    int valueSize = QJsonPrivate::Value::requiredStorage(val, &compressed);
 
     detach(valueSize + sizeof(QJsonPrivate::Value));
 
@@ -401,13 +404,16 @@ void QJsonArray::insert(int i, const QJsonValue &value)
         a->tableOffset = sizeof(QJsonPrivate::Array);
 
     int valueOffset = a->reserveSpace(valueSize, i, 1, false);
+    if (!valueOffset)
+        return;
+
     QJsonPrivate::Value &v = (*a)[i];
-    v.type = (value.t == QJsonValue::Undefined ? QJsonValue::Null : value.t);
+    v.type = (val.t == QJsonValue::Undefined ? QJsonValue::Null : val.t);
     v.latinOrIntValue = compressed;
     v.latinKey = false;
-    v.value = QJsonPrivate::Value::valueToStore(value, valueOffset);
+    v.value = QJsonPrivate::Value::valueToStore(val, valueOffset);
     if (valueSize)
-        QJsonPrivate::Value::copyData(value, (char *)a + valueOffset, compressed);
+        QJsonPrivate::Value::copyData(val, (char *)a + valueOffset, compressed);
 }
 
 /*!
@@ -437,9 +443,10 @@ void QJsonArray::insert(int i, const QJsonValue &value)
 void QJsonArray::replace(int i, const QJsonValue &value)
 {
     Q_ASSERT (a && i >= 0 && i < (int)(a->length));
+    QJsonValue val = value;
 
     bool compressed;
-    int valueSize = QJsonPrivate::Value::requiredStorage(value, &compressed);
+    int valueSize = QJsonPrivate::Value::requiredStorage(val, &compressed);
 
     detach(valueSize);
 
@@ -447,13 +454,16 @@ void QJsonArray::replace(int i, const QJsonValue &value)
         a->tableOffset = sizeof(QJsonPrivate::Array);
 
     int valueOffset = a->reserveSpace(valueSize, i, 1, true);
+    if (!valueOffset)
+        return;
+
     QJsonPrivate::Value &v = (*a)[i];
-    v.type = (value.t == QJsonValue::Undefined ? QJsonValue::Null : value.t);
+    v.type = (val.t == QJsonValue::Undefined ? QJsonValue::Null : val.t);
     v.latinOrIntValue = compressed;
     v.latinKey = false;
-    v.value = QJsonPrivate::Value::valueToStore(value, valueOffset);
+    v.value = QJsonPrivate::Value::valueToStore(val, valueOffset);
     if (valueSize)
-        QJsonPrivate::Value::copyData(value, (char *)a + valueOffset, compressed);
+        QJsonPrivate::Value::copyData(val, (char *)a + valueOffset, compressed);
 
     ++d->compactionCounter;
     if (d->compactionCounter > 32u && d->compactionCounter >= unsigned(a->length) / 2u)
@@ -1083,7 +1093,7 @@ void QJsonArray::compact()
 }
 
 
-#ifndef QT_NO_DEBUG_STREAM
+#if !defined(QT_NO_DEBUG_STREAM) && !defined(QT_JSON_READONLY)
 QDebug operator<<(QDebug dbg, const QJsonArray &a)
 {
     if (!a.a) {

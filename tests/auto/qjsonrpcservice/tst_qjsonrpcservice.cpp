@@ -73,15 +73,15 @@ void TestQJsonRpcService::testDispatch()
     provider.addService(&service);
 
     QJsonRpcMessage validRequestDispatch =
-        QJsonRpcMessage::createRequest("service.testMethod", QString("testParam"));
+        QJsonRpcMessage::createRequest("service.testMethod", QLatin1String("testParam"));
     QVERIFY(service.testDispatch(validRequestDispatch));
 
     QJsonRpcMessage validNotificationDispatch =
-        QJsonRpcMessage::createNotification("service.testMethod", "testParam");
+        QJsonRpcMessage::createNotification("service.testMethod", QLatin1String("testParam"));
     QVERIFY(service.testDispatch(validNotificationDispatch));
 
     QJsonRpcMessage invalidResponseDispatch =
-        validRequestDispatch.createResponse("testResult");
+        validRequestDispatch.createResponse(QLatin1String("testResult"));
     QVERIFY(!service.testDispatch(invalidResponseDispatch));
 
     QJsonRpcMessage invalidDispatch;
@@ -99,11 +99,11 @@ void TestQJsonRpcService::testSignals()
     QVERIFY(service.testDispatch(validRequestSignalDispatch));
 
     QJsonRpcMessage validRequestSignalWithParamDispatch =
-        QJsonRpcMessage::createRequest("service.testSignalWithParameter", "testParam");
+        QJsonRpcMessage::createRequest("service.testSignalWithParameter", QLatin1String("testParam"));
     QVERIFY(service.testDispatch(validRequestSignalWithParamDispatch));
 
     QJsonRpcMessage invalidRequestSignalDispatch =
-        QJsonRpcMessage::createRequest("service.testSignal", "testParam");
+        QJsonRpcMessage::createRequest("service.testSignal", QLatin1String("testParam"));
     QCOMPARE(service.testDispatch(invalidRequestSignalDispatch), false);
 }
 

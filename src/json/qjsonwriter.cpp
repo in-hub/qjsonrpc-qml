@@ -184,9 +184,14 @@ static void valueToJson(const QJsonPrivate::Base *b, const QJsonPrivate::Value &
     case QJsonValue::Bool:
         json += v.toBoolean() ? "true" : "false";
         break;
-    case QJsonValue::Double:
-        json += QByteArray::number(v.toDouble(b));
+    case QJsonValue::Double: {
+        const double d = v.toDouble(b);
+        if (qIsFinite(d)) // +2 to format to ensure the expected precision
+            json += QByteArray::number(d, 'g', std::numeric_limits<double>::digits10 + 2); // ::digits10 is 15
+        else
+            json += "null"; // +INF || -INF || NaN (see RFC4627#section2.4)
         break;
+    }
     case QJsonValue::String:
         json += '"';
         json += escapedString(v.toString(b));

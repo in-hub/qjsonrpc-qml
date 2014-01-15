@@ -66,7 +66,7 @@ public:
 
 public Q_SLOTS:
     void notifyConnectedClients(const QJsonRpcMessage &message);
-    void notifyConnectedClients(const QString &method, const QVariantList &params = QVariantList());
+    void notifyConnectedClients(const QString &method, const QJsonArray &params);
 
 protected Q_SLOTS:
     virtual void processIncomingConnection() = 0;

@@ -76,6 +76,8 @@ QT_BEGIN_NAMESPACE
 
     A document can also be created from a stored binary representation using fromBinaryData() or
     fromRawData().
+
+    \sa {JSON Support in Qt}, {JSON Save Game Example}
 */
 
 /*!
@@ -301,10 +303,12 @@ QVariant QJsonDocument::toVariant() const
 
  \sa fromJson()
  */
+#ifndef QT_JSON_READONLY
 QByteArray QJsonDocument::toJson() const
 {
     return toJson(Indented);
 }
+#endif
 
 /*!
     \enum QJsonDocument::JsonFormat
@@ -336,6 +340,7 @@ QByteArray QJsonDocument::toJson() const
 
     \sa fromJson(), JsonFormat
  */
+#ifndef QT_JSON_READONLY
 QByteArray QJsonDocument::toJson(JsonFormat format) const
 {
     if (!d)
@@ -350,6 +355,7 @@ QByteArray QJsonDocument::toJson(JsonFormat format) const
 
     return json;
 }
+#endif
 
 /*!
  Parses a UTF-8 encoded JSON document and creates a QJsonDocument
@@ -370,7 +376,7 @@ QJsonDocument QJsonDocument::fromJson(const QByteArray &json, QJsonParseError *e
 }
 
 /*!
-    Returns true if the document doesn't contain any data.
+    Returns \c true if the document doesn't contain any data.
  */
 bool QJsonDocument::isEmpty() const
 {
@@ -401,7 +407,7 @@ QByteArray QJsonDocument::toBinaryData() const
 }
 
 /*!
-    Returns true if the document contains an array.
+    Returns \c true if the document contains an array.
 
     \sa array(), isObject()
  */
@@ -415,7 +421,7 @@ bool QJsonDocument::isArray() const
 }
 
 /*!
-    Returns true if the document contains an object.
+    Returns \c true if the document contains an object.
 
     \sa object(), isArray()
  */
@@ -547,7 +553,7 @@ bool QJsonDocument::operator==(const QJsonDocument &other) const
  */
 
 /*!
-    returns true if this document is null.
+    returns \c true if this document is null.
 
     Null documents are documents created through the default constructor.
 
@@ -560,7 +566,7 @@ bool QJsonDocument::isNull() const
     return (d == 0);
 }
 
-#ifndef QT_NO_DEBUG_STREAM
+#if !defined(QT_NO_DEBUG_STREAM) && !defined(QT_JSON_READONLY)
 QDebug operator<<(QDebug dbg, const QJsonDocument &o)
 {
     if (!o.d) {
