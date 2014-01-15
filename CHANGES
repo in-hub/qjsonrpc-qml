@@ -11,3 +11,4 @@ qjsonrpc 1.1 (UNRELEASED)
  * split most classes out into their own headers/source files 
  * added ObjectCreator for handling object cleanup in dispatch through RAII (Alex Skorodumov)
  * added QJsonRpcHttpClient for easy access to web services using jsonrpc
+ * removed QVariant-based API for QJsonRpcMessage in favor of QJsonValue/QJsonArray
