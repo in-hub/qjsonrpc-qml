@@ -150,11 +150,15 @@ bool QJsonRpcService::dispatch(const QJsonRpcMessage &request)
     int idx = -1;
     QList<int> parameterTypes;
     QList<int> indexes = d->invokableMethodHash.values(method);
-    QVariantList arguments = request.params().toArray().toVariantList();
+
+    // NOTE: optimize!
+    QVariantList arguments = request.params().isObject() ?
+        request.params().toObject().toVariantMap().values() :
+        request.params().toArray().toVariantList();
+
     QList<int> argumentTypes;
-    foreach (QVariant argument, arguments) {
+    foreach (QVariant argument, arguments)
         argumentTypes.append(static_cast<int>(argument.type()));
-    }
 
     foreach (int methodIndex, indexes) {
         if (variantAwareCompare(argumentTypes, d->jsParameterTypeHash[methodIndex])) {

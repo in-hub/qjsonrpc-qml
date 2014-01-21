@@ -70,9 +70,14 @@ public:
     static QJsonRpcMessage createRequest(const QString &method,
                                          const QJsonArray &params = QJsonArray());
     static QJsonRpcMessage createRequest(const QString &method, const QJsonValue &param);
+    static QJsonRpcMessage createRequest(const QString &method, const QJsonObject &namedParameters);
+
     static QJsonRpcMessage createNotification(const QString &method,
                                               const QJsonArray &params = QJsonArray());
     static QJsonRpcMessage createNotification(const QString &method, const QJsonValue &param);
+    static QJsonRpcMessage createNotification(const QString &method,
+                                              const QJsonObject &namedParameters);
+
     QJsonRpcMessage createResponse(const QJsonValue &result) const;
     QJsonRpcMessage createErrorResponse(QJsonRpc::ErrorCode code,
                                         const QString &message = QString(),

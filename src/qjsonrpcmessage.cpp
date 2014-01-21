@@ -34,6 +34,8 @@ public:
 
     void initializeWithObject(const QJsonObject &message);
     static QJsonRpcMessage createBasicRequest(const QString &method, const QJsonArray &params);
+    static QJsonRpcMessage createBasicRequest(const QString &method,
+                                              const QJsonObject &namedParameters);
 
     QJsonRpcMessage::Type type;
     QScopedPointer<QJsonObject> object;
@@ -177,6 +179,17 @@ QJsonRpcMessage QJsonRpcMessagePrivate::createBasicRequest(const QString &method
     return request;
 }
 
+QJsonRpcMessage QJsonRpcMessagePrivate::createBasicRequest(const QString &method,
+                                                           const QJsonObject &namedParameters)
+{
+    QJsonRpcMessage request;
+    request.d->object->insert(QLatin1String("jsonrpc"), QLatin1String("2.0"));
+    request.d->object->insert(QLatin1String("method"), method);
+    if (!namedParameters.isEmpty())
+        request.d->object->insert(QLatin1String("params"), namedParameters);
+    return request;
+}
+
 QJsonRpcMessage QJsonRpcMessage::createRequest(const QString &method, const QJsonArray &params)
 {
     QJsonRpcMessage request = QJsonRpcMessagePrivate::createBasicRequest(method, params);
@@ -193,6 +206,17 @@ QJsonRpcMessage QJsonRpcMessage::createRequest(const QString &method, const QJso
     return createRequest(method, params);
 }
 
+QJsonRpcMessage QJsonRpcMessage::createRequest(const QString &method,
+                                               const QJsonObject &namedParameters)
+{
+    QJsonRpcMessage request =
+        QJsonRpcMessagePrivate::createBasicRequest(method, namedParameters);
+    request.d->type = QJsonRpcMessage::Request;
+    QJsonRpcMessagePrivate::uniqueRequestCounter++;
+    request.d->object->insert(QLatin1String("id"), QJsonRpcMessagePrivate::uniqueRequestCounter);
+    return request;
+}
+
 QJsonRpcMessage QJsonRpcMessage::createNotification(const QString &method, const QJsonArray &params)
 {
     QJsonRpcMessage notification = QJsonRpcMessagePrivate::createBasicRequest(method, params);
@@ -205,6 +229,15 @@ QJsonRpcMessage QJsonRpcMessage::createNotification(const QString &method, const
     QJsonArray params;
     params.append(param);
     return createNotification(method, params);
+}
+
+QJsonRpcMessage QJsonRpcMessage::createNotification(const QString &method,
+                                                    const QJsonObject &namedParameters)
+{
+    QJsonRpcMessage notification =
+        QJsonRpcMessagePrivate::createBasicRequest(method, namedParameters);
+    notification.d->type = QJsonRpcMessage::Notification;
+    return notification;
 }
 
 QJsonRpcMessage QJsonRpcMessage::createResponse(const QJsonValue &result) const
