@@ -259,14 +259,14 @@ QString QJsonRpcMessage::method() const
     return d->object->value(QLatin1String("method")).toString();
 }
 
-QJsonArray QJsonRpcMessage::params() const
+QJsonValue QJsonRpcMessage::params() const
 {
     if (d->type == QJsonRpcMessage::Response || d->type == QJsonRpcMessage::Error)
-        return QJsonArray();
+        return QJsonValue();
     if (!d->object)
-        return QJsonArray();
+        return QJsonValue();
 
-    return d->object->value(QLatin1String("params")).toArray();
+    return d->object->value(QLatin1String("params"));
 }
 
 QJsonValue QJsonRpcMessage::result() const

@@ -150,7 +150,7 @@ bool QJsonRpcService::dispatch(const QJsonRpcMessage &request)
     int idx = -1;
     QList<int> parameterTypes;
     QList<int> indexes = d->invokableMethodHash.values(method);
-    QVariantList arguments = request.params().toVariantList();
+    QVariantList arguments = request.params().toArray().toVariantList();
     QList<int> argumentTypes;
     foreach (QVariant argument, arguments) {
         argumentTypes.append(static_cast<int>(argument.type()));

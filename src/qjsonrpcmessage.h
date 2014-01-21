@@ -84,7 +84,7 @@ public:
 
     // request
     QString method() const;
-    QJsonArray params() const;
+    QJsonValue params() const;
 
     // response
     QJsonValue result() const;
