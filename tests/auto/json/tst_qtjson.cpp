@@ -673,8 +673,10 @@ void tst_QtJson::testValueRef()
     QCOMPARE(array.size(), 5);
     QCOMPARE(array.at(0).toDouble(), 1.);
     QCOMPARE(array.at(2).toDouble(), 3.);
+#if QT_VERSION >= 0x050200
     QCOMPARE(array.at(3).toInt(), 4);
     QCOMPARE(array.at(4).toInt(), 0);
+#endif
     QCOMPARE(array.at(1).type(), QJsonValue::Bool);
     QCOMPARE(array.at(1).toBool(), false);
 
@@ -703,10 +705,12 @@ void tst_QtJson::testObjectIteration()
 
     QCOMPARE(object.size(), 10);
 
+#if QT_VERSION >= 0x050200
     for (QJsonObject::iterator it = object.begin(); it != object.end(); ++it) {
         QJsonValue value = it.value();
         QCOMPARE((double)it.key().toInt(), value.toDouble());
     }
+#endif
 
     {
         QJsonObject object2 = object;
@@ -720,7 +724,9 @@ void tst_QtJson::testObjectIteration()
         for (QJsonObject::const_iterator it = object2.constBegin(); it != object2.constEnd(); ++it) {
             QJsonValue value = it.value();
             QVERIFY(it.value() != val);
+#if QT_VERSION >= 0x050200
             QCOMPARE((double)it.key().toInt(), value.toDouble());
+#endif
         }
     }
 
@@ -1174,6 +1180,7 @@ void tst_QtJson::toJson()
         QCOMPARE(json, expected);
     }
 
+#if QT_VERSION >= 0x050200
     // Test QJsonDocument::Compact format
     {
         QJsonObject object;
@@ -1202,6 +1209,7 @@ void tst_QtJson::toJson()
         expected = "[true,999,\"string\",null,\"\\\\\\u0007\\n\\r\\b\\tabcABC\\\"\"]";
         QCOMPARE(json, expected);
     }
+#endif
 }
 
 void tst_QtJson::toJsonSillyNumericValues()
@@ -1249,8 +1257,10 @@ void tst_QtJson::toJsonLargeNumericValues()
     array.append(QJsonValue(-std::numeric_limits<double>::epsilon()));
     array.append(QJsonValue(-std::numeric_limits<double>::denorm_min()));
     array.append(QJsonValue(-0.0));
+#if QT_VERSION >= 0x050200
     array.append(QJsonValue(9007199254740992LL));  // JS Number max integer
     array.append(QJsonValue(-9007199254740992LL)); // JS Number min integer
+#endif
     object.insert("Array", array);
 
     QByteArray json = QJsonDocument(object).toJson();

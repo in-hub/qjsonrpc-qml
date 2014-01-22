@@ -17,6 +17,7 @@
 #ifndef QJSONRPCABSTRACTSERVER_H
 #define QJSONRPCABSTRACTSERVER_H
 
+#include <QObject>
 #include <QScopedPointer>
 
 #if QT_VERSION >= 0x050000
