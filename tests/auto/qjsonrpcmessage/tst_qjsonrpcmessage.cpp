@@ -36,6 +36,7 @@ private slots:
     void testNotificationNoId();
     void testMessageTypes();
     void testPositionalParameters();
+    void testEquivalence_data();
     void testEquivalence();
     void testWithVariantListArgs();
 };
@@ -120,48 +121,82 @@ void TestQJsonRpcMessage::testPositionalParameters()
     QVERIFY2(firstObject.value("params").toArray() != secondObject.value("params").toArray(), "params should maintain order");
 }
 
-void TestQJsonRpcMessage::testEquivalence()
+void TestQJsonRpcMessage::testEquivalence_data()
 {
-    // request (same as error)
-    QJsonRpcMessage firstRequest =
-        QJsonRpcMessage::createRequest("testRequest");
-    QJsonRpcMessage secondRequest(firstRequest);
-
-    QJsonArray params;
-    params.append(QLatin1String("with"));
-    params.append(QLatin1String("parameters"));
-    QJsonRpcMessage thirdRequest =
-        QJsonRpcMessage::createRequest("testRequest", params);
-    QJsonRpcMessage fourthRequest = thirdRequest;
-    QCOMPARE(firstRequest, secondRequest);
-    QVERIFY(secondRequest != thirdRequest);
-    QCOMPARE(thirdRequest, fourthRequest);
-
-    // notification (no id)
-    QJsonRpcMessage firstNotification =
-        QJsonRpcMessage::createNotification("testNotification");
-    QJsonRpcMessage secondNotification =
-        QJsonRpcMessage::createNotification("testNotification");
-
-    QJsonArray params2;
-    params2.append(QLatin1String("first"));
-    QJsonRpcMessage thirdNotification =
-        QJsonRpcMessage::createNotification("testNotification", params2);
-    QJsonRpcMessage fourthNotification =
-        QJsonRpcMessage::createNotification("testNotification", params2);
-    QCOMPARE(firstNotification, secondNotification);
-    QVERIFY(firstNotification != thirdNotification);
-    QCOMPARE(thirdNotification, fourthNotification);
+    QTest::addColumn<QJsonRpcMessage>("lhs");
+    QTest::addColumn<QJsonRpcMessage>("rhs");
+    QTest::addColumn<bool>("equal");
 
     QJsonRpcMessage invalid;
-    QVERIFY(firstRequest != invalid);
-    QVERIFY(secondRequest != invalid);
-    QVERIFY(thirdRequest != invalid);
-    QVERIFY(fourthRequest != invalid);
-    QVERIFY(firstNotification != invalid);
-    QVERIFY(secondNotification != invalid);
-    QVERIFY(thirdNotification != invalid);
-    QVERIFY(fourthNotification != invalid);
+    {
+        // REQUESTS
+        const char *simpleData =
+            "{\"jsonrpc\": \"2.0\", \"id\": 1, \"method\": \"request\" }";
+        QJsonRpcMessage simpleRequest(simpleData);
+        QJsonRpcMessage simpleRequestCopyCtor(simpleRequest);
+        QJsonRpcMessage simpleRequestEqualsOp = simpleRequest;
+
+        const char *withParametersData =
+            "{\"jsonrpc\": \"2.0\", \"id\": 1, \"method\": \"request\", \"params\": [\"with\", \"parameters\"]}";
+        QJsonRpcMessage simpleRequestWithParameters(withParametersData);
+
+        const char *withNamedParametersData =
+            "{\"jsonrpc\": \"2.0\", \"id\": 1, \"method\": \"request\", \"params\": {\"firstName\": \"yogi\", \"lastName\": \"thebear\"}}";
+        QJsonRpcMessage simpleRequestWithNamedParameters(withNamedParametersData);
+
+        QTest::newRow("simpleRequestCopiesEqual_1") << simpleRequest << simpleRequestCopyCtor << true;
+        QTest::newRow("simpleRequestCopiesEqual_2") << simpleRequest << simpleRequestEqualsOp << true;
+        QTest::newRow("simpleRequestAndSimpleRequestWithParamsNotEqual") << simpleRequest
+            << simpleRequestWithParameters << false;
+        QTest::newRow("simpleRequestAndSimpleRequestWithNamedParamsNotEqual") << simpleRequest
+            << simpleRequestWithNamedParameters << false;
+        QTest::newRow("requestWithParamsNotEqualWithNamedParameters")
+            << simpleRequestWithParameters << simpleRequestWithNamedParameters << false;
+        QTest::newRow("simpleRequestNotEqualInvalid") << simpleRequest << invalid << false;
+    }
+
+    {
+        // NOTIFICATIONS
+        QJsonRpcMessage simpleNotification = QJsonRpcMessage::createNotification("notification");
+        QJsonRpcMessage simpleNotificationCopyCtor(simpleNotification);
+        QJsonRpcMessage simpleNotificationEqualsOp = simpleNotification;
+
+        QJsonArray params;
+        params.append(QLatin1String("yogi"));
+        params.append(QLatin1String("thebear"));
+        QJsonRpcMessage simpleNotificationWithParams =
+            QJsonRpcMessage::createNotification("notification", params);
+
+        QJsonObject namedParameters;
+        namedParameters.insert("firstName", QLatin1String("yogi"));
+        namedParameters.insert("lastName", QLatin1String("thebear"));
+        QJsonRpcMessage simpleNotificationWithNamedParameters =
+            QJsonRpcMessage::createNotification("notification", namedParameters);
+
+        QTest::newRow("simpleNotificationCopiesEqual_1")
+            << simpleNotification << simpleNotificationCopyCtor << true;
+        QTest::newRow("simpleNotificationCopiesEqual_2")
+            << simpleNotification << simpleNotificationEqualsOp << true;
+        QTest::newRow("simpleNotificationNotEqualNotificationWithParams")
+            << simpleNotification << simpleNotificationWithParams << false;
+        QTest::newRow("simpleNotificationNotEqualNotificationWithNamedParameters")
+            << simpleNotification << simpleNotificationWithNamedParameters << false;
+        QTest::newRow("notificationWithParamsNotEqualWithNamedParameters")
+            << simpleNotificationWithParams << simpleNotificationWithNamedParameters << false;
+        QTest::newRow("simpleNotificationNotEqualInvalid") << simpleNotification << invalid << false;
+    }
+}
+
+void TestQJsonRpcMessage::testEquivalence()
+{
+    QFETCH(QJsonRpcMessage, lhs);
+    QFETCH(QJsonRpcMessage, rhs);
+    QFETCH(bool, equal);
+
+    if (equal)
+        QCOMPARE(lhs, rhs);
+    else
+        QVERIFY(lhs != rhs);
 }
 
 void TestQJsonRpcMessage::testWithVariantListArgs()
