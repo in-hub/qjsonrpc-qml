@@ -17,6 +17,7 @@
 #include <QVarLengthArray>
 #include <QMetaMethod>
 #include <QEventLoop>
+#include <QDebug>
 
 #include "qjsonrpcsocket.h"
 #include "qjsonrpcservice_p.h"
@@ -86,6 +87,7 @@ void QJsonRpcServicePrivate::cacheInvokableInfo()
 
             QList<int> parameterTypes;
             QList<int> jsParameterTypes;
+            QStringList parameterNames;
 #if QT_VERSION >= 0x050000
             parameterTypes << method.returnType();
 #else
@@ -93,9 +95,13 @@ void QJsonRpcServicePrivate::cacheInvokableInfo()
 #endif
             foreach(QByteArray parameterType, method.parameterTypes()) {
                 parameterTypes << QMetaType::type(parameterType);
-                jsParameterTypes << convertVariantTypeToJSType(QMetaType::type(parameterType));                
+                jsParameterTypes << convertVariantTypeToJSType(QMetaType::type(parameterType));
             }
 
+            foreach (QByteArray parameterName, method.parameterNames())
+                parameterNames.append(parameterName);
+
+            parameterNamesHash[idx] = parameterNames;
             parameterTypeHash[idx] = parameterTypes;
             jsParameterTypeHash[idx] = jsParameterTypes;
         }
@@ -152,9 +158,40 @@ bool QJsonRpcService::dispatch(const QJsonRpcMessage &request)
     QList<int> indexes = d->invokableMethodHash.values(method);
 
     // NOTE: optimize!
-    QVariantList arguments = request.params().isObject() ?
-        request.params().toObject().toVariantMap().values() :
-        request.params().toArray().toVariantList();
+    QVariantList arguments;
+    if (!request.params().isObject()) {
+        arguments = request.params().toArray().toVariantList();
+    } else {
+        QJsonObject namedParametersObject = request.params().toObject();
+        QStringList namedParameters = namedParametersObject.keys();
+
+        bool outerMatch = false;
+        for (int i = 0; i < d->parameterNamesHash.size(); ++i) {
+            QStringList parameterNames = d->parameterNamesHash[i];
+            if (namedParameters.size() != parameterNames.size())
+                continue;
+
+            bool match = true;
+            foreach (QString namedParameter, namedParameters) {
+                if (!parameterNames.contains(namedParameter))
+                    match = false;
+            }
+
+            if (match) {
+                outerMatch = true;
+                foreach (QString parameterName, parameterNames)
+                    arguments << namedParametersObject.value(parameterName).toVariant();
+                break;
+            }
+        }
+
+        if (!outerMatch) {
+            QJsonRpcMessage error =
+                request.createErrorResponse(QJsonRpc::InvalidParams, "invalid named parameters");
+            Q_EMIT result(error);
+            return false;
+        }
+    }
 
     QList<int> argumentTypes;
     foreach (QVariant argument, arguments)

@@ -77,10 +77,16 @@ void TestQJsonRpcService::testDispatch()
     QVERIFY(service.testDispatch(validRequestDispatch));
 
     QJsonObject namedParameters;
-    namedParameters.insert("testParameter", QLatin1String("testParam"));
+    namedParameters.insert("string", QLatin1String("testParam"));
     QJsonRpcMessage validRequestDispatchWithNamedParameters =
         QJsonRpcMessage::createRequest("service.testMethod", namedParameters);
     QVERIFY(service.testDispatch(validRequestDispatchWithNamedParameters));
+
+    QJsonObject invalidNamedParameters;
+    invalidNamedParameters.insert("testParameter", QLatin1String("testParam"));
+    QJsonRpcMessage invalidRequestDispatchWithNamedParameters =
+        QJsonRpcMessage::createRequest("service.testMethod", invalidNamedParameters);
+    QVERIFY(!service.testDispatch(invalidRequestDispatchWithNamedParameters));
 
     QJsonRpcMessage validNotificationDispatch =
         QJsonRpcMessage::createNotification("service.testMethod", QLatin1String("testParam"));
