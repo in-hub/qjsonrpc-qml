@@ -166,9 +166,9 @@ bool QJsonRpcService::dispatch(const QJsonRpcMessage &request)
         QStringList namedParameters = namedParametersObject.keys();
 
         bool outerMatch = false;
-        for (int i = 0; i < d->parameterNamesHash.size(); ++i) {
-            QStringList parameterNames = d->parameterNamesHash[i];
-            if (namedParameters.size() != parameterNames.size())
+        foreach (int index, indexes) {
+            QStringList parameterNames = d->parameterNamesHash[index];
+            if (namedParameters.size() > parameterNames.size())
                 continue;
 
             bool match = true;
