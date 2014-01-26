@@ -24,8 +24,7 @@
 #include "qjsonrpcservice.h"
 
 QJsonRpcService::QJsonRpcService(QObject *parent)
-    : QObject(parent),
-      d_ptr(new QJsonRpcServicePrivate(this))
+    : QObject(*new QJsonRpcServicePrivate(this), parent)
 {
 }
 

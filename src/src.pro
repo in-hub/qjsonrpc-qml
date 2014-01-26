@@ -3,7 +3,7 @@ include(../qjsonrpc.pri)
 INCLUDEPATH += .
 TEMPLATE = lib
 TARGET = qjsonrpc
-QT += core network
+QT += core core-private network
 QT -= gui
 DEFINES += QJSONRPC_BUILD
 CONFIG += $${QJSONRPC_LIBRARY_TYPE}

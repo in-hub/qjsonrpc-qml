@@ -43,7 +43,7 @@ bool QJsonRpcServiceProvider::addService(QJsonRpcService *service)
         return false;
     }
 
-    service->d_ptr->cacheInvokableInfo();
+    service->d_func()->cacheInvokableInfo();
     d->services.insert(serviceName, service);
     if (!service->parent())
         d->cleanupHandler.add(service);
@@ -80,7 +80,7 @@ void QJsonRpcServiceProvider::processMessage(QJsonRpcSocket *socket, const QJson
                 }
             } else {
                 QJsonRpcService *service = d->services.value(serviceName);
-                service->d_ptr->socket = socket;
+                service->d_func()->socket = socket;
                 if (message.type() == QJsonRpcMessage::Request)
                     QObject::connect(service, SIGNAL(result(QJsonRpcMessage)),
                                       socket, SLOT(notify(QJsonRpcMessage)));
