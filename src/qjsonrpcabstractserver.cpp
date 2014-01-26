@@ -165,13 +165,16 @@ void QJsonRpcAbstractServer::notifyConnectedClients(const QJsonRpcMessage &messa
         d->clients[i]->notify(message);
 }
 
-void QJsonRpcAbstractServer::processMessage(const QJsonRpcMessage &message)
+void QJsonRpcAbstractServerPrivate::_q_processMessage(const QJsonRpcMessage &message)
 {
-    QJsonRpcSocket *socket = static_cast<QJsonRpcSocket*>(sender());
+    Q_Q(QJsonRpcAbstractServer);
+    QJsonRpcSocket *socket = static_cast<QJsonRpcSocket*>(q->sender());
     if (!socket) {
         qDebug() << Q_FUNC_INFO << "called without service socket";
         return;
     }
 
-    QJsonRpcServiceProvider::processMessage(socket, message);
+    q->processMessage(socket, message);
 }
+
+#include "moc_qjsonrpcabstractserver.cpp"

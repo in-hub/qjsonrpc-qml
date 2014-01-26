@@ -27,6 +27,8 @@
 #include "json/qjsondocument.h"
 #endif
 
+#include "qjsonrpcabstractserver.h"
+
 class QJsonRpcService;
 class QJsonRpcServiceProviderPrivate
 {
@@ -41,6 +43,7 @@ public:
 class QJsonRpcSocket;
 class QJsonRpcAbstractServerPrivate : public QObjectPrivate
 {
+    Q_DECLARE_PUBLIC(QJsonRpcAbstractServer)
 public:
 #if QT_VERSION >= 0x050100 || QT_VERSION <= 0x050000
     QJsonDocument::JsonFormat format;
@@ -48,6 +51,10 @@ public:
 #else
     QJsonRpcAbstractServerPrivate() {}
 #endif
+
+    virtual void _q_processIncomingConnection() = 0;
+    virtual void _q_clientDisconnected() = 0;
+    void _q_processMessage(const QJsonRpcMessage &message);
 
     QList<QJsonRpcSocket*> clients;
 
