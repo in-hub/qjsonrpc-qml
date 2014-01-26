@@ -70,8 +70,8 @@ protected:
     virtual void processRequestMessage(const QJsonRpcMessage &message);
 
 private:
+    Q_DISABLE_COPY(QJsonRpcSocket)
     Q_DECLARE_PRIVATE(QJsonRpcSocket)
-    QScopedPointer<QJsonRpcSocketPrivate> d_ptr;
 
 };
 
