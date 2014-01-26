@@ -20,6 +20,7 @@
 #include <QHash>
 #include <QPointer>
 #include <QVarLengthArray>
+#include <QStringList>
 
 class QJsonRpcSocket;
 class QJsonRpcService;
@@ -36,6 +37,7 @@ public:
     QMultiHash<QByteArray, int> invokableMethodHash;
     QHash<int, QList<int> > parameterTypeHash;    // actual parameter types to convert to
     QHash<int, QList<int> > jsParameterTypeHash;  // for comparing incoming messages
+    QHash<int, QStringList> parameterNamesHash;
     QPointer<QJsonRpcSocket> socket;
 
     QJsonRpcService * const q_ptr;

@@ -17,6 +17,7 @@
 #include <QVarLengthArray>
 #include <QMetaMethod>
 #include <QEventLoop>
+#include <QDebug>
 
 #include "qjsonrpcsocket.h"
 #include "qjsonrpcservice_p.h"
@@ -86,6 +87,7 @@ void QJsonRpcServicePrivate::cacheInvokableInfo()
 
             QList<int> parameterTypes;
             QList<int> jsParameterTypes;
+            QStringList parameterNames;
 #if QT_VERSION >= 0x050000
             parameterTypes << method.returnType();
 #else
@@ -93,9 +95,13 @@ void QJsonRpcServicePrivate::cacheInvokableInfo()
 #endif
             foreach(QByteArray parameterType, method.parameterTypes()) {
                 parameterTypes << QMetaType::type(parameterType);
-                jsParameterTypes << convertVariantTypeToJSType(QMetaType::type(parameterType));                
+                jsParameterTypes << convertVariantTypeToJSType(QMetaType::type(parameterType));
             }
 
+            foreach (QByteArray parameterName, method.parameterNames())
+                parameterNames.append(parameterName);
+
+            parameterNamesHash[idx] = parameterNames;
             parameterTypeHash[idx] = parameterTypes;
             jsParameterTypeHash[idx] = jsParameterTypes;
         }
@@ -151,16 +157,35 @@ bool QJsonRpcService::dispatch(const QJsonRpcMessage &request)
     QList<int> parameterTypes;
     QList<int> indexes = d->invokableMethodHash.values(method);
 
-    // NOTE: optimize!
-    QVariantList arguments = request.params().isObject() ?
-        request.params().toObject().toVariantMap().values() :
-        request.params().toArray().toVariantList();
-
+    QVariantList arguments;
     QList<int> argumentTypes;
-    foreach (QVariant argument, arguments)
-        argumentTypes.append(static_cast<int>(argument.type()));
+    if (!request.params().isObject()) {
+        arguments = request.params().toArray().toVariantList();
+        foreach (QVariant argument, arguments)
+            argumentTypes.append(static_cast<int>(argument.type()));
+    }
 
     foreach (int methodIndex, indexes) {
+        if (request.params().isObject()) {  // named parameters
+            QJsonObject namedParametersObject = request.params().toObject();
+            QStringList namedParameters = namedParametersObject.keys();
+            QStringList parameterNames = d->parameterNamesHash[methodIndex];
+            if (namedParameters.size() > parameterNames.size())
+                continue;
+
+            foreach (QString namedParameter, namedParameters) {
+                if (!parameterNames.contains(namedParameter))
+                    continue;
+            }
+
+            // otherwise we have a potential match
+            foreach (QString parameterName, parameterNames) {
+                QVariant variant =  namedParametersObject.value(parameterName).toVariant();
+                arguments.append(variant);
+                argumentTypes.append(static_cast<int>(variant.type()));
+            }
+        }
+
         if (variantAwareCompare(argumentTypes, d->jsParameterTypeHash[methodIndex])) {
             parameterTypes = d->parameterTypeHash[methodIndex];
             idx = methodIndex;
