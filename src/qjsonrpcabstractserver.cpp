@@ -9,7 +9,7 @@
 #include "qjsonrpcabstractserver.h"
 
 QJsonRpcServiceProvider::QJsonRpcServiceProvider()
-    : d_ptr(new QJsonRpcServiceProviderPrivate)
+    : d(new QJsonRpcServiceProviderPrivate)
 {
 }
 
@@ -31,7 +31,6 @@ QByteArray QJsonRpcServiceProviderPrivate::serviceName(QJsonRpcService *service)
 
 bool QJsonRpcServiceProvider::addService(QJsonRpcService *service)
 {
-    Q_D(QJsonRpcServiceProvider);
     QByteArray serviceName = d->serviceName(service);
     if (serviceName.isEmpty()) {
         qDebug() << Q_FUNC_INFO << "service added without serviceName classinfo, aborting";
@@ -52,7 +51,6 @@ bool QJsonRpcServiceProvider::addService(QJsonRpcService *service)
 
 bool QJsonRpcServiceProvider::removeService(QJsonRpcService *service)
 {
-    Q_D(QJsonRpcServiceProvider);
     QByteArray serviceName = d->serviceName(service);
     if (!d->services.contains(serviceName)) {
         qDebug() << Q_FUNC_INFO << "can nof find service with name " << serviceName;
@@ -66,7 +64,6 @@ bool QJsonRpcServiceProvider::removeService(QJsonRpcService *service)
 
 void QJsonRpcServiceProvider::processMessage(QJsonRpcSocket *socket, const QJsonRpcMessage &message)
 {
-    Q_D(QJsonRpcServiceProvider);
     switch (message.type()) {
         case QJsonRpcMessage::Request:
         case QJsonRpcMessage::Notification: {
@@ -102,9 +99,8 @@ void QJsonRpcServiceProvider::processMessage(QJsonRpcSocket *socket, const QJson
     };
 }
 
-QJsonRpcAbstractServer::QJsonRpcAbstractServer(QJsonRpcAbstractServerPrivate *dd, QObject *parent)
-    : QObject(parent),
-      d_ptr(dd)
+QJsonRpcAbstractServer::QJsonRpcAbstractServer(QJsonRpcAbstractServerPrivate &dd, QObject *parent)
+    : QObject(dd, parent)
 {
 }
 

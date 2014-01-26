@@ -17,6 +17,8 @@
 #ifndef QJSONRPCABSTRACTSERVER_P_H
 #define QJSONRPCABSTRACTSERVER_P_H
 
+#include <private/qobject_p.h>
+
 #include <QObjectCleanupHandler>
 
 #if QT_VERSION >= 0x050000
@@ -37,7 +39,7 @@ public:
 };
 
 class QJsonRpcSocket;
-class QJsonRpcAbstractServerPrivate
+class QJsonRpcAbstractServerPrivate : public QObjectPrivate
 {
 public:
 #if QT_VERSION >= 0x050100 || QT_VERSION <= 0x050000

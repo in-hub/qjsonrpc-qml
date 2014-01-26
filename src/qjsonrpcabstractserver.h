@@ -44,14 +44,12 @@ protected:
     void processMessage(QJsonRpcSocket *socket, const QJsonRpcMessage &message);
 
 private:
-    Q_DECLARE_PRIVATE(QJsonRpcServiceProvider)
-    QScopedPointer<QJsonRpcServiceProviderPrivate> d_ptr;
+    QScopedPointer<QJsonRpcServiceProviderPrivate> d;
 
 };
 
 class QJsonRpcAbstractServerPrivate;
-class QJSONRPC_EXPORT QJsonRpcAbstractServer : public QObject,
-                                               public QJsonRpcServiceProvider
+class QJSONRPC_EXPORT QJsonRpcAbstractServer : public QObject, public QJsonRpcServiceProvider
 {
     Q_OBJECT
 public:
@@ -75,9 +73,9 @@ protected Q_SLOTS:
     void processMessage(const QJsonRpcMessage &message);
 
 protected:
-    explicit QJsonRpcAbstractServer(QJsonRpcAbstractServerPrivate *dd, QObject *parent);
+    explicit QJsonRpcAbstractServer(QJsonRpcAbstractServerPrivate &dd, QObject *parent);
+    Q_DISABLE_COPY(QJsonRpcAbstractServer)
     Q_DECLARE_PRIVATE(QJsonRpcAbstractServer)
-    QScopedPointer<QJsonRpcAbstractServerPrivate> d_ptr;
 
 };
 

@@ -14,7 +14,7 @@ public:
 };
 
 QJsonRpcLocalServer::QJsonRpcLocalServer(QObject *parent)
-    : QJsonRpcAbstractServer(new QJsonRpcLocalServerPrivate, parent)
+    : QJsonRpcAbstractServer(*new QJsonRpcLocalServerPrivate, parent)
 {
 }
 

@@ -95,7 +95,7 @@ class FakeQJsonRpcServer : public QJsonRpcAbstractServer
     Q_OBJECT
 public:
     FakeQJsonRpcServer(QObject *parent = 0)
-        : QJsonRpcAbstractServer(new QJsonRpcAbstractServerPrivate, parent),
+        : QJsonRpcAbstractServer(*new QJsonRpcAbstractServerPrivate, parent),
           m_buffer(0)
     {
         m_buffer = new QBuffer(this);
@@ -111,7 +111,7 @@ public:
                   this, SLOT(received(QJsonRpcMessage)));
 
         QJsonRpcSocket *tmpSocket = new FakeQJsonRpcServerSocket(m_buffer, this);
-        d_ptr->clients.append(tmpSocket);
+        d_func()->clients.append(tmpSocket);
     }
 
 private Q_SLOTS:
