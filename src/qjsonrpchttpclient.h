@@ -56,7 +56,6 @@ protected Q_SLOTS:
 private:
     Q_DISABLE_COPY(QJsonRpcHttpClient)
     Q_DECLARE_PRIVATE(QJsonRpcHttpClient)
-    QScopedPointer<QJsonRpcHttpClientPrivate> d_ptr;
 
 };
 

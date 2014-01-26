@@ -18,7 +18,6 @@
 #define QJSONRPCSOCKET_H
 
 #include <QObject>
-#include <QScopedPointer>
 #include <QIODevice>
 
 #include "qjsonrpcabstractserver.h"

@@ -14,6 +14,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  */
+#include <private/qobject_p.h>
+
 #include <QEventLoop>
 #include <QTimer>
 #include <QDebug>
@@ -116,7 +118,7 @@ private:
 
 };
 
-class QJsonRpcHttpClientPrivate
+class QJsonRpcHttpClientPrivate : public QObjectPrivate
 {
 public:
     void initializeNetworkAccessManager(QJsonRpcHttpClient *client) {
@@ -140,8 +142,7 @@ public:
 };
 
 QJsonRpcHttpClient::QJsonRpcHttpClient(QObject *parent)
-    : QObject(parent),
-      d_ptr(new QJsonRpcHttpClientPrivate)
+    : QObject(*new QJsonRpcHttpClientPrivate, parent)
 {
     Q_D(QJsonRpcHttpClient);
     d->networkAccessManager = new QNetworkAccessManager(this);
@@ -149,8 +150,7 @@ QJsonRpcHttpClient::QJsonRpcHttpClient(QObject *parent)
 }
 
 QJsonRpcHttpClient::QJsonRpcHttpClient(QNetworkAccessManager *manager, QObject *parent)
-    : QObject(parent),
-      d_ptr(new QJsonRpcHttpClientPrivate)
+    : QObject(*new QJsonRpcHttpClientPrivate, parent)
 {
     Q_D(QJsonRpcHttpClient);
     d->networkAccessManager = manager;
@@ -158,8 +158,7 @@ QJsonRpcHttpClient::QJsonRpcHttpClient(QNetworkAccessManager *manager, QObject *
 }
 
 QJsonRpcHttpClient::QJsonRpcHttpClient(const QString &endPoint, QObject *parent)
-    : QObject(parent),
-      d_ptr(new QJsonRpcHttpClientPrivate)
+    : QObject(*new QJsonRpcHttpClientPrivate, parent)
 {
     Q_D(QJsonRpcHttpClient);
     d->endPoint = QUrl::fromUserInput(endPoint);
