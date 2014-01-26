@@ -157,47 +157,35 @@ bool QJsonRpcService::dispatch(const QJsonRpcMessage &request)
     QList<int> parameterTypes;
     QList<int> indexes = d->invokableMethodHash.values(method);
 
-    // NOTE: optimize!
     QVariantList arguments;
+    QList<int> argumentTypes;
     if (!request.params().isObject()) {
         arguments = request.params().toArray().toVariantList();
-    } else {
-        QJsonObject namedParametersObject = request.params().toObject();
-        QStringList namedParameters = namedParametersObject.keys();
+        foreach (QVariant argument, arguments)
+            argumentTypes.append(static_cast<int>(argument.type()));
+    }
 
-        bool outerMatch = false;
-        foreach (int index, indexes) {
-            QStringList parameterNames = d->parameterNamesHash[index];
+    foreach (int methodIndex, indexes) {
+        if (request.params().isObject()) {  // named parameters
+            QJsonObject namedParametersObject = request.params().toObject();
+            QStringList namedParameters = namedParametersObject.keys();
+            QStringList parameterNames = d->parameterNamesHash[methodIndex];
             if (namedParameters.size() > parameterNames.size())
                 continue;
 
-            bool match = true;
             foreach (QString namedParameter, namedParameters) {
                 if (!parameterNames.contains(namedParameter))
-                    match = false;
+                    continue;
             }
 
-            if (match) {
-                outerMatch = true;
-                foreach (QString parameterName, parameterNames)
-                    arguments << namedParametersObject.value(parameterName).toVariant();
-                break;
+            // otherwise we have a potential match
+            foreach (QString parameterName, parameterNames) {
+                QVariant variant =  namedParametersObject.value(parameterName).toVariant();
+                arguments.append(variant);
+                argumentTypes.append(static_cast<int>(variant.type()));
             }
         }
 
-        if (!outerMatch) {
-            QJsonRpcMessage error =
-                request.createErrorResponse(QJsonRpc::InvalidParams, "invalid named parameters");
-            Q_EMIT result(error);
-            return false;
-        }
-    }
-
-    QList<int> argumentTypes;
-    foreach (QVariant argument, arguments)
-        argumentTypes.append(static_cast<int>(argument.type()));
-
-    foreach (int methodIndex, indexes) {
         if (variantAwareCompare(argumentTypes, d->jsParameterTypeHash[methodIndex])) {
             parameterTypes = d->parameterTypeHash[methodIndex];
             idx = methodIndex;
