@@ -26,8 +26,8 @@
 #include "qjsonrpcmessage.h"
 #include "qjsonrpc_export.h"
 
-class QJsonRpcSocketPrivate;
 class QJsonRpcServiceReply;
+class QJsonRpcSocketPrivate;
 class QJSONRPC_EXPORT QJsonRpcSocket : public QObject
 {
     Q_OBJECT
@@ -63,16 +63,15 @@ public Q_SLOTS:
 Q_SIGNALS:
     void messageReceived(const QJsonRpcMessage &message);
 
-protected Q_SLOTS:
-    virtual void processIncomingData();
-
 protected:
+    QJsonRpcSocket(QJsonRpcSocketPrivate &dd, QObject *parent);
     virtual void processRequestMessage(const QJsonRpcMessage &message);
 
 private:
-    Q_DISABLE_COPY(QJsonRpcSocket)
     Q_DECLARE_PRIVATE(QJsonRpcSocket)
+    Q_DISABLE_COPY(QJsonRpcSocket)
 
+    Q_PRIVATE_SLOT(d_func(), void _q_processIncomingData())
 };
 
 class QJSONRPC_EXPORT QJsonRpcServiceSocket : public QJsonRpcSocket,

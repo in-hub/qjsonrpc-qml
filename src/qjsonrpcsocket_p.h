@@ -29,12 +29,15 @@
 #include "json/qjsondocument.h"
 #endif
 
+#include "qjsonrpcsocket.h"
 #include "qjsonrpcmessage.h"
 #include "qjsonrpc_export.h"
 
 class QJsonRpcServiceReply;
 class QJSONRPC_EXPORT QJsonRpcSocketPrivate : public QObjectPrivate
 {
+    Q_DECLARE_PUBLIC(QJsonRpcSocket)
+
 public:
 #if QT_VERSION >= 0x050100 || QT_VERSION <= 0x050000
     QJsonDocument::JsonFormat format;
@@ -42,6 +45,9 @@ public:
 #else
     QJsonRpcSocketPrivate() {}
 #endif
+
+    // slots
+    virtual void _q_processIncomingData();
 
     int findJsonDocumentEnd(const QByteArray &jsonData);
     void writeData(const QJsonRpcMessage &message);

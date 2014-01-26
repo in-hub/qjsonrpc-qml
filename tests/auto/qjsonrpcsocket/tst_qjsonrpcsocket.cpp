@@ -34,25 +34,32 @@
 #include "qjsonrpcsocket_p.h"
 #include "qjsonrpcsocket.h"
 
+class QBufferBackedQJsonRpcSocketPrivate : public QJsonRpcSocketPrivate
+{
+public:
+    QBufferBackedQJsonRpcSocketPrivate(QBuffer *b)
+        : buffer(b)
+    {
+        device = b;
+    }
+
+    virtual void _q_processIncomingData() {
+        buffer->seek(0);
+        QJsonRpcSocketPrivate::_q_processIncomingData();
+    }
+
+    QBuffer *buffer;
+
+};
+
 class QBufferBackedQJsonRpcSocket : public QJsonRpcSocket
 {
     Q_OBJECT
 public:
     QBufferBackedQJsonRpcSocket(QBuffer *buffer, QObject *parent = 0)
-        : QJsonRpcSocket(buffer, parent),
-          m_buffer(buffer)
+        : QJsonRpcSocket(*new QBufferBackedQJsonRpcSocketPrivate(buffer), parent)
     {
     }
-
-protected Q_SLOTS:
-    virtual void processIncomingData() {
-        m_buffer->seek(0);
-        QJsonRpcSocket::processIncomingData();
-    }
-
-private:
-    QBuffer *m_buffer;
-
 };
 
 class TestQJsonRpcSocket: public QObject

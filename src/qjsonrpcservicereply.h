@@ -37,11 +37,10 @@ Q_SIGNALS:
     void finished();
 
 protected:
-    Q_DISABLE_COPY(QJsonRpcServiceReply)
     Q_DECLARE_PRIVATE(QJsonRpcServiceReply)
+    Q_DISABLE_COPY(QJsonRpcServiceReply)
     QJsonRpcServiceReply(QJsonRpcServiceReplyPrivate &dd, QObject *parent = 0);
-    QScopedPointer<QJsonRpcServiceReplyPrivate> d_ptr;
-    friend class QJsonRpcSocket;
+    friend class QJsonRpcSocketPrivate;
 
 };
 

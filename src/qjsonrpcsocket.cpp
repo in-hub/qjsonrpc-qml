@@ -81,8 +81,15 @@ QJsonRpcSocket::QJsonRpcSocket(QIODevice *device, QObject *parent)
     : QObject(*new QJsonRpcSocketPrivate, parent)
 {
     Q_D(QJsonRpcSocket);
-    connect(device, SIGNAL(readyRead()), this, SLOT(processIncomingData()));
+    connect(device, SIGNAL(readyRead()), this, SLOT(_q_processIncomingData()));
     d->device = device;
+}
+
+QJsonRpcSocket::QJsonRpcSocket(QJsonRpcSocketPrivate &dd, QObject *parent)
+    : QObject(dd, parent)
+{
+    Q_D(QJsonRpcSocket);
+    connect(d->device, SIGNAL(readyRead()), this, SLOT(_q_processIncomingData()));
 }
 
 QJsonRpcSocket::~QJsonRpcSocket()
@@ -219,27 +226,27 @@ void QJsonRpcSocket::setWireFormat(QJsonDocument::JsonFormat format)
 }
 #endif
 
-void QJsonRpcSocket::processIncomingData()
+void QJsonRpcSocketPrivate::_q_processIncomingData()
 {
-    Q_D(QJsonRpcSocket);
-    if (!d->device) {
+    Q_Q(QJsonRpcSocket);
+    if (!device) {
         qDebug() << Q_FUNC_INFO << "called without device";
         return;
     }
 
-    d->buffer.append(d->device.data()->readAll());
-    while (!d->buffer.isEmpty()) {
-        int dataSize = d->findJsonDocumentEnd(d->buffer);
+    buffer.append(device.data()->readAll());
+    while (!buffer.isEmpty()) {
+        int dataSize = findJsonDocumentEnd(buffer);
         if (dataSize == -1) {
             // incomplete data, wait for more
             return;
         }
 
-        QJsonDocument document = QJsonDocument::fromJson(d->buffer);
+        QJsonDocument document = QJsonDocument::fromJson(buffer);
         if (document.isEmpty())
             break;
 
-        d->buffer = d->buffer.mid(dataSize + 1);
+        buffer = buffer.mid(dataSize + 1);
         if (document.isArray()) {
             qDebug() << Q_FUNC_INFO << "bulk support is current disabled";
             /*
@@ -256,19 +263,19 @@ void QJsonRpcSocket::processIncomingData()
                 qDebug() << "received: " << document.toJson();
 
             QJsonRpcMessage message(document.object());
-            Q_EMIT messageReceived(message);
+            Q_EMIT q->messageReceived(message);
 
             if (message.type() == QJsonRpcMessage::Response ||
                 message.type() == QJsonRpcMessage::Error) {
-                if (d->replies.contains(message.id())) {
-                    QPointer<QJsonRpcServiceReply> reply = d->replies.take(message.id());
+                if (replies.contains(message.id())) {
+                    QPointer<QJsonRpcServiceReply> reply = replies.take(message.id());
                     if (!reply.isNull()) {
-                        reply->d_ptr->response = message;
+                        reply->d_func()->response = message;
                         reply->finished();
                     }
                 }
             } else {
-                processRequestMessage(message);
+                q->processRequestMessage(message);
             }
         }
     }
@@ -294,3 +301,5 @@ void QJsonRpcServiceSocket::processRequestMessage(const QJsonRpcMessage &message
 {
     QJsonRpcServiceProvider::processMessage(this, message);
 }
+
+#include "moc_qjsonrpcsocket.cpp"
