@@ -83,7 +83,10 @@ void QJsonRpcServicePrivate::cacheInvokableInfo()
             QByteArray signature = method.signature();
             QByteArray methodName = signature.left(signature.indexOf('('));
 #endif
-            invokableMethodHash.insert(methodName, idx);
+            if (signature.contains("QVariant"))
+                invokableMethodHash[methodName].append(idx);
+            else
+                invokableMethodHash[methodName].prepend(idx);
 
             QList<int> parameterTypes;
             QList<int> jsParameterTypes;
@@ -155,7 +158,7 @@ bool QJsonRpcService::dispatch(const QJsonRpcMessage &request)
 
     int idx = -1;
     QList<int> parameterTypes;
-    QList<int> indexes = d->invokableMethodHash.values(method);
+    QList<int> indexes = d->invokableMethodHash.value(method);
 
     QVariantList arguments;
     QList<int> argumentTypes;

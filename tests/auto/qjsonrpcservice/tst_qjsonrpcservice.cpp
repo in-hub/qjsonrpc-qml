@@ -32,6 +32,7 @@ class TestQJsonRpcService: public QObject
     Q_OBJECT  
 private slots:
     void testDispatch();
+    void ambiguousDispatch();
     void testSignals();
 
 };
@@ -42,12 +43,20 @@ class TestService : public QJsonRpcService
     Q_CLASSINFO("serviceName", "service")
 public:
     TestService(QObject *parent = 0)
-        : QJsonRpcService(parent)
+        : QJsonRpcService(parent),
+          m_stringCount(0),
+          m_intCount(0),
+          m_variantCount(0)
     {}
 
     bool testDispatch(const QJsonRpcMessage &message) {
         return QJsonRpcService::dispatch(message);
     }
+
+    int stringCount() const { return m_stringCount; }
+    int intCount() const { return m_intCount; }
+    int variantCount() const { return m_variantCount; }
+    void resetCounters() { m_stringCount = m_intCount = m_variantCount = 0; }
 
 Q_SIGNALS:
     void testSignal();
@@ -57,6 +66,24 @@ public Q_SLOTS:
     QString testMethod(const QString &string) const {
         return string;
     }
+
+    // note: order of definition matters here for ambiguousDispatch test
+    void ambiguousMethod(const QString &) {
+        m_stringCount++;
+    }
+
+    void ambiguousMethod(int) {
+        m_intCount++;
+    }
+
+    void ambiguousMethod(const QVariant &) {
+        m_variantCount++;
+    }
+
+private:
+    int m_stringCount;
+    int m_intCount;
+    int m_variantCount;
 
 };
 
@@ -102,6 +129,35 @@ void TestQJsonRpcService::testDispatch()
 
     QJsonRpcMessage invalidDispatch;
     QVERIFY(!service.testDispatch(invalidDispatch));
+}
+
+void TestQJsonRpcService::ambiguousDispatch()
+{
+    TestServiceProvider provider;
+    TestService service;
+    provider.addService(&service);
+
+    QJsonRpcMessage stringDispatch =
+        QJsonRpcMessage::createRequest("service.ambiguousMethod", QLatin1String("testParam"));
+    service.testDispatch(stringDispatch);
+    QCOMPARE(service.stringCount(), 1);
+    QCOMPARE(service.intCount(), 0);
+    QCOMPARE(service.variantCount(), 0);
+
+    QJsonRpcMessage intDispatch =
+        QJsonRpcMessage::createRequest("service.ambiguousMethod", 10);
+    service.testDispatch(intDispatch);
+    QCOMPARE(service.stringCount(), 1);
+    QCOMPARE(service.intCount(), 1);
+    QCOMPARE(service.variantCount(), 0);
+
+    QStringList stringList = QStringList() << "test" << "string" << "list";
+    QJsonRpcMessage stringListDispatch =
+        QJsonRpcMessage::createRequest("service.ambiguousMethod", QJsonValue::fromVariant(stringList));
+    service.testDispatch(stringListDispatch);
+    QCOMPARE(service.stringCount(), 1);
+    QCOMPARE(service.intCount(), 1);
+    QCOMPARE(service.variantCount(), 1);
 }
 
 void TestQJsonRpcService::testSignals()

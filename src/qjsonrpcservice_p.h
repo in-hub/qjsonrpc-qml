@@ -34,7 +34,7 @@ public:
 
     void cacheInvokableInfo();
     static int qjsonRpcMessageType;
-    QMultiHash<QByteArray, int> invokableMethodHash;
+    QHash<QByteArray, QList<int> > invokableMethodHash;
     QHash<int, QList<int> > parameterTypeHash;    // actual parameter types to convert to
     QHash<int, QList<int> > jsParameterTypeHash;  // for comparing incoming messages
     QHash<int, QStringList> parameterNamesHash;
