@@ -29,26 +29,26 @@ class TestQJsonRpcMessage: public QObject
 {
     Q_OBJECT  
 private slots:
-    void testInvalidData();
-    void testInvalidDataResponseWithId();
-    void testInvalidDataResponseWithoutId();
-    void testResponseSameId();
-    void testNotificationNoId();
-    void testMessageTypes();
-    void testPositionalParameters();
-    void testEquivalence_data();
-    void testEquivalence();
-    void testWithVariantListArgs();
+    void invalidData();
+    void invalidDataResponseWithId();
+    void invalidDataResponseWithoutId();
+    void responseSameId();
+    void notificationNoId();
+    void messageTypes();
+    void positionalParameters();
+    void equivalence_data();
+    void equivalence();
+    void withVariantListArgs();
 };
 
-void TestQJsonRpcMessage::testInvalidData()
+void TestQJsonRpcMessage::invalidData()
 {
     QJsonObject invalidData;
     QJsonRpcMessage message(invalidData);
     QCOMPARE(message.type(), QJsonRpcMessage::Invalid);
 }
 
-void TestQJsonRpcMessage::testInvalidDataResponseWithId()
+void TestQJsonRpcMessage::invalidDataResponseWithId()
 {
     // invalid with id
     const char *invalid = "{\"jsonrpc\": \"2.0\", \"params\": [], \"id\": 666}";
@@ -61,7 +61,7 @@ void TestQJsonRpcMessage::testInvalidDataResponseWithId()
     QCOMPARE(error.type(), QJsonRpcMessage::Error);
 }
 
-void TestQJsonRpcMessage::testInvalidDataResponseWithoutId()
+void TestQJsonRpcMessage::invalidDataResponseWithoutId()
 {
     // invalid without id
     const char *invalid = "{\"jsonrpc\": \"2.0\", \"params\": []}";
@@ -74,7 +74,7 @@ void TestQJsonRpcMessage::testInvalidDataResponseWithoutId()
     QCOMPARE(error.id(), 0);
 }
 
-void TestQJsonRpcMessage::testResponseSameId()
+void TestQJsonRpcMessage::responseSameId()
 {
     QJsonRpcMessage request =
         QJsonRpcMessage::createRequest("testMethod");
@@ -83,14 +83,14 @@ void TestQJsonRpcMessage::testResponseSameId()
     QCOMPARE(response.id(), request.id());
 }
 
-void TestQJsonRpcMessage::testNotificationNoId()
+void TestQJsonRpcMessage::notificationNoId()
 {
     QJsonRpcMessage notification =
         QJsonRpcMessage::createNotification("testNotification");
     QCOMPARE(notification.id(), -1);
 }
 
-void TestQJsonRpcMessage::testMessageTypes()
+void TestQJsonRpcMessage::messageTypes()
 {
     QJsonRpcMessage invalid;
     QCOMPARE(invalid.type(), QJsonRpcMessage::Invalid);
@@ -112,7 +112,7 @@ void TestQJsonRpcMessage::testMessageTypes()
 }
 
 // this is from the spec, I don't think it proves much..
-void TestQJsonRpcMessage::testPositionalParameters()
+void TestQJsonRpcMessage::positionalParameters()
 {
     const char *first = "{\"jsonrpc\": \"2.0\", \"method\": \"subtract\", \"params\": [42, 23], \"id\": 1}";
     QJsonObject firstObject = QJsonDocument::fromJson(first).object();
@@ -121,7 +121,7 @@ void TestQJsonRpcMessage::testPositionalParameters()
     QVERIFY2(firstObject.value("params").toArray() != secondObject.value("params").toArray(), "params should maintain order");
 }
 
-void TestQJsonRpcMessage::testEquivalence_data()
+void TestQJsonRpcMessage::equivalence_data()
 {
     QTest::addColumn<QJsonRpcMessage>("lhs");
     QTest::addColumn<QJsonRpcMessage>("rhs");
@@ -187,7 +187,7 @@ void TestQJsonRpcMessage::testEquivalence_data()
     }
 }
 
-void TestQJsonRpcMessage::testEquivalence()
+void TestQJsonRpcMessage::equivalence()
 {
     QFETCH(QJsonRpcMessage, lhs);
     QFETCH(QJsonRpcMessage, rhs);
@@ -199,7 +199,7 @@ void TestQJsonRpcMessage::testEquivalence()
         QVERIFY(lhs != rhs);
 }
 
-void TestQJsonRpcMessage::testWithVariantListArgs()
+void TestQJsonRpcMessage::withVariantListArgs()
 {
     const char *varListArgsFormat = "{ " \
             "\"id\": %1, " \
