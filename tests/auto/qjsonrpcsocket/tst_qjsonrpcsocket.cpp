@@ -64,11 +64,11 @@ private Q_SLOTS:
     void init();
     void cleanup();
 
-    void testSocketNoParameters();
-    void testSocketMultiparamter();
-    void testSocketNotification();
-    void testSocketResponse();
-    void testDelayedMessageReceive();
+    void noParameters();
+    void multiParameter();
+    void notification();
+    void response();
+    void delayedMessageReceive();
 
 private:
     // benchmark parsing speed
@@ -92,7 +92,7 @@ void TestQJsonRpcSocket::cleanup()
 {
 }
 
-void TestQJsonRpcSocket::testSocketNoParameters()
+void TestQJsonRpcSocket::noParameters()
 {
     QBuffer buffer;
     buffer.open(QIODevice::ReadWrite);
@@ -114,7 +114,7 @@ void TestQJsonRpcSocket::testSocketNoParameters()
     QCOMPARE(spyMessageReceived.count(), 0);
 }
 
-void TestQJsonRpcSocket::testSocketMultiparamter()
+void TestQJsonRpcSocket::multiParameter()
 {
     QBuffer buffer;
     buffer.open(QIODevice::ReadWrite);
@@ -140,7 +140,7 @@ void TestQJsonRpcSocket::testSocketMultiparamter()
     QCOMPARE(spyMessageReceived.count(), 0);
 }
 
-void TestQJsonRpcSocket::testSocketNotification()
+void TestQJsonRpcSocket::notification()
 {
     QBuffer buffer;
     buffer.open(QIODevice::ReadWrite);
@@ -163,7 +163,7 @@ void TestQJsonRpcSocket::testSocketNotification()
     QCOMPARE(spyMessageReceived.count(), 0);
 }
 
-void TestQJsonRpcSocket::testSocketResponse()
+void TestQJsonRpcSocket::response()
 {
     QBuffer buffer;
     buffer.open(QIODevice::ReadWrite);
@@ -211,7 +211,7 @@ void TestQJsonRpcSocket::jsonParsingBenchmark()
     QCOMPARE(messageCount, 8);
 }
 
-void TestQJsonRpcSocket::testDelayedMessageReceive()
+void TestQJsonRpcSocket::delayedMessageReceive()
 {
     QBuffer buffer;
     buffer.open(QIODevice::ReadWrite);

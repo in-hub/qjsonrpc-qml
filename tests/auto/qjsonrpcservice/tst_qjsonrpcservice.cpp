@@ -31,9 +31,9 @@ class TestQJsonRpcService: public QObject
 {
     Q_OBJECT  
 private slots:
-    void testDispatch();
+    void dispatch();
     void ambiguousDispatch();
-    void testSignals();
+    void dispatchSignals();
 
 };
 
@@ -93,7 +93,7 @@ public:
     TestServiceProvider() {}
 };
 
-void TestQJsonRpcService::testDispatch()
+void TestQJsonRpcService::dispatch()
 {
     TestServiceProvider provider;
     TestService service;
@@ -160,7 +160,7 @@ void TestQJsonRpcService::ambiguousDispatch()
     QCOMPARE(service.variantCount(), 1);
 }
 
-void TestQJsonRpcService::testSignals()
+void TestQJsonRpcService::dispatchSignals()
 {
     TestServiceProvider provider;
     TestService service;
