@@ -42,8 +42,8 @@ protected Q_SLOTS:
     bool dispatch(const QJsonRpcMessage &request);
 
 private:
+    Q_DISABLE_COPY(QJsonRpcService)
     Q_DECLARE_PRIVATE(QJsonRpcService)
-    QScopedPointer<QJsonRpcServicePrivate> d_ptr;
     friend class QJsonRpcServiceProvider;
 
 };

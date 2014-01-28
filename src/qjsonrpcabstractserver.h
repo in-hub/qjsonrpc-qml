@@ -44,14 +44,12 @@ protected:
     void processMessage(QJsonRpcSocket *socket, const QJsonRpcMessage &message);
 
 private:
-    Q_DECLARE_PRIVATE(QJsonRpcServiceProvider)
-    QScopedPointer<QJsonRpcServiceProviderPrivate> d_ptr;
+    QScopedPointer<QJsonRpcServiceProviderPrivate> d;
 
 };
 
 class QJsonRpcAbstractServerPrivate;
-class QJSONRPC_EXPORT QJsonRpcAbstractServer : public QObject,
-                                               public QJsonRpcServiceProvider
+class QJSONRPC_EXPORT QJsonRpcAbstractServer : public QObject, public QJsonRpcServiceProvider
 {
     Q_OBJECT
 public:
@@ -69,16 +67,12 @@ public Q_SLOTS:
     void notifyConnectedClients(const QJsonRpcMessage &message);
     void notifyConnectedClients(const QString &method, const QJsonArray &params);
 
-protected Q_SLOTS:
-    virtual void processIncomingConnection() = 0;
-    virtual void clientDisconnected() = 0;
-    void processMessage(const QJsonRpcMessage &message);
-
 protected:
-    explicit QJsonRpcAbstractServer(QJsonRpcAbstractServerPrivate *dd, QObject *parent);
-    Q_DECLARE_PRIVATE(QJsonRpcAbstractServer)
-    QScopedPointer<QJsonRpcAbstractServerPrivate> d_ptr;
+    explicit QJsonRpcAbstractServer(QJsonRpcAbstractServerPrivate &dd, QObject *parent);
 
+    Q_DECLARE_PRIVATE(QJsonRpcAbstractServer)
+    Q_DISABLE_COPY(QJsonRpcAbstractServer)
+    Q_PRIVATE_SLOT(d_func(), void _q_processMessage(const QJsonRpcMessage &message))
 };
 
 #endif

@@ -18,8 +18,7 @@
 #include "qjsonrpcservicereply.h"
 
 QJsonRpcServiceReply::QJsonRpcServiceReply(QObject *parent)
-    : QObject(parent),
-      d_ptr(new QJsonRpcServiceReplyPrivate)
+    : QObject(*new QJsonRpcServiceReplyPrivate, parent)
 {
 }
 
@@ -28,8 +27,7 @@ QJsonRpcServiceReply::~QJsonRpcServiceReply()
 }
 
 QJsonRpcServiceReply::QJsonRpcServiceReply(QJsonRpcServiceReplyPrivate &dd, QObject *parent)
-    : QObject(parent),
-      d_ptr(&dd)
+    : QObject(dd, parent)
 {
 }
 

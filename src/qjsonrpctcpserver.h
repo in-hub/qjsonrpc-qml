@@ -32,12 +32,11 @@ public:
     QString errorString() const;
     bool listen(const QHostAddress &address, quint16 port);
 
-private Q_SLOTS:
-    void processIncomingConnection();
-    void clientDisconnected();
-
 private:
     Q_DECLARE_PRIVATE(QJsonRpcTcpServer)
+    Q_DISABLE_COPY(QJsonRpcTcpServer)
+    Q_PRIVATE_SLOT(d_func(), void _q_processIncomingConnection())
+    Q_PRIVATE_SLOT(d_func(), void _q_clientDisconnected())
 
 };
 

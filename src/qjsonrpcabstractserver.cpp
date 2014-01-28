@@ -9,7 +9,7 @@
 #include "qjsonrpcabstractserver.h"
 
 QJsonRpcServiceProvider::QJsonRpcServiceProvider()
-    : d_ptr(new QJsonRpcServiceProviderPrivate)
+    : d(new QJsonRpcServiceProviderPrivate)
 {
 }
 
@@ -31,7 +31,6 @@ QByteArray QJsonRpcServiceProviderPrivate::serviceName(QJsonRpcService *service)
 
 bool QJsonRpcServiceProvider::addService(QJsonRpcService *service)
 {
-    Q_D(QJsonRpcServiceProvider);
     QByteArray serviceName = d->serviceName(service);
     if (serviceName.isEmpty()) {
         qDebug() << Q_FUNC_INFO << "service added without serviceName classinfo, aborting";
@@ -43,7 +42,7 @@ bool QJsonRpcServiceProvider::addService(QJsonRpcService *service)
         return false;
     }
 
-    service->d_ptr->cacheInvokableInfo();
+    service->d_func()->cacheInvokableInfo();
     d->services.insert(serviceName, service);
     if (!service->parent())
         d->cleanupHandler.add(service);
@@ -52,7 +51,6 @@ bool QJsonRpcServiceProvider::addService(QJsonRpcService *service)
 
 bool QJsonRpcServiceProvider::removeService(QJsonRpcService *service)
 {
-    Q_D(QJsonRpcServiceProvider);
     QByteArray serviceName = d->serviceName(service);
     if (!d->services.contains(serviceName)) {
         qDebug() << Q_FUNC_INFO << "can nof find service with name " << serviceName;
@@ -66,7 +64,6 @@ bool QJsonRpcServiceProvider::removeService(QJsonRpcService *service)
 
 void QJsonRpcServiceProvider::processMessage(QJsonRpcSocket *socket, const QJsonRpcMessage &message)
 {
-    Q_D(QJsonRpcServiceProvider);
     switch (message.type()) {
         case QJsonRpcMessage::Request:
         case QJsonRpcMessage::Notification: {
@@ -80,7 +77,7 @@ void QJsonRpcServiceProvider::processMessage(QJsonRpcSocket *socket, const QJson
                 }
             } else {
                 QJsonRpcService *service = d->services.value(serviceName);
-                service->d_ptr->socket = socket;
+                service->d_func()->socket = socket;
                 if (message.type() == QJsonRpcMessage::Request)
                     QObject::connect(service, SIGNAL(result(QJsonRpcMessage)),
                                       socket, SLOT(notify(QJsonRpcMessage)));
@@ -102,9 +99,8 @@ void QJsonRpcServiceProvider::processMessage(QJsonRpcSocket *socket, const QJson
     };
 }
 
-QJsonRpcAbstractServer::QJsonRpcAbstractServer(QJsonRpcAbstractServerPrivate *dd, QObject *parent)
-    : QObject(parent),
-      d_ptr(dd)
+QJsonRpcAbstractServer::QJsonRpcAbstractServer(QJsonRpcAbstractServerPrivate &dd, QObject *parent)
+    : QObject(dd, parent)
 {
 }
 
@@ -169,13 +165,16 @@ void QJsonRpcAbstractServer::notifyConnectedClients(const QJsonRpcMessage &messa
         d->clients[i]->notify(message);
 }
 
-void QJsonRpcAbstractServer::processMessage(const QJsonRpcMessage &message)
+void QJsonRpcAbstractServerPrivate::_q_processMessage(const QJsonRpcMessage &message)
 {
-    QJsonRpcSocket *socket = static_cast<QJsonRpcSocket*>(sender());
+    Q_Q(QJsonRpcAbstractServer);
+    QJsonRpcSocket *socket = static_cast<QJsonRpcSocket*>(q->sender());
     if (!socket) {
         qDebug() << Q_FUNC_INFO << "called without service socket";
         return;
     }
 
-    QJsonRpcServiceProvider::processMessage(socket, message);
+    q->processMessage(socket, message);
 }
+
+#include "moc_qjsonrpcabstractserver.cpp"

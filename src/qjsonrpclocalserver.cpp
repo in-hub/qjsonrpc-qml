@@ -7,14 +7,22 @@
 
 class QJsonRpcLocalServerPrivate : public QJsonRpcAbstractServerPrivate
 {
+    Q_DECLARE_PUBLIC(QJsonRpcLocalServer)
 public:
-    QJsonRpcLocalServerPrivate() : server(0) {}
+    QJsonRpcLocalServerPrivate()
+        : server(0)
+    {
+    }
+
+    virtual void _q_processIncomingConnection();
+    virtual void _q_clientDisconnected();
+
     QLocalServer *server;
     QHash<QLocalSocket*, QJsonRpcSocket*> socketLookup;
 };
 
 QJsonRpcLocalServer::QJsonRpcLocalServer(QObject *parent)
-    : QJsonRpcAbstractServer(new QJsonRpcLocalServerPrivate, parent)
+    : QJsonRpcAbstractServer(*new QJsonRpcLocalServerPrivate, parent)
 {
 }
 
@@ -37,35 +45,36 @@ bool QJsonRpcLocalServer::listen(const QString &service)
     return d->server->listen(service);
 }
 
-void QJsonRpcLocalServer::processIncomingConnection()
+void QJsonRpcLocalServerPrivate::_q_processIncomingConnection()
 {
-    Q_D(QJsonRpcLocalServer);
-    QLocalSocket *localSocket = d->server->nextPendingConnection();
+    Q_Q(QJsonRpcLocalServer);
+    QLocalSocket *localSocket = server->nextPendingConnection();
     if (!localSocket) {
         qDebug() << Q_FUNC_INFO << "nextPendingConnection is null";
         return;
     }
 
     QIODevice *device = qobject_cast<QIODevice*>(localSocket);
-    QJsonRpcSocket *socket = new QJsonRpcSocket(device, this);
+    QJsonRpcSocket *socket = new QJsonRpcSocket(device, q);
 #if QT_VERSION >= 0x050100 || QT_VERSION <= 0x050000
-    socket->setWireFormat(d->format);
+    socket->setWireFormat(format);
 #endif
 
-    connect(socket, SIGNAL(messageReceived(QJsonRpcMessage)), this, SLOT(processMessage(QJsonRpcMessage)));
-    d->clients.append(socket);
-    connect(localSocket, SIGNAL(disconnected()), this, SLOT(clientDisconnected()));
-    d->socketLookup.insert(localSocket, socket);
+    QObject::connect(socket, SIGNAL(messageReceived(QJsonRpcMessage)),
+                          q, SLOT(_q_processMessage(QJsonRpcMessage)));
+    clients.append(socket);
+    QObject::connect(localSocket, SIGNAL(disconnected()), q, SLOT(_q_clientDisconnected()));
+    socketLookup.insert(localSocket, socket);
 }
 
-void QJsonRpcLocalServer::clientDisconnected()
+void QJsonRpcLocalServerPrivate::_q_clientDisconnected()
 {
-    Q_D(QJsonRpcLocalServer);
-    QLocalSocket *localSocket = static_cast<QLocalSocket*>(sender());
+    Q_Q(QJsonRpcLocalServer);
+    QLocalSocket *localSocket = static_cast<QLocalSocket*>(q->sender());
     if (localSocket) {
-        if (d->socketLookup.contains(localSocket)) {
-            QJsonRpcSocket *socket = d->socketLookup.take(localSocket);
-            d->clients.removeAll(socket);
+        if (socketLookup.contains(localSocket)) {
+            QJsonRpcSocket *socket = socketLookup.take(localSocket);
+            clients.removeAll(socket);
             socket->deleteLater();
         }
 
@@ -78,3 +87,5 @@ QString QJsonRpcLocalServer::errorString() const
     Q_D(const QJsonRpcLocalServer);
     return d->server->errorString();
 }
+
+#include "moc_qjsonrpclocalserver.cpp"

@@ -30,12 +30,11 @@ public:
     QString errorString() const;
     bool listen(const QString &service);
 
-private Q_SLOTS:
-    void processIncomingConnection();
-    void clientDisconnected();
-
 private:
     Q_DECLARE_PRIVATE(QJsonRpcLocalServer)
+    Q_DISABLE_COPY(QJsonRpcLocalServer)
+    Q_PRIVATE_SLOT(d_func(), void _q_processIncomingConnection())
+    Q_PRIVATE_SLOT(d_func(), void _q_clientDisconnected())
 
 };
 
