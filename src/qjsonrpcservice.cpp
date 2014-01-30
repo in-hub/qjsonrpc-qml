@@ -76,7 +76,9 @@ void QJsonRpcServicePrivate::cacheInvokableInfo()
         if ((method.methodType() == QMetaMethod::Slot &&
              method.access() == QMetaMethod::Public) ||
              method.methodType() == QMetaMethod::Signal) {
+
 #if QT_VERSION >= 0x050000
+            QByteArray signature = method.methodSignature();
             QByteArray methodName = method.name();
 #else
             QByteArray signature = method.signature();
