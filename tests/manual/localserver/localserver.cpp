@@ -19,26 +19,13 @@
 #include <QFile>
 #include <QDir>
 
-#if QT_VERSION >= 0x050000
-#include <QStandardPaths>
-#else
-#include <QDesktopServices>
-#endif //QT_VERSION >= 0x050000
-
 #include "qjsonrpclocalserver.h"
 #include "testservice.h"
 
 int main(int argc, char **argv)
 {
     QCoreApplication app(argc, argv);
-
-#if QT_VERSION >= 0x050000
-    QDir tempDirectory(QStandardPaths::writableLocation(QStandardPaths::TempLocation));
-#else
-    QDir tempDirectory(QDesktopServices::storageLocation(QDesktopServices::TempLocation));
-#endif //QT_VERSION >= 0x050000
-    QString serviceName = tempDirectory.absoluteFilePath("testservice");
-
+    QString serviceName = QDir::temp().absoluteFilePath("testservice");
     if (QFile::exists(serviceName)) {
         if (!QFile::remove(serviceName)) {
             qDebug() << "couldn't delete temporary service";
