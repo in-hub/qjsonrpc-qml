@@ -39,7 +39,7 @@ bool QJsonRpcLocalServer::listen(const QString &service)
     Q_D(QJsonRpcLocalServer);
     if (!d->server) {
         d->server = new QLocalServer(this);
-        connect(d->server, SIGNAL(newConnection()), this, SLOT(processIncomingConnection()));
+        connect(d->server, SIGNAL(newConnection()), this, SLOT(_q_processIncomingConnection()));
     }
 
     return d->server->listen(service);
