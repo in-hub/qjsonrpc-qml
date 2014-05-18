@@ -5,4 +5,5 @@ SUBDIRS += localserver \
            tcpclient \
            console \
            qjsonrpc \
-           httpclient
+           httpclient \
+           benchmark
