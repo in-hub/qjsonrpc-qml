@@ -141,14 +141,6 @@ private:
     QBuffer *m_buffer;
 };
 
-struct QObjectDeleter
-{
-    static inline void cleanup(QObject *pointer) {
-        if (pointer)
-            pointer->deleteLater();
-    }
-};
-
 class TestQJsonRpcServer: public QObject
 {
     Q_OBJECT
@@ -185,9 +177,9 @@ private Q_SLOTS:
 
 private:
     void clearBuffers();
-    QScopedPointer<FakeQJsonRpcServer, QObjectDeleter> m_server;
-    QScopedPointer<FakeQJsonRpcSocket, QObjectDeleter> m_clientSocket;
-    QScopedPointer<FakeQJsonRpcSocket, QObjectDeleter> m_serverSocket;
+    QScopedPointer<FakeQJsonRpcServer> m_server;
+    QScopedPointer<FakeQJsonRpcSocket> m_clientSocket;
+    QScopedPointer<FakeQJsonRpcSocket> m_serverSocket;
 
 private:
     // fix later
@@ -467,7 +459,7 @@ void TestQJsonRpcServer::invalidArgs()
 {
     m_server->addService(new TestService);
 
-    QSignalSpy spyMessageReceived(m_clientSocket.data(), SIGNAL(messageReceived(QJsonRpcMessage)));    
+    QSignalSpy spyMessageReceived(m_clientSocket.data(), SIGNAL(messageReceived(QJsonRpcMessage)));
     QJsonRpcMessage request =
         QJsonRpcMessage::createRequest("service.noParam", false);
     m_clientSocket->sendMessageBlocking(request);
@@ -791,7 +783,8 @@ void TestQJsonRpcServer::userDeletedReplyOnDelayedResponse()
 
 void TestQJsonRpcServer::addRemoveService()
 {
-    QVERIFY(m_server->addService(new TestService));
+    TestService service;
+    QVERIFY(m_server->addService(&service));
 
     QSignalSpy spyMessageReceived(m_clientSocket.data(), SIGNAL(messageReceived(QJsonRpcMessage)));
     QJsonRpcMessage request = QJsonRpcMessage::createRequest("service.noParam");
@@ -800,7 +793,7 @@ void TestQJsonRpcServer::addRemoveService()
     QCOMPARE(request.id(), response.id());
     QCOMPARE(spyMessageReceived.count(), 1);
 
-    QVERIFY(m_server->removeService(new TestService));
+    QVERIFY(m_server->removeService(&service));
     response = m_clientSocket->sendMessageBlocking(request);
     QVERIFY(response.errorCode() == QJsonRpc::MethodNotFound);
 }
