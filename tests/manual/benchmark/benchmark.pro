@@ -1,7 +1,8 @@
 DEPTH = ../../..
 include($${DEPTH}/qjsonrpc.pri)
 include($${DEPTH}/tests/tests.pri)
+CONFIG -= testcase
 
-TARGET = tst_benchmark
-SOURCES = tst_benchmark.cpp
-QT += core-private
+TARGET = benchmark
+SOURCES = \
+    tst_benchmark.cpp

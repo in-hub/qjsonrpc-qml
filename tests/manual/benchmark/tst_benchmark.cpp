@@ -28,26 +28,18 @@
 #include "json/qjsondocument.h"
 #endif
 
-#include "qjsonrpcabstractserver_p.h"
 #include "qjsonrpcabstractserver.h"
 #include "qjsonrpcsocket.h"
-#include "qjsonrpcservice_p.h"
 #include "qjsonrpcservice.h"
 #include "qjsonrpcmessage.h"
 
 class TestBenchmark: public QObject
 {
     Q_OBJECT
-
 private Q_SLOTS:
-    void initTestCase();
-    void cleanupTestCase();
+    void simple();
+    void namedParameters();
 
-    void simpleCall();
-    void namedParamsCall();
-
-private:
-    QThread::Priority m_prio;
 };
 
 class TestService : public QJsonRpcService
@@ -82,76 +74,35 @@ public:
     TestServiceProvider() {}
 };
 
-void TestBenchmark::initTestCase()
-{
-    m_prio = thread()->priority();
-    thread()->setPriority(QThread::TimeCriticalPriority);
-}
-
-void TestBenchmark::cleanupTestCase()
-{
-    thread()->setPriority(m_prio);
-}
-
-#define BENCH_LOOP_COUNT 1000000
-
-void TestBenchmark::simpleCall()
+void TestBenchmark::simple()
 {
     TestServiceProvider provider;
     TestService service;
     provider.addService(&service);
 
-    QElapsedTimer timer;
-
-    QJsonRpcMessage request = QJsonRpcMessage::createRequest(
-                "service.singleParam", QString("test"));
-    qDebug() << "Running preloop";
-    /* Let's hotten the CPU */
-    for (int i = 0; i < 1000; ++i)
+    QJsonRpcMessage request =
+        QJsonRpcMessage::createRequest("service.singleParam", QString("test"));
+    QBENCHMARK {
         QVERIFY(service.testDispatch(request));
-
-    qDebug() << "Starting benchmark";
-    /* Clear the event queue */
-    QCoreApplication::processEvents(QEventLoop::AllEvents);
-    timer.start();
-
-    for (int i = 0; i < BENCH_LOOP_COUNT; ++i)
-        QVERIFY(service.testDispatch(request));
-
-    qint64 elapsed = timer.elapsed();
-    qDebug() << elapsed;
+    }
 }
 
-void TestBenchmark::namedParamsCall()
+void TestBenchmark::namedParameters()
 {
     TestServiceProvider provider;
     TestService service;
     provider.addService(&service);
-
-    QElapsedTimer timer;
 
     QJsonObject obj;
     obj["integer"] = 1;
     obj["string"] = QLatin1String("str");
     obj["doub"] = 1.2;
-    QJsonRpcMessage request = QJsonRpcMessage::createRequest(
-                "service.namedParams", obj);
+    QJsonRpcMessage request =
+        QJsonRpcMessage::createRequest("service.namedParams", obj);
 
-    qDebug() << "Running preloop";
-    /* Let's hotten the CPU */
-    for (int i = 0; i < 1000; ++i)
+    QBENCHMARK {
         QVERIFY(service.testDispatch(request));
-
-    qDebug() << "Starting benchmark";
-    /* Clear the event queue */
-    QCoreApplication::processEvents(QEventLoop::AllEvents);
-    timer.start();
-
-    for (int i = 0; i < BENCH_LOOP_COUNT; ++i)
-        QVERIFY(service.testDispatch(request));
-
-    qint64 elapsed = timer.elapsed();
-    qDebug() << elapsed;
+    }
 }
 
 QTEST_MAIN(TestBenchmark)
