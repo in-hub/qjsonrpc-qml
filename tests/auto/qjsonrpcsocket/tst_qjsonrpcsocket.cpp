@@ -64,7 +64,7 @@ public:
 
 class TestQJsonRpcSocket: public QObject
 {
-    Q_OBJECT  
+    Q_OBJECT
 private Q_SLOTS:
     void initTestCase();
     void cleanupTestCase();
@@ -202,7 +202,7 @@ void TestQJsonRpcSocket::jsonParsingBenchmark()
 
     int messageCount = 0;
     while (!jsonData.isEmpty()) {
-        int pos;
+        int pos = 0;
         QBENCHMARK {
             pos = socketPrivate.findJsonDocumentEnd(jsonData);
         }

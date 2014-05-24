@@ -1,10 +1,12 @@
 DEPTH = ../../..
 include($${DEPTH}/qjsonrpc.pri)
 include($${DEPTH}/tests/tests.pri)
+CONFIG -= testcase
 
-QT += gui
 TEMPLATE = app
-TARGET = server
-HEADERS = testservice.h
-SOURCES = testservice.cpp \
-          localserver.cpp
+TARGET = localserver
+HEADERS = \
+    testservice.h
+SOURCES = \
+    testservice.cpp \
+    localserver.cpp

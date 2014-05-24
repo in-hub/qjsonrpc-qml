@@ -11,11 +11,7 @@ VERSION = $${QJSONRPC_VERSION}
 win32:DESTDIR = $$OUT_PWD
 
 # check if we need to build qjson
-QT_VERSION = $$[QT_VERSION]
-QT_VERSION = $$split(QT_VERSION, ".")
-QT_VERSION_MAJOR = $$member(QT_VERSION, 0)
-QT_VERSION_MINOR = $$member(QT_VERSION, 1)
-lessThan(QT_VERSION_MAJOR, 5) {
+lessThan(QT_MAJOR_VERSION, 5) {
     include(json/json.pri)
 }
 
@@ -39,7 +35,7 @@ INSTALL_HEADERS += \
 HEADERS += \
     $${INSTALL_HEADERS} \
     $${PRIVATE_HEADERS}
-       
+
 SOURCES += \
     qjsonrpcmessage.cpp \
     qjsonrpcservice.cpp \
