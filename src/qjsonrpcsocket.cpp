@@ -40,7 +40,7 @@ int QJsonRpcSocketPrivate::findJsonDocumentEnd(const QByteArray &jsonData)
     index++;
     int depth = 1;
     bool inString = false;
-    while (depth > 0 && pos != end) {
+    while (depth > 0 && pos <= end) {
         if (*pos == '\\') {
             pos += 2;
             index += 2;
