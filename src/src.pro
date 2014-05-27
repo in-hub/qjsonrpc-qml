@@ -32,6 +32,12 @@ INSTALL_HEADERS += \
     qjsonrpcservicereply.h \
     qjsonrpchttpclient.h
 
+greaterThan(QT_MAJOR_VERSION, 4) {
+    greaterThan(QT_MINOR_VERSION, 1) {
+        INSTALL_HEADERS += qjsonrpcmetatype.h
+    }
+}
+
 HEADERS += \
     $${INSTALL_HEADERS} \
     $${PRIVATE_HEADERS}

@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2012-2013 Matt Broadstone
+ * Copyright (C) 2013 Fargier Sylvain
  * Contact: http://bitbucket.org/devonit/qjsonrpc
  *
  * This file is part of the QJsonRpc Library.
@@ -36,26 +37,32 @@ public:
 
     void cacheInvokableInfo();
     static int qjsonRpcMessageType;
+    static int convertVariantTypeToJSType(int type);
+
+    struct ParameterInfo
+    {
+        ParameterInfo(const QString &name = QString(), int type = 0);
+
+        int type;
+        int jsType;
+        QString name;
+    };
+
+    struct MethodInfo
+    {
+        MethodInfo(const QMetaMethod &method = QMetaMethod());
+
+        QVarLengthArray<ParameterInfo> parameters;
+        int returnType;
+        bool valid;
+    };
+
+    QHash<int, MethodInfo > methodInfoHash;
     QHash<QByteArray, QList<int> > invokableMethodHash;
-    QHash<int, QList<int> > parameterTypeHash;    // actual parameter types to convert to
-    QHash<int, QList<int> > jsParameterTypeHash;  // for comparing incoming messages
-    QHash<int, QStringList> parameterNamesHash;
     QPointer<QJsonRpcSocket> socket;
 
     QJsonRpcService * const q_ptr;
     Q_DECLARE_PUBLIC(QJsonRpcService)
-};
-
-class ObjectCreator
-{
-public:
-    void *create(int type);
-    ~ObjectCreator();
-
-private:
-    static const int prealloc = 10;
-    QVarLengthArray<QPair<void*, int>, prealloc> m_objects;
-
 };
 
 #endif
