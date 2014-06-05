@@ -178,11 +178,26 @@ QJsonValue::QJsonValue(qint64 n)
 QJsonValue::QJsonValue(const QString &s)
     : d(0), t(String)
 {
-    /*
-    stringData = *(QStringData **)(&s);
-    stringData->ref.ref();
-    */
-    stringValue = s;
+    stringDataFromQStringHelper(s);
+}
+
+/*!
+    \fn QJsonValue::QJsonValue(const char *s)
+
+    Creates a value of type String with value \a s, assuming
+    UTF-8 encoding of the input.
+
+    You can disable this constructor by defining \c
+    QT_NO_CAST_FROM_ASCII when you compile your applications.
+
+    \since 5.3
+ */
+
+void QJsonValue::stringDataFromQStringHelper(const QString &string)
+{
+    // stringData = *(QStringData **)(&string);
+    // stringData->ref.ref();
+    stringValue = string;
 }
 
 /*!
@@ -192,12 +207,9 @@ QJsonValue::QJsonValue(QLatin1String s)
     : d(0), t(String)
 {
     // ### FIXME: Avoid creating the temp QString below
-    /*
+
     QString str(s);
-    stringData = *(QStringData **)(&str);
-    stringData->ref.ref();
-    */
-    stringValue = s;
+    stringDataFromQStringHelper(str);
 }
 
 /*!
@@ -346,18 +358,47 @@ QJsonValue &QJsonValue::operator =(const QJsonValue &other)
 
     The conversion will convert QVariant types as follows:
 
-    \list
-    \li QVariant::Bool to Bool
-    \li QVariant::Int
-    \li QVariant::Double
-    \li QVariant::LongLong
-    \li QVariant::ULongLong
-    \li QVariant::UInt to Double
-    \li QVariant::String to String
-    \li QVariant::StringList
-    \li QVariant::VariantList to Array
-    \li QVariant::VariantMap to Object
-    \endlist
+    \table
+    \header
+        \li Source type
+        \li Destination type
+    \row
+        \li
+            \list
+                \li QMetaType::Bool
+            \endlist
+        \li QJsonValue::Bool
+    \row
+        \li
+            \list
+                \li QMetaType::Int
+                \li QMetaType::UInt
+                \li QMetaType::LongLong
+                \li QMetaType::ULongLong
+                \li QMetaType::Float
+                \li QMetaType::Double
+            \endlist
+        \li QJsonValue::Double
+    \row
+        \li
+            \list
+                \li QMetaType::QString
+            \endlist
+        \li QJsonValue::String
+    \row
+        \li
+            \list
+                \li QMetaType::QStringList
+                \li QMetaType::QVariantList
+            \endlist
+        \li QJsonValue::Array
+    \row
+        \li
+            \list
+                \li QMetaType::QVariantMap
+            \endlist
+        \li QJsonValue::Object
+    \endtable
 
     For all other QVariant types a conversion to a QString will be attempted. If the returned string
     is empty, a Null QJsonValue will be stored, otherwise a String value using the returned QString.
@@ -366,10 +407,11 @@ QJsonValue &QJsonValue::operator =(const QJsonValue &other)
  */
 QJsonValue QJsonValue::fromVariant(const QVariant &variant)
 {
-    switch (variant.type()) {
+    switch (variant.userType()) {
     case QVariant::Bool:
         return QJsonValue(variant.toBool());
     case QVariant::Int:
+    case QMetaType::Float:
     case QVariant::Double:
     case QVariant::LongLong:
     case QVariant::ULongLong:
@@ -398,9 +440,9 @@ QJsonValue QJsonValue::fromVariant(const QVariant &variant)
     The QJsonValue types will be converted as follows:
 
     \value Null     QVariant()
-    \value Bool     QVariant::Bool
-    \value Double   QVariant::Double
-    \value String   QVariant::String
+    \value Bool     QMetaType::Bool
+    \value Double   QMetaType::Double
+    \value String   QString
     \value Array    QVariantList
     \value Object   QVariantMap
     \value Undefined QVariant()
