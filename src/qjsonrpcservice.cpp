@@ -37,15 +37,17 @@ QJsonRpcServicePrivate::MethodInfo::MethodInfo(const QMetaMethod &method)
 {
 #if QT_VERSION >= 0x050000
     returnType = method.returnType();
-#else
-    returnType = QMetaType::type(method.typeName());
-#endif
     if (returnType == QMetaType::UnknownType) {
         valid = false;
         return;
     }
 
     parameters.reserve(method.parameterCount());
+#else
+    returnType = QMetaType::type(method.typeName());
+    parameters.reserve(method.parameterNames().count());
+#endif
+
     const QList<QByteArray> &types = method.parameterTypes();
     const QList<QByteArray> &names = method.parameterNames();
     for (int i = 0; i < types.size(); ++i) {
@@ -58,7 +60,7 @@ QJsonRpcServicePrivate::MethodInfo::MethodInfo(const QMetaMethod &method)
             break;
         }
 
-        parameters.push_back(ParameterInfo(parameterName, type));
+        parameters.append(ParameterInfo(parameterName, type));
     }
 }
 
@@ -209,12 +211,17 @@ static inline QVariant convertArgument(const QJsonValue &argument,
     return QVariant();
 #else
     QVariant result = argument.toVariant();
-    // custom conversions could not be registered before 5.2, so this is only an optimization
+    QVariant::Type variantType = static_cast<QVariant::Type>(info.type);
     if (info.type != QMetaType::QVariant && info.type != result.type() &&
-        !result.canConvert(static_cast<QVariant::Type>(info.type)))
+        !result.canConvert(variantType))
         return QVariant();
 
-    result.convert(static_cast<QVariant::Type>(info.type));
+    if (!result.canConvert(variantType)) {
+        // toVariant succeeded, no need to convert
+        return result;
+    }
+
+    result.convert(variantType);
     return result;
 #endif
 }
