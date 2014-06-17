@@ -24,20 +24,31 @@
 #include "qjsonrpcservice_p.h"
 #include "qjsonrpcservice.h"
 
-QJsonRpcServicePrivate::ParameterInfo::ParameterInfo(const QString &n, int t)
+QJsonRpcServicePrivate::ParameterInfo::ParameterInfo(const QString &n, int t, bool o)
     : type(t),
       jsType(convertVariantTypeToJSType(t)),
-      name(n)
+      name(n),
+      out(o)
+{
+}
+
+QJsonRpcServicePrivate::MethodInfo::MethodInfo()
+    : returnType(QMetaType::Void),
+      valid(false),
+      hasOut(false)
 {
 }
 
 QJsonRpcServicePrivate::MethodInfo::MethodInfo(const QMetaMethod &method)
     : returnType(QMetaType::Void),
-      valid(true)
+      valid(true),
+      hasOut(false)
 {
 #if QT_VERSION >= 0x050000
     returnType = method.returnType();
     if (returnType == QMetaType::UnknownType) {
+        qWarning() << "QJsonRpcService: can't bind method's return type"
+                      << QString(method.name());
         valid = false;
         return;
     }
@@ -53,14 +64,21 @@ QJsonRpcServicePrivate::MethodInfo::MethodInfo(const QMetaMethod &method)
     for (int i = 0; i < types.size(); ++i) {
         QByteArray parameterType = types.at(i);
         const QByteArray &parameterName = names.at(i);
+        bool out = parameterType.endsWith('&');
 
+        if (out) {
+            hasOut = true;
+            parameterType.resize(parameterType.size() - 1);
+        }
         int type = QMetaType::type(parameterType);
         if (type == 0) {
+            qWarning() << "QJsonRpcService: can't bind method's parameter"
+                          << QString(parameterType);
             valid = false;
             break;
         }
 
-        parameters.append(ParameterInfo(parameterName, type));
+        parameters.append(ParameterInfo(parameterName, type, out));
     }
 }
 
@@ -150,10 +168,14 @@ static bool jsParameterCompare(const QJsonArray &parameters,
                                const QJsonRpcServicePrivate::MethodInfo &info)
 {
     int j = 0;
-    for (int i = 0; i < info.parameters.size() && j < parameters.size(); ++i, ++j) {
+    for (int i = 0; i < info.parameters.size() && j < parameters.size(); ++i) {
         int jsType = info.parameters.at(i).jsType;
         if (jsType != QJsonValue::Undefined && jsType != parameters.at(j).type()) {
-            return false;
+            if (!info.parameters.at(i).out)
+                return false;
+        }
+        else {
+            ++j;
         }
     }
 
@@ -167,7 +189,8 @@ static  bool jsParameterCompare(const QJsonObject &parameters,
         int jsType = info.parameters.at(i).jsType;
         QJsonValue value = parameters.value(info.parameters.at(i).name);
         if (value == QJsonValue::Undefined) {
-            return false;
+            if (!info.parameters.at(i).out)
+                return false;
         } else if (jsType == QJsonValue::Undefined) {
             continue;
         } else if (jsType != value.type()) {
@@ -340,6 +363,8 @@ bool QJsonRpcService::dispatch(const QJsonRpcMessage &request)
         return false;
     }
 
+    QJsonRpcServicePrivate::MethodInfo &info = d->methodInfoHash[idx];
+
     bool success =
         const_cast<QJsonRpcService*>(this)->qt_metacall(QMetaObject::InvokeMetaMethod, idx, parameters.data()) < 0;
     if (!success) {
@@ -349,7 +374,23 @@ bool QJsonRpcService::dispatch(const QJsonRpcMessage &request)
         Q_EMIT result(error);
         return false;
     }
-
-    Q_EMIT result(request.createResponse(convertReturnValue(returnValue)));
-    return true;
+    else if (info.hasOut)
+    {
+        QJsonArray ret;
+        if (info.returnType != QMetaType::Void)
+            ret.append(convertReturnValue(returnValue));
+        for (int i = 0; i < info.parameters.size(); ++i)
+            if (info.parameters.at(i).out)
+                ret.append(convertReturnValue(arguments[i]));
+        if (ret.size() > 1)
+            Q_EMIT result(request.createResponse(ret));
+        else
+            Q_EMIT result(request.createResponse(ret.first()));
+        return true;
+    }
+    else
+    {
+        Q_EMIT result(request.createResponse(convertReturnValue(returnValue)));
+        return true;
+    }
 }
