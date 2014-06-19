@@ -261,6 +261,7 @@ public Q_SLOTS:
         m_called++;
     }
 
+    /* NOTE: suppress binding warnings
     bool methodWithListOfInts(const QList<int> &list) {
         if (list.size() < 3)
             return false;
@@ -272,6 +273,7 @@ public Q_SLOTS:
             return false;
         return true;
     }
+    */
 
     QString variantMapInvalidParam(const QVariantMap &map) {
         return map["foo"].toString();
