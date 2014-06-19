@@ -284,6 +284,14 @@ public Q_SLOTS:
         out = in1 + out + in2;
     }
 
+    void outputParameterWithStrings(const QString &first, QString &output, const QString &last)
+    {
+        if (output.isEmpty())
+            output = QString("%1 %2").arg(first).arg(last);
+        else
+            output.append(QString(" %1 %2").arg(first).arg(last));
+    }
+
     bool overloadedMethod(int input) { Q_UNUSED(input) return true; }
     bool overloadedMethod(const QString &input) { Q_UNUSED(input) return false; }
 
@@ -780,7 +788,7 @@ void TestQJsonRpcServer::outputParameter()
 {
     m_server->addService(new TestService);
 
-    /* use argument 2 as in/out parameter */
+    // use argument 2 as in/out parameter
     QJsonArray arrParams;
     arrParams.push_back(1);
     arrParams.push_back(0);
@@ -791,7 +799,7 @@ void TestQJsonRpcServer::outputParameter()
     QVERIFY(response.type() != QJsonRpcMessage::Error);
     QCOMPARE((int) response.result().toDouble(), 3);
 
-    /* only input parameters are provided */
+    // only input parameters are provided
     QJsonObject objParams;
     objParams["in1"] = 1;
     objParams["in2"] = 3;
@@ -801,13 +809,35 @@ void TestQJsonRpcServer::outputParameter()
     QVERIFY(response.type() != QJsonRpcMessage::Error);
     QCOMPARE((int) response.result().toDouble(), 4);
 
-    /* also provide the in/out parameter */
+    // also provide the in/out parameter
     objParams["out"] = 2;
     strRequest =
         QJsonRpcMessage::createRequest("service.outputParameter", objParams);
     response = m_clientSocket->sendMessageBlocking(strRequest);
     QVERIFY(response.type() != QJsonRpcMessage::Error);
     QCOMPARE((int) response.result().toDouble(), 6);
+
+    // test strings
+    QJsonArray stringParams;
+    stringParams.push_back("Sherlock");
+    stringParams.push_back("");
+    stringParams.push_back("Holmes");
+    strRequest =
+        QJsonRpcMessage::createRequest("service.outputParameterWithStrings", stringParams);
+    response = m_clientSocket->sendMessageBlocking(strRequest);
+    QVERIFY(response.type() != QJsonRpcMessage::Error);
+    QCOMPARE(response.result().toString(), QLatin1String("Sherlock Holmes"));
+
+    // only input parameters are provided
+    QJsonObject stringObjectParams;
+    stringObjectParams["first"] = "Sherlock";
+    stringObjectParams["output"] = "Hello";
+    stringObjectParams["last"] = "Holmes";
+    strRequest =
+        QJsonRpcMessage::createRequest("service.outputParameterWithStrings", stringObjectParams);
+    response = m_clientSocket->sendMessageBlocking(strRequest);
+    QVERIFY(response.type() != QJsonRpcMessage::Error);
+    QCOMPARE(response.result().toString(), QLatin1String("Hello Sherlock Holmes"));
 }
 
 void TestQJsonRpcServer::userDeletedReplyOnDelayedResponse()
