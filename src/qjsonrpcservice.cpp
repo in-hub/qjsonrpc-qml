@@ -235,7 +235,7 @@ static inline QVariant convertArgument(const QJsonValue &argument,
 #else
     QVariant result = argument.toVariant();
     QVariant::Type variantType = static_cast<QVariant::Type>(info.type);
-    if (info.type != QMetaType::QVariant && info.type != result.type() &&
+    if (info.type != QMetaType::QVariant && variantType != result.type() &&
         !result.canConvert(variantType))
         return QVariant();
 
