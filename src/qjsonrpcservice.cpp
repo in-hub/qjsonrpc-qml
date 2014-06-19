@@ -70,6 +70,7 @@ QJsonRpcServicePrivate::MethodInfo::MethodInfo(const QMetaMethod &method)
             hasOut = true;
             parameterType.resize(parameterType.size() - 1);
         }
+
         int type = QMetaType::type(parameterType);
         if (type == 0) {
             qWarning() << "QJsonRpcService: can't bind method's parameter"
@@ -173,8 +174,7 @@ static bool jsParameterCompare(const QJsonArray &parameters,
         if (jsType != QJsonValue::Undefined && jsType != parameters.at(j).type()) {
             if (!info.parameters.at(i).out)
                 return false;
-        }
-        else {
+        } else {
             ++j;
         }
     }
@@ -235,7 +235,7 @@ static inline QVariant convertArgument(const QJsonValue &argument,
 #else
     QVariant result = argument.toVariant();
     QVariant::Type variantType = static_cast<QVariant::Type>(info.type);
-    if (info.type != QMetaType::QVariant && info.type != result.type() &&
+    if (info.type != QMetaType::QVariant && variantType != result.type() &&
         !result.canConvert(variantType))
         return QVariant();
 
@@ -373,9 +373,7 @@ bool QJsonRpcService::dispatch(const QJsonRpcMessage &request)
             request.createErrorResponse(QJsonRpc::InvalidRequest, message);
         Q_EMIT result(error);
         return false;
-    }
-    else if (info.hasOut)
-    {
+    } else if (info.hasOut) {
         QJsonArray ret;
         if (info.returnType != QMetaType::Void)
             ret.append(convertReturnValue(returnValue));
@@ -388,9 +386,7 @@ bool QJsonRpcService::dispatch(const QJsonRpcMessage &request)
             Q_EMIT result(request.createResponse(ret.first()));
         return true;
     }
-    else
-    {
-        Q_EMIT result(request.createResponse(convertReturnValue(returnValue)));
-        return true;
-    }
+
+    Q_EMIT result(request.createResponse(convertReturnValue(returnValue)));
+    return true;
 }
