@@ -170,6 +170,7 @@ private Q_SLOTS:
     void overloadedMethod();
     void qVariantMapInvalidParam();
     void stringListParameter();
+    void outputParameter();
     void userDeletedReplyOnDelayedResponse();
 
     void addRemoveService();
@@ -274,6 +275,11 @@ public Q_SLOTS:
 
     QString variantMapInvalidParam(const QVariantMap &map) {
         return map["foo"].toString();
+    }
+
+    void outputParameter(int in1, int &out, int in2)
+    {
+        out = in1 + out + in2;
     }
 
     bool overloadedMethod(int input) { Q_UNUSED(input) return true; }
@@ -766,6 +772,40 @@ void TestQJsonRpcServer::stringListParameter()
     QJsonRpcMessage response = m_clientSocket->sendMessageBlocking(strRequest);
     QVERIFY(response.type() != QJsonRpcMessage::Error);
     QVERIFY(response.result().toBool());
+}
+
+void TestQJsonRpcServer::outputParameter()
+{
+    m_server->addService(new TestService);
+
+    /* use argument 2 as in/out parameter */
+    QJsonArray arrParams;
+    arrParams.push_back(1);
+    arrParams.push_back(0);
+    arrParams.push_back(2);
+    QJsonRpcMessage strRequest =
+        QJsonRpcMessage::createRequest("service.outputParameter", arrParams);
+    QJsonRpcMessage response = m_clientSocket->sendMessageBlocking(strRequest);
+    QVERIFY(response.type() != QJsonRpcMessage::Error);
+    QCOMPARE((int) response.result().toDouble(), 3);
+
+    /* only input parameters are provided */
+    QJsonObject objParams;
+    objParams["in1"] = 1;
+    objParams["in2"] = 3;
+    strRequest =
+        QJsonRpcMessage::createRequest("service.outputParameter", objParams);
+    response = m_clientSocket->sendMessageBlocking(strRequest);
+    QVERIFY(response.type() != QJsonRpcMessage::Error);
+    QCOMPARE((int) response.result().toDouble(), 4);
+
+    /* also provide the in/out parameter */
+    objParams["out"] = 2;
+    strRequest =
+        QJsonRpcMessage::createRequest("service.outputParameter", objParams);
+    response = m_clientSocket->sendMessageBlocking(strRequest);
+    QVERIFY(response.type() != QJsonRpcMessage::Error);
+    QCOMPARE((int) response.result().toDouble(), 6);
 }
 
 void TestQJsonRpcServer::userDeletedReplyOnDelayedResponse()

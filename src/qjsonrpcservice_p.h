@@ -41,20 +41,23 @@ public:
 
     struct ParameterInfo
     {
-        ParameterInfo(const QString &name = QString(), int type = 0);
+        ParameterInfo(const QString &name = QString(), int type = 0, bool out = false);
 
         int type;
         int jsType;
         QString name;
+        bool out;
     };
 
     struct MethodInfo
     {
-        MethodInfo(const QMetaMethod &method = QMetaMethod());
+        MethodInfo();
+        MethodInfo(const QMetaMethod &method);
 
         QVarLengthArray<ParameterInfo> parameters;
         int returnType;
         bool valid;
+        bool hasOut;
     };
 
     QHash<int, MethodInfo > methodInfoHash;
