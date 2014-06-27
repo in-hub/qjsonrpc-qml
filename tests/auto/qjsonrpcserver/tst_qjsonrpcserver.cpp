@@ -819,9 +819,9 @@ void TestQJsonRpcServer::outputParameter()
 
     // test strings
     QJsonArray stringParams;
-    stringParams.push_back("Sherlock");
-    stringParams.push_back("");
-    stringParams.push_back("Holmes");
+    stringParams.push_back(QLatin1String("Sherlock"));
+    stringParams.push_back(QLatin1String(""));
+    stringParams.push_back(QLatin1String("Holmes"));
     strRequest =
         QJsonRpcMessage::createRequest("service.outputParameterWithStrings", stringParams);
     response = m_clientSocket->sendMessageBlocking(strRequest);
@@ -830,9 +830,9 @@ void TestQJsonRpcServer::outputParameter()
 
     // only input parameters are provided
     QJsonObject stringObjectParams;
-    stringObjectParams["first"] = "Sherlock";
-    stringObjectParams["output"] = "Hello";
-    stringObjectParams["last"] = "Holmes";
+    stringObjectParams["first"] = QLatin1String("Sherlock");
+    stringObjectParams["output"] = QLatin1String("Hello");
+    stringObjectParams["last"] = QLatin1String("Holmes");
     strRequest =
         QJsonRpcMessage::createRequest("service.outputParameterWithStrings", stringObjectParams);
     response = m_clientSocket->sendMessageBlocking(strRequest);
