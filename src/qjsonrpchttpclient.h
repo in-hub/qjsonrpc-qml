@@ -57,6 +57,9 @@ private:
     Q_DISABLE_COPY(QJsonRpcHttpClient)
     Q_DECLARE_PRIVATE(QJsonRpcHttpClient)
 
+#if !defined(USE_QT_PRIVATE_HEADERS)
+    QScopedPointer<QJsonRpcHttpClientPrivate> d_ptr;
+#endif
 };
 
 #endif

@@ -17,8 +17,6 @@
 #ifndef QJSONRPCABSTRACTSERVER_P_H
 #define QJSONRPCABSTRACTSERVER_P_H
 
-#include <private/qobject_p.h>
-
 #include <QObjectCleanupHandler>
 
 #if QT_VERSION >= 0x050000
@@ -41,15 +39,29 @@ public:
 };
 
 class QJsonRpcSocket;
+#if defined(USE_QT_PRIVATE_HEADERS)
+#include <private/qobject_p.h>
+
 class QJsonRpcAbstractServerPrivate : public QObjectPrivate
+#else
+class QJsonRpcAbstractServerPrivate
+#endif
 {
-    Q_DECLARE_PUBLIC(QJsonRpcAbstractServer)
 public:
 #if QT_VERSION >= 0x050100 || QT_VERSION <= 0x050000
     QJsonDocument::JsonFormat format;
-    QJsonRpcAbstractServerPrivate() : format(QJsonDocument::Compact) {}
+    QJsonRpcAbstractServerPrivate(QJsonRpcAbstractServer *server)
+        : format(QJsonDocument::Compact),
+          q_ptr(server)
+    {}
 #else
-    QJsonRpcAbstractServerPrivate() {}
+    QJsonRpcAbstractServerPrivate(QJsonRpcAbstractServer *server)
+        : q_ptr(server)
+    {}
+#endif
+
+#if !defined(USE_QT_PRIVATE_HEADERS)
+    virtual ~QJsonRpcAbstractServerPrivate() {}
 #endif
 
     virtual void _q_processIncomingConnection() = 0;
@@ -58,6 +70,8 @@ public:
 
     QList<QJsonRpcSocket*> clients;
 
+    QJsonRpcAbstractServer * const q_ptr;
+    Q_DECLARE_PUBLIC(QJsonRpcAbstractServer)
 };
 
 #endif

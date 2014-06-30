@@ -78,7 +78,12 @@ void QJsonRpcSocketPrivate::writeData(const QJsonRpcMessage &message)
 }
 
 QJsonRpcSocket::QJsonRpcSocket(QIODevice *device, QObject *parent)
-    : QObject(*new QJsonRpcSocketPrivate, parent)
+#if defined(USE_QT_PRIVATE_HEADERS)
+    : QObject(*new QJsonRpcSocketPrivate(this), parent)
+#else
+    : QObject(parent),
+      d_ptr(new QJsonRpcSocketPrivate(this))
+#endif
 {
     Q_D(QJsonRpcSocket);
     connect(device, SIGNAL(readyRead()), this, SLOT(_q_processIncomingData()));
@@ -86,7 +91,12 @@ QJsonRpcSocket::QJsonRpcSocket(QIODevice *device, QObject *parent)
 }
 
 QJsonRpcSocket::QJsonRpcSocket(QJsonRpcSocketPrivate &dd, QObject *parent)
+#if defined(USE_QT_PRIVATE_HEADERS)
     : QObject(dd, parent)
+#else
+    : QObject(parent),
+      d_ptr(&dd)
+#endif
 {
     Q_D(QJsonRpcSocket);
     connect(d->device, SIGNAL(readyRead()), this, SLOT(_q_processIncomingData()));

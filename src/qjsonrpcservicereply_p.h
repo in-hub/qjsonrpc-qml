@@ -17,10 +17,15 @@
 #ifndef QJSONRPCSERVICEREPLY_P_H
 #define QJSONRPCSERVICEREPLY_P_H
 
-#include <private/qobject_p.h>
 #include "qjsonrpcmessage.h"
 
+#if defined(USE_QT_PRIVATE_HEADERS)
+#include <private/qobject_p.h>
+
 class QJsonRpcServiceReplyPrivate : public QObjectPrivate
+#else
+class QJsonRpcServiceReplyPrivate
+#endif
 {
 public:
     QJsonRpcMessage response;

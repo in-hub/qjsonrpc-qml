@@ -17,8 +17,6 @@
 #ifndef QJSONRPCSOCKET_P_H
 #define QJSONRPCSOCKET_P_H
 
-#include <private/qobject_p.h>
-
 #include <QPointer>
 #include <QHash>
 #include <QIODevice>
@@ -34,16 +32,29 @@
 #include "qjsonrpc_export.h"
 
 class QJsonRpcServiceReply;
-class QJSONRPC_EXPORT QJsonRpcSocketPrivate : public QObjectPrivate
-{
-    Q_DECLARE_PUBLIC(QJsonRpcSocket)
+#if defined(USE_QT_PRIVATE_HEADERS)
+#include <private/qobject_p.h>
 
+class QJSONRPC_EXPORT QJsonRpcSocketPrivate : public QObjectPrivate
+#else
+class QJSONRPC_EXPORT QJsonRpcSocketPrivate
+#endif
+{
 public:
 #if QT_VERSION >= 0x050100 || QT_VERSION <= 0x050000
     QJsonDocument::JsonFormat format;
-    QJsonRpcSocketPrivate() : format(QJsonDocument::Compact) {}
+    QJsonRpcSocketPrivate(QJsonRpcSocket *socket)
+        : format(QJsonDocument::Compact),
+          q_ptr(socket)
+    {}
 #else
-    QJsonRpcSocketPrivate() {}
+    QJsonRpcSocketPrivate(QJsonRpcSocket *socket)
+        : q_ptr(socket)
+    {}
+#endif
+
+#if !defined(USE_QT_PRIVATE_HEADERS)
+    virtual ~QJsonRpcSocketPrivate() {}
 #endif
 
     // slots
@@ -56,6 +67,8 @@ public:
     QByteArray buffer;
     QHash<int, QPointer<QJsonRpcServiceReply> > replies;
 
+    QJsonRpcSocket * const q_ptr;
+    Q_DECLARE_PUBLIC(QJsonRpcSocket)
 };
 
 #endif

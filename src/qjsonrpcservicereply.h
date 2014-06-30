@@ -42,6 +42,10 @@ protected:
     QJsonRpcServiceReply(QJsonRpcServiceReplyPrivate &dd, QObject *parent = 0);
     friend class QJsonRpcSocketPrivate;
 
+#if !defined(USE_QT_PRIVATE_HEADERS)
+    QScopedPointer<QJsonRpcServiceReplyPrivate> d_ptr;
+#endif
+
 };
 
 #endif // QJSONRPCSERVICEREPLY_H

@@ -73,6 +73,10 @@ protected:
     Q_DECLARE_PRIVATE(QJsonRpcAbstractServer)
     Q_DISABLE_COPY(QJsonRpcAbstractServer)
     Q_PRIVATE_SLOT(d_func(), void _q_processMessage(const QJsonRpcMessage &message))
+
+#if !defined(USE_QT_PRIVATE_HEADERS)
+    QScopedPointer<QJsonRpcAbstractServerPrivate> d_ptr;
+#endif
 };
 
 #endif

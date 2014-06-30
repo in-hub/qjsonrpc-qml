@@ -100,7 +100,12 @@ void QJsonRpcServiceProvider::processMessage(QJsonRpcSocket *socket, const QJson
 }
 
 QJsonRpcAbstractServer::QJsonRpcAbstractServer(QJsonRpcAbstractServerPrivate &dd, QObject *parent)
+#if defined(USE_QT_PRIVATE_HEADERS)
     : QObject(dd, parent)
+#else
+    : QObject(parent),
+      d_ptr(&dd)
+#endif
 {
 }
 

@@ -4,6 +4,11 @@ isEmpty(QJSONRPC_LIBRARY_TYPE) {
     QJSONRPC_LIBRARY_TYPE = shared
 }
 
+private-headers {
+    DEFINES += USE_QT_PRIVATE_HEADERS
+    QT += core-private
+}
+
 QT += network
 QJSONRPC_INCLUDEPATH = $${PWD}/src
 QJSONRPC_LIBS = -lqjsonrpc

@@ -18,7 +18,12 @@
 #include "qjsonrpcservicereply.h"
 
 QJsonRpcServiceReply::QJsonRpcServiceReply(QObject *parent)
+#if defined(USE_QT_PRIVATE_HEADERS)
     : QObject(*new QJsonRpcServiceReplyPrivate, parent)
+#else
+    : QObject(parent),
+      d_ptr(new QJsonRpcServiceReplyPrivate)
+#endif
 {
 }
 
@@ -27,7 +32,12 @@ QJsonRpcServiceReply::~QJsonRpcServiceReply()
 }
 
 QJsonRpcServiceReply::QJsonRpcServiceReply(QJsonRpcServiceReplyPrivate &dd, QObject *parent)
+#if defined(USE_QT_PRIVATE_HEADERS)
     : QObject(dd, parent)
+#else
+    : QObject(parent),
+      d_ptr(&dd)
+#endif
 {
 }
 

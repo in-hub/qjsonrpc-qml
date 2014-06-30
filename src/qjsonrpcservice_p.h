@@ -18,8 +18,6 @@
 #ifndef QJSONRPCSERVICE_P_H
 #define QJSONRPCSERVICE_P_H
 
-#include <private/qobject_p.h>
-
 #include <QHash>
 #include <QPointer>
 #include <QVarLengthArray>
@@ -27,7 +25,13 @@
 
 class QJsonRpcSocket;
 class QJsonRpcService;
+#if defined(USE_QT_PRIVATE_HEADERS)
+#include <private/qobject_p.h>
+
 class QJsonRpcServicePrivate : public QObjectPrivate
+#else
+class QJsonRpcServicePrivate
+#endif
 {
 public:
     QJsonRpcServicePrivate(QJsonRpcService *parent)

@@ -93,6 +93,10 @@ private:
 class FakeQJsonRpcServerPrivate : public QJsonRpcAbstractServerPrivate
 {
 public:
+    FakeQJsonRpcServerPrivate(QJsonRpcAbstractServer *q)
+        : QJsonRpcAbstractServerPrivate(q)
+    {}
+
     virtual void _q_processIncomingConnection() {}
     virtual void _q_clientDisconnected() {}
 };
@@ -102,7 +106,7 @@ class FakeQJsonRpcServer : public QJsonRpcAbstractServer
     Q_OBJECT
 public:
     FakeQJsonRpcServer(QObject *parent = 0)
-        : QJsonRpcAbstractServer(*new FakeQJsonRpcServerPrivate, parent),
+        : QJsonRpcAbstractServer(*new FakeQJsonRpcServerPrivate(this), parent),
           m_buffer(0)
     {
         m_buffer = new QBuffer(this);

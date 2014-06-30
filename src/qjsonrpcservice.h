@@ -46,6 +46,10 @@ private:
     Q_DECLARE_PRIVATE(QJsonRpcService)
     friend class QJsonRpcServiceProvider;
 
+#if !defined(USE_QT_PRIVATE_HEADERS)
+    QScopedPointer<QJsonRpcServicePrivate> d_ptr;
+#endif
+
 };
 
 #endif
