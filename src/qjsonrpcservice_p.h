@@ -23,7 +23,7 @@
 #include <QVarLengthArray>
 #include <QStringList>
 
-class QJsonRpcSocket;
+class QJsonRpcAbstractSocket;
 class QJsonRpcService;
 #if defined(USE_QT_PRIVATE_HEADERS)
 #include <private/qobject_p.h>
@@ -66,7 +66,7 @@ public:
 
     QHash<int, MethodInfo > methodInfoHash;
     QHash<QByteArray, QList<int> > invokableMethodHash;
-    QPointer<QJsonRpcSocket> socket;
+    QPointer<QJsonRpcAbstractSocket> socket;
 
     QJsonRpcService * const q_ptr;
     Q_DECLARE_PUBLIC(QJsonRpcService)

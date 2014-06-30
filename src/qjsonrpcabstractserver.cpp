@@ -62,7 +62,7 @@ bool QJsonRpcServiceProvider::removeService(QJsonRpcService *service)
     return true;
 }
 
-void QJsonRpcServiceProvider::processMessage(QJsonRpcSocket *socket, const QJsonRpcMessage &message)
+void QJsonRpcServiceProvider::processMessage(QJsonRpcAbstractSocket *socket, const QJsonRpcMessage &message)
 {
     switch (message.type()) {
         case QJsonRpcMessage::Request:
@@ -80,7 +80,7 @@ void QJsonRpcServiceProvider::processMessage(QJsonRpcSocket *socket, const QJson
                 service->d_func()->socket = socket;
                 if (message.type() == QJsonRpcMessage::Request)
                     QObject::connect(service, SIGNAL(result(QJsonRpcMessage)),
-                                      socket, SLOT(notify(QJsonRpcMessage)));
+                                      socket, SLOT(notify(QJsonRpcMessage)), Qt::UniqueConnection);
                 service->dispatch(message);
             }
         }

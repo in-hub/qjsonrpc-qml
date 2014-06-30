@@ -25,21 +25,49 @@
 #include "qjsonrpcmessage.h"
 #include "qjsonrpc_export.h"
 
-class QJsonRpcServiceReply;
-class QJsonRpcSocketPrivate;
-class QJSONRPC_EXPORT QJsonRpcSocket : public QObject
+class QJsonRpcAbstractSocketPrivate;
+class QJSONRPC_EXPORT QJsonRpcAbstractSocket : public QObject
 {
     Q_OBJECT
 public:
-    explicit QJsonRpcSocket(QIODevice *device, QObject *parent = 0);
-    ~QJsonRpcSocket();
+    explicit QJsonRpcAbstractSocket(QObject *parent = 0);
+    ~QJsonRpcAbstractSocket();
 
 #if QT_VERSION >= 0x050100 || QT_VERSION <= 0x050000
     QJsonDocument::JsonFormat wireFormat() const;
     void setWireFormat(QJsonDocument::JsonFormat format);
 #endif
 
-    bool isValid() const;
+    virtual bool isValid() const;
+
+Q_SIGNALS:
+    void messageReceived(const QJsonRpcMessage &message);
+
+public Q_SLOTS:
+    virtual void notify(const QJsonRpcMessage &message) = 0;
+
+protected:
+    QJsonRpcAbstractSocket(QJsonRpcAbstractSocketPrivate &dd, QObject *parent = 0);
+
+private:
+    Q_DECLARE_PRIVATE(QJsonRpcAbstractSocket)
+    Q_DISABLE_COPY(QJsonRpcAbstractSocket)
+
+#if !defined(USE_QT_PRIVATE_HEADERS)
+    QScopedPointer<QJsonRpcAbstractSocketPrivate> d_ptr;
+#endif
+};
+
+class QJsonRpcServiceReply;
+class QJsonRpcSocketPrivate;
+class QJSONRPC_EXPORT QJsonRpcSocket : public QJsonRpcAbstractSocket
+{
+    Q_OBJECT
+public:
+    explicit QJsonRpcSocket(QIODevice *device, QObject *parent = 0);
+    ~QJsonRpcSocket();
+
+    virtual bool isValid() const;
 
 public Q_SLOTS:
     virtual void notify(const QJsonRpcMessage &message);
@@ -58,9 +86,6 @@ public Q_SLOTS:
                                              const QVariant &arg6 = QVariant(), const QVariant &arg7 = QVariant(),
                                              const QVariant &arg8 = QVariant(), const QVariant &arg9 = QVariant(),
                                              const QVariant &arg10 = QVariant());
-
-Q_SIGNALS:
-    void messageReceived(const QJsonRpcMessage &message);
 
 protected:
     QJsonRpcSocket(QJsonRpcSocketPrivate &dd, QObject *parent);
