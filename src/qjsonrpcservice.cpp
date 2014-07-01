@@ -84,7 +84,12 @@ QJsonRpcServicePrivate::MethodInfo::MethodInfo(const QMetaMethod &method)
 }
 
 QJsonRpcService::QJsonRpcService(QObject *parent)
+#if defined(USE_QT_PRIVATE_HEADERS)
     : QObject(*new QJsonRpcServicePrivate(this), parent)
+#else
+    : QObject(parent),
+      d_ptr(new QJsonRpcServicePrivate(this))
+#endif
 {
 }
 

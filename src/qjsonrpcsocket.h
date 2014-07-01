@@ -71,6 +71,10 @@ private:
     Q_DISABLE_COPY(QJsonRpcSocket)
 
     Q_PRIVATE_SLOT(d_func(), void _q_processIncomingData())
+
+#if !defined(USE_QT_PRIVATE_HEADERS)
+    QScopedPointer<QJsonRpcSocketPrivate> d_ptr;
+#endif
 };
 
 class QJSONRPC_EXPORT QJsonRpcServiceSocket : public QJsonRpcSocket,

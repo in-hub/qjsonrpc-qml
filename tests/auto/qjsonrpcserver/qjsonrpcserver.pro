@@ -4,4 +4,7 @@ include($${DEPTH}/tests/tests.pri)
 
 TARGET = tst_qjsonrpcserver
 SOURCES = tst_qjsonrpcserver.cpp
-QT += core-private
+
+private-headers {
+    QT += core-private
+}

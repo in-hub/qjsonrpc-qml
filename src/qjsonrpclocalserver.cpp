@@ -9,8 +9,9 @@ class QJsonRpcLocalServerPrivate : public QJsonRpcAbstractServerPrivate
 {
     Q_DECLARE_PUBLIC(QJsonRpcLocalServer)
 public:
-    QJsonRpcLocalServerPrivate()
-        : server(0)
+    QJsonRpcLocalServerPrivate(QJsonRpcLocalServer *q)
+        : QJsonRpcAbstractServerPrivate(q),
+          server(0)
     {
     }
 
@@ -22,7 +23,7 @@ public:
 };
 
 QJsonRpcLocalServer::QJsonRpcLocalServer(QObject *parent)
-    : QJsonRpcAbstractServer(*new QJsonRpcLocalServerPrivate, parent)
+    : QJsonRpcAbstractServer(*new QJsonRpcLocalServerPrivate(this), parent)
 {
 }
 

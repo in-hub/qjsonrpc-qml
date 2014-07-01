@@ -37,8 +37,9 @@
 class QBufferBackedQJsonRpcSocketPrivate : public QJsonRpcSocketPrivate
 {
 public:
-    QBufferBackedQJsonRpcSocketPrivate(QBuffer *b)
-        : buffer(b)
+    QBufferBackedQJsonRpcSocketPrivate(QBuffer *b, QJsonRpcSocket *q)
+        : QJsonRpcSocketPrivate(q),
+          buffer(b)
     {
         device = b;
     }
@@ -57,7 +58,7 @@ class QBufferBackedQJsonRpcSocket : public QJsonRpcSocket
     Q_OBJECT
 public:
     QBufferBackedQJsonRpcSocket(QBuffer *buffer, QObject *parent = 0)
-        : QJsonRpcSocket(*new QBufferBackedQJsonRpcSocketPrivate(buffer), parent)
+        : QJsonRpcSocket(*new QBufferBackedQJsonRpcSocketPrivate(buffer, this), parent)
     {
     }
 };
@@ -198,7 +199,7 @@ void TestQJsonRpcSocket::jsonParsingBenchmark()
     QFile testData(":/testwire.json");
     QVERIFY(testData.open(QIODevice::ReadOnly));
     QByteArray jsonData = testData.readAll();
-    QJsonRpcSocketPrivate socketPrivate;
+    QJsonRpcSocketPrivate socketPrivate(0);
 
     int messageCount = 0;
     while (!jsonData.isEmpty()) {

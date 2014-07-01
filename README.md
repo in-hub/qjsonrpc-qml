@@ -33,3 +33,12 @@ Building
     mkdir build
     cd build
     qmake .. && make install
+
+You can pass the following arguments to qmake:
+
+    PREFIX=<prefix>                 to change the install prefix
+                                    default:
+                                        unix:  /usr
+                                        other: $$[QT_INSTALL_PREFIX]
+    QJSONRPC_LIBRARY_TYPE=staticlib to build a static version of the library
+    -config private-headers         build with qt private headers (to reduce allocations)
