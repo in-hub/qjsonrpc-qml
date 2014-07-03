@@ -97,12 +97,10 @@ QJsonRpcService::~QJsonRpcService()
 {
 }
 
-QJsonRpcSocket *QJsonRpcService::senderSocket()
+QJsonRpcAbstractSocket *QJsonRpcService::senderSocket() const
 {
-    Q_D(QJsonRpcService);
-    if (d->socket)
-        return d->socket.data();
-    return 0;
+    Q_D(const QJsonRpcService);
+    return d->socket.data();
 }
 
 int QJsonRpcServicePrivate::convertVariantTypeToJSType(int type)

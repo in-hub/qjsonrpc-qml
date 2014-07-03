@@ -20,7 +20,7 @@
 #include <QVariant>
 #include "qjsonrpcmessage.h"
 
-class QJsonRpcSocket;
+class QJsonRpcAbstractSocket;
 class QJsonRpcServiceProvider;
 class QJsonRpcServicePrivate;
 class QJSONRPC_EXPORT QJsonRpcService : public QObject
@@ -36,7 +36,7 @@ Q_SIGNALS:
     void notifyConnectedClients(const QString &method, const QJsonArray &params = QJsonArray());
 
 protected:
-    QJsonRpcSocket *senderSocket();
+    QJsonRpcAbstractSocket *senderSocket() const;
 
 protected Q_SLOTS:
     bool dispatch(const QJsonRpcMessage &request);

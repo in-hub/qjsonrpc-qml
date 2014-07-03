@@ -77,11 +77,54 @@ void QJsonRpcSocketPrivate::writeData(const QJsonRpcMessage &message)
         qDebug() << "sending: " << data;
 }
 
-QJsonRpcSocket::QJsonRpcSocket(QIODevice *device, QObject *parent)
+QJsonRpcAbstractSocket::QJsonRpcAbstractSocket(QObject *parent)
 #if defined(USE_QT_PRIVATE_HEADERS)
-    : QObject(*new QJsonRpcSocketPrivate(this), parent)
+    : QObject(*new QJsonRpcAbstractSocketPrivate, parent)
 #else
     : QObject(parent),
+      d_ptr(new QJsonRpcAbstractSocketPrivate)
+#endif
+{
+}
+
+QJsonRpcAbstractSocket::~QJsonRpcAbstractSocket()
+{
+}
+
+QJsonRpcAbstractSocket::QJsonRpcAbstractSocket(QJsonRpcAbstractSocketPrivate &dd, QObject *parent)
+#if defined(USE_QT_PRIVATE_HEADERS)
+    : QObject(dd, parent)
+#else
+    : QObject(parent),
+      d_ptr(&dd)
+#endif
+{
+}
+
+#if QT_VERSION >= 0x050100 || QT_VERSION <= 0x050000
+QJsonDocument::JsonFormat QJsonRpcAbstractSocket::wireFormat() const
+{
+    Q_D(const QJsonRpcAbstractSocket);
+    return d->format;
+}
+
+void QJsonRpcAbstractSocket::setWireFormat(QJsonDocument::JsonFormat format)
+{
+    Q_D(QJsonRpcAbstractSocket);
+    d->format = format;
+}
+#endif
+
+bool QJsonRpcAbstractSocket::isValid() const
+{
+    return false;
+}
+
+QJsonRpcSocket::QJsonRpcSocket(QIODevice *device, QObject *parent)
+#if defined(USE_QT_PRIVATE_HEADERS)
+    : QJsonRpcAbstractSocket(*new QJsonRpcSocketPrivate(this), parent)
+#else
+    : QJsonRpcAbstractSocket(parent),
       d_ptr(new QJsonRpcSocketPrivate(this))
 #endif
 {
@@ -92,9 +135,9 @@ QJsonRpcSocket::QJsonRpcSocket(QIODevice *device, QObject *parent)
 
 QJsonRpcSocket::QJsonRpcSocket(QJsonRpcSocketPrivate &dd, QObject *parent)
 #if defined(USE_QT_PRIVATE_HEADERS)
-    : QObject(dd, parent)
+    : QJsonRpcAbstractSocket(dd, parent)
 #else
-    : QObject(parent),
+    : QJsonRpcAbstractSocket(parent),
       d_ptr(&dd)
 #endif
 {
@@ -221,20 +264,6 @@ QJsonRpcServiceReply *QJsonRpcSocket::invokeRemoteMethod(const QString &method, 
         QJsonRpcMessage::createRequest(method, QJsonArray::fromVariantList(params));
     return sendMessage(request);
 }
-
-#if QT_VERSION >= 0x050100 || QT_VERSION <= 0x050000
-QJsonDocument::JsonFormat QJsonRpcSocket::wireFormat() const
-{
-    Q_D(const QJsonRpcSocket);
-    return d->format;
-}
-
-void QJsonRpcSocket::setWireFormat(QJsonDocument::JsonFormat format)
-{
-    Q_D(QJsonRpcSocket);
-    d->format = format;
-}
-#endif
 
 void QJsonRpcSocketPrivate::_q_processIncomingData()
 {

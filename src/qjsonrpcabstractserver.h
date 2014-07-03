@@ -30,7 +30,7 @@
 #include "qjsonrpc_export.h"
 
 class QJsonRpcService;
-class QJsonRpcSocket;
+class QJsonRpcAbstractSocket;
 class QJsonRpcServiceProviderPrivate;
 class QJSONRPC_EXPORT QJsonRpcServiceProvider
 {
@@ -41,7 +41,7 @@ public:
 
 protected:
     QJsonRpcServiceProvider();
-    void processMessage(QJsonRpcSocket *socket, const QJsonRpcMessage &message);
+    void processMessage(QJsonRpcAbstractSocket *socket, const QJsonRpcMessage &message);
 
 private:
     QScopedPointer<QJsonRpcServiceProviderPrivate> d;

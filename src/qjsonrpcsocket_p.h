@@ -31,27 +31,36 @@
 #include "qjsonrpcmessage.h"
 #include "qjsonrpc_export.h"
 
-class QJsonRpcServiceReply;
 #if defined(USE_QT_PRIVATE_HEADERS)
 #include <private/qobject_p.h>
 
-class QJSONRPC_EXPORT QJsonRpcSocketPrivate : public QObjectPrivate
+class QJSONRPC_EXPORT QJsonRpcAbstractSocketPrivate : public QObjectPrivate
 #else
-class QJSONRPC_EXPORT QJsonRpcSocketPrivate
+class QJSONRPC_EXPORT QJsonRpcAbstractSocketPrivate
 #endif
 {
 public:
 #if QT_VERSION >= 0x050100 || QT_VERSION <= 0x050000
     QJsonDocument::JsonFormat format;
-    QJsonRpcSocketPrivate(QJsonRpcSocket *socket)
-        : format(QJsonDocument::Compact),
-          q_ptr(socket)
+    QJsonRpcAbstractSocketPrivate()
+        : format(QJsonDocument::Compact)
     {}
 #else
+    QJsonRpcAbstractSocketPrivate() {}
+#endif
+
+#if !defined(USE_QT_PRIVATE_HEADERS)
+    virtual ~QJsonRpcAbstractSocketPrivate() {}
+#endif
+};
+
+class QJsonRpcServiceReply;
+class QJSONRPC_EXPORT QJsonRpcSocketPrivate : public QJsonRpcAbstractSocketPrivate
+{
+public:
     QJsonRpcSocketPrivate(QJsonRpcSocket *socket)
         : q_ptr(socket)
     {}
-#endif
 
 #if !defined(USE_QT_PRIVATE_HEADERS)
     virtual ~QJsonRpcSocketPrivate() {}
