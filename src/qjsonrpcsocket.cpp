@@ -73,8 +73,7 @@ void QJsonRpcSocketPrivate::writeData(const QJsonRpcMessage &message)
 #endif
 
     device.data()->write(data);
-    if (qgetenv("QJSONRPC_DEBUG").toInt())
-        qDebug() << "sending: " << data;
+    qJsonRpcDebug() << "sending: " << data;
 }
 
 QJsonRpcAbstractSocket::QJsonRpcAbstractSocket(QObject *parent)
@@ -191,7 +190,7 @@ QJsonRpcServiceReply *QJsonRpcSocket::sendMessage(const QJsonRpcMessage &message
 {
     Q_D(QJsonRpcSocket);
     if (!d->device) {
-        qDebug() << Q_FUNC_INFO << "trying to send message without device";
+        qJsonRpcDebug() << Q_FUNC_INFO << "trying to send message without device";
         return 0;
     }
 
@@ -205,7 +204,7 @@ void QJsonRpcSocket::notify(const QJsonRpcMessage &message)
 {
     Q_D(QJsonRpcSocket);
     if (!d->device) {
-        qDebug() << Q_FUNC_INFO << "trying to send message without device";
+        qJsonRpcDebug() << Q_FUNC_INFO << "trying to send message without device";
         return;
     }
 
@@ -269,7 +268,7 @@ void QJsonRpcSocketPrivate::_q_processIncomingData()
 {
     Q_Q(QJsonRpcSocket);
     if (!device) {
-        qDebug() << Q_FUNC_INFO << "called without device";
+        qJsonRpcDebug() << Q_FUNC_INFO << "called without device";
         return;
     }
 
@@ -287,7 +286,7 @@ void QJsonRpcSocketPrivate::_q_processIncomingData()
 
         buffer = buffer.mid(dataSize + 1);
         if (document.isArray()) {
-            qDebug() << Q_FUNC_INFO << "bulk support is current disabled";
+            qJsonRpcDebug() << Q_FUNC_INFO << "bulk support is current disabled";
             /*
             for (int i = 0; i < document.array().size(); ++i) {
                 QJsonObject messageObject = document.array().at(i).toObject();
@@ -298,9 +297,7 @@ void QJsonRpcSocketPrivate::_q_processIncomingData()
             }
             */
         } else if (document.isObject()){
-            if (qgetenv("QJSONRPC_DEBUG").toInt())
-                qDebug() << "received: " << document.toJson();
-
+            qJsonRpcDebug() << "received: " << document.toJson();
             QJsonRpcMessage message(document.object());
             Q_EMIT q->messageReceived(message);
 

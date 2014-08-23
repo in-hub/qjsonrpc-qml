@@ -30,7 +30,7 @@
 #include "json/qjsonarray.h"
 #endif
 
-#include "qjsonrpc_export.h"
+#include "qjsonrpcglobal.h"
 
 // error codes defined by spec
 namespace QJsonRpc {

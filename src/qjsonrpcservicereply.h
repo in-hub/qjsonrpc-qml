@@ -20,7 +20,7 @@
 #include <QObject>
 #include <QNetworkReply>
 
-#include "qjsonrpc_export.h"
+#include "qjsonrpcglobal.h"
 #include "qjsonrpcmessage.h"
 
 class QJsonRpcServiceReplyPrivate;

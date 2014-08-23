@@ -56,9 +56,7 @@ public Q_SLOTS:
         QByteArray data = doc.toJson();
         m_buffer->write(data);
         m_buffer->seek(m_buffer->pos() - data.size());
-
-        if (qgetenv("QJSONRPC_DEBUG").toInt())
-            qDebug() << Q_FUNC_INFO << "sending: " << data;
+        qJsonRpcDebug() << Q_FUNC_INFO << "sending: " << data;
     }
 
 private:
@@ -80,9 +78,7 @@ public Q_SLOTS:
         QByteArray data = doc.toJson();
         m_device->write(data);
         m_device->seek(m_device->pos() - data.size());
-
-        if (qgetenv("QJSONRPC_DEBUG").toInt())
-            qDebug() << Q_FUNC_INFO << "sending: " << data;
+        qJsonRpcDebug() << Q_FUNC_INFO << "sending: " << data;
     }
 
 private:
@@ -129,7 +125,7 @@ private Q_SLOTS:
     void received(const QJsonRpcMessage &message) {
         FakeQJsonRpcSocket *socket = static_cast<FakeQJsonRpcSocket*>(sender());
         if (!socket) {
-            qDebug() << Q_FUNC_INFO << "called without service socket";
+            qJsonRpcDebug() << Q_FUNC_INFO << "called without service socket";
             return;
         }
 
@@ -727,7 +723,7 @@ public:
     }
 
 public Q_SLOTS:
-    void testMethod() { qDebug() << "text"; }
+    void testMethod() { qJsonRpcDebug() << "text"; }
 };
 
 /*

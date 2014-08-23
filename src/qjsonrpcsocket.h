@@ -23,7 +23,7 @@
 #include "qjsonrpcabstractserver.h"
 #include "qjsonrpcservice.h"
 #include "qjsonrpcmessage.h"
-#include "qjsonrpc_export.h"
+#include "qjsonrpcglobal.h"
 
 class QJsonRpcAbstractSocketPrivate;
 class QJSONRPC_EXPORT QJsonRpcAbstractSocket : public QObject

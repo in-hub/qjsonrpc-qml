@@ -28,7 +28,7 @@ INSTALL_HEADERS += \
     qjsonrpcabstractserver.h \
     qjsonrpclocalserver.h \
     qjsonrpctcpserver.h \
-    qjsonrpc_export.h \
+    qjsonrpcglobal.h \
     qjsonrpcservicereply.h \
     qjsonrpchttpclient.h
 

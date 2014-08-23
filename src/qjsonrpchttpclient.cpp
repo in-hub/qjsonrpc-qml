@@ -58,7 +58,7 @@ private Q_SLOTS:
         Q_D(QJsonRpcHttpReply);
         QNetworkReply *reply = qobject_cast<QNetworkReply*>(sender());
         if (!reply) {
-            qDebug() << Q_FUNC_INFO << "invalid reply";
+            qJsonRpcDebug() << Q_FUNC_INFO << "invalid reply";
             return;
         }
 
@@ -73,9 +73,7 @@ private Q_SLOTS:
                                                    "unable to process incoming JSON data",
                                                    QString::fromUtf8(data));
             } else {
-                if (qgetenv("QJSONRPC_DEBUG").toInt())
-                    qDebug() << "received: " << doc.toJson();
-
+                qJsonRpcDebug() << "received: " << doc.toJson();
                 QJsonRpcMessage response = QJsonRpcMessage(doc.object());
                 if (d->request.type() == QJsonRpcMessage::Request &&
                     d->request.id() != response.id()) {
@@ -97,7 +95,7 @@ private Q_SLOTS:
         Q_D(QJsonRpcHttpReply);
         QNetworkReply *reply = qobject_cast<QNetworkReply*>(sender());
         if (!reply) {
-            qDebug() << Q_FUNC_INFO << "invalid reply";
+            qJsonRpcDebug() << Q_FUNC_INFO << "invalid reply";
             return;
         }
 
@@ -136,8 +134,7 @@ public:
         QNetworkRequest request(endPoint);
         request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
         QByteArray data = QJsonDocument(message.toObject()).toJson();
-        if (qgetenv("QJSONRPC_DEBUG").toInt())
-            qDebug() << "sending: " << data;
+        qJsonRpcDebug() << "sending: " << data;
         return networkAccessManager->post(request, data);
     }
 
@@ -217,7 +214,7 @@ void QJsonRpcHttpClient::notify(const QJsonRpcMessage &message)
 {
     Q_D(QJsonRpcHttpClient);
     if (d->endPoint.isEmpty()) {
-        qDebug() << Q_FUNC_INFO << "invalid endpoint specified";
+        qJsonRpcDebug() << Q_FUNC_INFO << "invalid endpoint specified";
         return;
     }
 
@@ -233,7 +230,7 @@ QJsonRpcServiceReply *QJsonRpcHttpClient::sendMessage(const QJsonRpcMessage &mes
 {
     Q_D(QJsonRpcHttpClient);
     if (d->endPoint.isEmpty()) {
-        qDebug() << Q_FUNC_INFO << "invalid endpoint specified";
+        qJsonRpcDebug() << Q_FUNC_INFO << "invalid endpoint specified";
         return 0;
     }
 

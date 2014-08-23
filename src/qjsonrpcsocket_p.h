@@ -29,7 +29,7 @@
 
 #include "qjsonrpcsocket.h"
 #include "qjsonrpcmessage.h"
-#include "qjsonrpc_export.h"
+#include "qjsonrpcglobal.h"
 
 #if defined(USE_QT_PRIVATE_HEADERS)
 #include <private/qobject_p.h>

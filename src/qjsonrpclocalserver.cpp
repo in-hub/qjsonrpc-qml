@@ -51,7 +51,7 @@ void QJsonRpcLocalServerPrivate::_q_processIncomingConnection()
     Q_Q(QJsonRpcLocalServer);
     QLocalSocket *localSocket = server->nextPendingConnection();
     if (!localSocket) {
-        qDebug() << Q_FUNC_INFO << "nextPendingConnection is null";
+        qJsonRpcDebug() << Q_FUNC_INFO << "nextPendingConnection is null";
         return;
     }
 

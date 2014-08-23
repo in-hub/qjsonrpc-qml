@@ -14,8 +14,10 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  */
-#ifndef QJSONRPC_EXPORT_H
-#define QJSONRPC_EXPORT_H
+#ifndef QJSONRPCGLOBAL_H
+#define QJSONRPCGLOBAL_H
+
+#define qJsonRpcDebug if (qgetenv("QJSONRPC_DEBUG").isEmpty()); else qDebug
 
 #ifdef QJSONRPC_SHARED
 #   ifdef QJSONRPC_BUILD

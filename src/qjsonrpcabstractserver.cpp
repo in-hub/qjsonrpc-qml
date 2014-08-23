@@ -33,12 +33,12 @@ bool QJsonRpcServiceProvider::addService(QJsonRpcService *service)
 {
     QByteArray serviceName = d->serviceName(service);
     if (serviceName.isEmpty()) {
-        qDebug() << Q_FUNC_INFO << "service added without serviceName classinfo, aborting";
+        qJsonRpcDebug() << Q_FUNC_INFO << "service added without serviceName classinfo, aborting";
         return false;
     }
 
     if (d->services.contains(serviceName)) {
-        qDebug() << Q_FUNC_INFO << "service with name " << serviceName << " already exist";
+        qJsonRpcDebug() << Q_FUNC_INFO << "service with name " << serviceName << " already exist";
         return false;
     }
 
@@ -53,7 +53,7 @@ bool QJsonRpcServiceProvider::removeService(QJsonRpcService *service)
 {
     QByteArray serviceName = d->serviceName(service);
     if (!d->services.contains(serviceName)) {
-        qDebug() << Q_FUNC_INFO << "can nof find service with name " << serviceName;
+        qJsonRpcDebug() << Q_FUNC_INFO << "can not find service with name " << serviceName;
         return false;
     }
 
@@ -175,7 +175,7 @@ void QJsonRpcAbstractServerPrivate::_q_processMessage(const QJsonRpcMessage &mes
     Q_Q(QJsonRpcAbstractServer);
     QJsonRpcSocket *socket = static_cast<QJsonRpcSocket*>(q->sender());
     if (!socket) {
-        qDebug() << Q_FUNC_INFO << "called without service socket";
+        qJsonRpcDebug() << Q_FUNC_INFO << "called without service socket";
         return;
     }
 

@@ -27,7 +27,7 @@
 #endif
 
 #include "qjsonrpcmessage.h"
-#include "qjsonrpc_export.h"
+#include "qjsonrpcglobal.h"
 
 class QJsonRpcService;
 class QJsonRpcAbstractSocket;

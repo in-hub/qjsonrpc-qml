@@ -30,7 +30,7 @@ public:
     ~QJsonRpcTcpServer();
 
     QString errorString() const;
-    bool listen(const QHostAddress &address, quint16 port);
+    virtual bool listen(const QHostAddress &address, quint16 port);
 
 private:
     Q_DECLARE_PRIVATE(QJsonRpcTcpServer)
