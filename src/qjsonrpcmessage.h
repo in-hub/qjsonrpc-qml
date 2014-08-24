@@ -100,6 +100,7 @@ public:
     QJsonValue errorData() const;
 
     QJsonObject toObject() const;
+    QByteArray toJson() const;
     bool operator==(const QJsonRpcMessage &message) const;
     inline bool operator!=(const QJsonRpcMessage &message) const { return !(operator==(message)); }
 

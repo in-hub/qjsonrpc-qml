@@ -1,6 +1,11 @@
 DEPTH = ../../..
 include($${DEPTH}/qjsonrpc.pri)
 include($${DEPTH}/tests/tests.pri)
+include(http-parser/http-parser.pri)
 
 TARGET = tst_qjsonrpchttpclient
-SOURCES = tst_qjsonrpchttpclient.cpp
+HEADERS += \
+    testhttpserver.h
+SOURCES += \
+    testhttpserver.cpp \
+    tst_qjsonrpchttpclient.cpp

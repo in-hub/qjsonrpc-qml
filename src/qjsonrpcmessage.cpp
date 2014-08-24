@@ -159,6 +159,16 @@ QJsonObject QJsonRpcMessage::toObject() const
     return QJsonObject();
 }
 
+QByteArray QJsonRpcMessage::toJson() const
+{
+    if (d->object) {
+        QJsonDocument doc(*d->object);
+        return doc.toJson();
+    }
+
+    return QByteArray();
+}
+
 bool QJsonRpcMessage::isValid() const
 {
     return d->type != QJsonRpcMessage::Invalid;
