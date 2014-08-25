@@ -63,6 +63,13 @@ public:
     void setWireFormat(QJsonDocument::JsonFormat format);
 #endif
 
+    virtual void close();
+    int connectedClientCount() const;
+
+Q_SIGNALS:
+    void clientConnected();
+    void clientDisconnected();
+
 public Q_SLOTS:
     void notifyConnectedClients(const QJsonRpcMessage &message);
     void notifyConnectedClients(const QString &method, const QJsonArray &params);

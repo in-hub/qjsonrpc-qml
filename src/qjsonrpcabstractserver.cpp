@@ -155,6 +155,16 @@ void QJsonRpcAbstractServer::setWireFormat(QJsonDocument::JsonFormat format)
 }
 #endif
 
+void QJsonRpcAbstractServer::close()
+{
+}
+
+int QJsonRpcAbstractServer::connectedClientCount() const
+{
+    Q_D(const QJsonRpcAbstractServer);
+    return d->clients.size();
+}
+
 void QJsonRpcAbstractServer::notifyConnectedClients(const QString &method,
                                                     const QJsonArray &params)
 {

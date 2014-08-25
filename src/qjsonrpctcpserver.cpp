@@ -46,6 +46,12 @@ bool QJsonRpcTcpServer::listen(const QHostAddress &address, quint16 port)
     return d->server->listen(address, port);
 }
 
+void QJsonRpcTcpServer::close()
+{
+    Q_D(QJsonRpcTcpServer);
+    d->server->close();
+}
+
 void QJsonRpcTcpServerPrivate::_q_processIncomingConnection()
 {
     Q_Q(QJsonRpcTcpServer);
@@ -66,21 +72,26 @@ void QJsonRpcTcpServerPrivate::_q_processIncomingConnection()
     clients.append(socket);
     QObject::connect(tcpSocket, SIGNAL(disconnected()), q, SLOT(_q_clientDisconnected()));
     socketLookup.insert(tcpSocket, socket);
+    Q_EMIT q->clientConnected();
 }
 
 void QJsonRpcTcpServerPrivate::_q_clientDisconnected()
 {
     Q_Q(QJsonRpcTcpServer);
     QTcpSocket *tcpSocket = static_cast<QTcpSocket*>(q->sender());
-    if (tcpSocket) {
-        if (socketLookup.contains(tcpSocket)) {
-            QJsonRpcSocket *socket = socketLookup.take(tcpSocket);
-            clients.removeAll(socket);
-            socket->deleteLater();
-        }
-
-        tcpSocket->deleteLater();
+    if (!tcpSocket) {
+        qJsonRpcDebug() << Q_FUNC_INFO << "called with invalid socket";
+        return;
     }
+
+    if (socketLookup.contains(tcpSocket)) {
+        QJsonRpcSocket *socket = socketLookup.take(tcpSocket);
+        clients.removeAll(socket);
+        socket->deleteLater();
+    }
+
+    tcpSocket->deleteLater();
+    Q_EMIT q->clientDisconnected();
 }
 
 QString QJsonRpcTcpServer::errorString() const

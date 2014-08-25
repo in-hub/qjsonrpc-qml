@@ -30,6 +30,8 @@ class TestQJsonRpcMessage: public QObject
     Q_OBJECT  
 private slots:
     void invalidData();
+    void invalidStringData_data();
+    void invalidStringData();
     void invalidDataResponseWithId();
     void invalidDataResponseWithoutId();
     void responseSameId();
@@ -45,7 +47,28 @@ void TestQJsonRpcMessage::invalidData()
 {
     QJsonObject invalidData;
     QJsonRpcMessage message(invalidData);
+    QCOMPARE(message.isValid(), false);
     QCOMPARE(message.type(), QJsonRpcMessage::Invalid);
+    QVERIFY(message.toObject().isEmpty());
+}
+
+void TestQJsonRpcMessage::invalidStringData_data()
+{
+    QTest::addColumn<QByteArray>("stringData");
+    QTest::newRow("not-json") << QByteArray("invalid json string");
+    QTest::newRow("not-an-object") << QByteArray("[\"string\"]");
+}
+
+void TestQJsonRpcMessage::invalidStringData()
+{
+    QFETCH(QByteArray, stringData);
+    QJsonRpcMessage message(stringData);
+    QCOMPARE(message.isValid(), false);
+    QCOMPARE(message.type(), QJsonRpcMessage::Invalid);
+    QVERIFY(message.toObject().isEmpty());
+    QVERIFY(message.params().isNull());
+    QVERIFY(message.result().isNull());
+    QVERIFY(message.errorData().isNull());
 }
 
 void TestQJsonRpcMessage::invalidDataResponseWithId()
@@ -184,6 +207,17 @@ void TestQJsonRpcMessage::equivalence_data()
         QTest::newRow("notificationWithParamsNotEqualWithNamedParameters")
             << simpleNotificationWithParams << simpleNotificationWithNamedParameters << false;
         QTest::newRow("simpleNotificationNotEqualInvalid") << simpleNotification << invalid << false;
+    }
+
+    {
+        // ERRORS
+        QJsonRpcMessage basicRequest = QJsonRpcMessage::createRequest("blah", QLatin1String("first"));
+        QJsonRpcMessage lhs = basicRequest.createErrorResponse(QJsonRpc::InternalError, "some error");
+        QJsonRpcMessage rhs = basicRequest.createErrorResponse(QJsonRpc::InternalError, "some error");
+        QJsonRpcMessage invalidRhs = basicRequest.createErrorResponse(QJsonRpc::InvalidRequest, "some error");
+
+        QTest::newRow("errorResponseEqual") << lhs << rhs << true;
+        QTest::newRow("errorResponseNotEqual") << lhs << invalidRhs << false;
     }
 }
 

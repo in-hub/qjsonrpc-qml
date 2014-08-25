@@ -134,12 +134,12 @@ QJsonRpcMessage::QJsonRpcMessage(const QByteArray &message)
     QJsonParseError error;
     QJsonDocument document = QJsonDocument::fromJson(message, &error);
     if (error.error != QJsonParseError::NoError) {
-        qWarning() << Q_FUNC_INFO << error.errorString();
+        qJsonRpcDebug() << Q_FUNC_INFO << error.errorString();
         return;
     }
 
     if (!document.isObject()) {
-        qWarning() << Q_FUNC_INFO << "invalid message: " << message;
+        qJsonRpcDebug() << Q_FUNC_INFO << "invalid message: " << message;
         return;
     }
 

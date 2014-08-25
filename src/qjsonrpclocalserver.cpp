@@ -46,6 +46,12 @@ bool QJsonRpcLocalServer::listen(const QString &service)
     return d->server->listen(service);
 }
 
+void QJsonRpcLocalServer::close()
+{
+    Q_D(QJsonRpcLocalServer);
+    d->server->close();
+}
+
 void QJsonRpcLocalServerPrivate::_q_processIncomingConnection()
 {
     Q_Q(QJsonRpcLocalServer);
@@ -66,21 +72,26 @@ void QJsonRpcLocalServerPrivate::_q_processIncomingConnection()
     clients.append(socket);
     QObject::connect(localSocket, SIGNAL(disconnected()), q, SLOT(_q_clientDisconnected()));
     socketLookup.insert(localSocket, socket);
+    Q_EMIT q->clientConnected();
 }
 
 void QJsonRpcLocalServerPrivate::_q_clientDisconnected()
 {
     Q_Q(QJsonRpcLocalServer);
     QLocalSocket *localSocket = static_cast<QLocalSocket*>(q->sender());
-    if (localSocket) {
-        if (socketLookup.contains(localSocket)) {
-            QJsonRpcSocket *socket = socketLookup.take(localSocket);
-            clients.removeAll(socket);
-            socket->deleteLater();
-        }
-
-        localSocket->deleteLater();
+    if (!localSocket) {
+        qJsonRpcDebug() << Q_FUNC_INFO << "called with invalid socket";
+        return;
     }
+
+    if (socketLookup.contains(localSocket)) {
+        QJsonRpcSocket *socket = socketLookup.take(localSocket);
+        clients.removeAll(socket);
+        socket->deleteLater();
+    }
+
+    localSocket->deleteLater();
+    Q_EMIT q->clientDisconnected();
 }
 
 QString QJsonRpcLocalServer::errorString() const

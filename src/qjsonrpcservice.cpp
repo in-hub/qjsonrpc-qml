@@ -47,7 +47,7 @@ QJsonRpcServicePrivate::MethodInfo::MethodInfo(const QMetaMethod &method)
 #if QT_VERSION >= 0x050000
     returnType = method.returnType();
     if (returnType == QMetaType::UnknownType) {
-        qWarning() << "QJsonRpcService: can't bind method's return type"
+        qJsonRpcDebug() << "QJsonRpcService: can't bind method's return type"
                       << QString(method.name());
         valid = false;
         return;
@@ -73,7 +73,7 @@ QJsonRpcServicePrivate::MethodInfo::MethodInfo(const QMetaMethod &method)
 
         int type = QMetaType::type(parameterType);
         if (type == 0) {
-            qWarning() << "QJsonRpcService: can't bind method's parameter"
+            qJsonRpcDebug() << "QJsonRpcService: can't bind method's parameter"
                           << QString(parameterType);
             valid = false;
             break;

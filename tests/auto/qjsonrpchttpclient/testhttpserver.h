@@ -29,7 +29,7 @@ public:
 
 protected:
 #if QT_VERSION >= 0x050000
-    virtual void incomingConnection(quintptr socketDescriptor);
+    virtual void incomingConnection(qintptr socketDescriptor);
 #else
     virtual void incomingConnection(int socketDescriptor);
 #endif

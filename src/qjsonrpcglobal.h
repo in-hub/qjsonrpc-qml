@@ -17,6 +17,25 @@
 #ifndef QJSONRPCGLOBAL_H
 #define QJSONRPCGLOBAL_H
 
+#include <QMetaType>
+
+// error codes defined by spec
+namespace QJsonRpc {
+    enum ErrorCode {
+        NoError         = 0,
+        ParseError      = -32700,           // Invalid JSON was received by the server.
+                                            // An error occurred on the server while parsing the JSON text.
+        InvalidRequest  = -32600,           // The JSON sent is not a valid Request object.
+        MethodNotFound  = -32601,           // The method does not exist / is not available.
+        InvalidParams   = -32602,           // Invalid method parameter(s).
+        InternalError   = -32603,           // Internal JSON-RPC error.
+        ServerErrorBase = -32000,           // Reserved for implementation-defined server-errors.
+        UserError       = -32099,           // Anything after this is user defined
+        TimeoutError    = -32100
+    };
+}
+Q_DECLARE_METATYPE(QJsonRpc::ErrorCode)
+
 #define qJsonRpcDebug if (qgetenv("QJSONRPC_DEBUG").isEmpty()); else qDebug
 
 #ifdef QJSONRPC_SHARED

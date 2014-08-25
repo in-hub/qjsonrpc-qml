@@ -29,6 +29,7 @@ public:
 
     QString errorString() const;
     bool listen(const QString &service);
+    virtual void close();
 
 private:
     Q_DECLARE_PRIVATE(QJsonRpcLocalServer)

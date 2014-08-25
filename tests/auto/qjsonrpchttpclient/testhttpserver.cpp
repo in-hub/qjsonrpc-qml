@@ -234,7 +234,7 @@ void TestHttpServer::setResponseData(const QByteArray &data)
 }
 
 #if QT_VERSION >= 0x050000
-void TestHttpServer::incomingConnection(quintptr socketDescriptor)
+void TestHttpServer::incomingConnection(qintptr socketDescriptor)
 #else
 void TestHttpServer::incomingConnection(int socketDescriptor)
 #endif

@@ -16,12 +16,6 @@
  */
 #include <QtTest/QtTest>
 
-#if QT_VERSION >= 0x050000
-#include <QJsonDocument>
-#else
-#include "json/qjsondocument.h"
-#endif
-
 #include "testhttpserver.h"
 #include "qjsonrpcmessage.h"
 #include "qjsonrpchttpclient.h"
@@ -42,16 +36,16 @@ class TestQJsonRpcHttpClient : public QObject
     Q_OBJECT
 private Q_SLOTS:
     void init();
-    void cleanup();
 
+    void properties();
     void basicRequest();
+    void invalidResponse_data();
+    void invalidResponse();
+    void connectionRefused();
+    void requestTimedOut();
 };
 
 void TestQJsonRpcHttpClient::init()
-{
-}
-
-void TestQJsonRpcHttpClient::cleanup()
 {
 }
 
@@ -78,6 +72,19 @@ public:
     }
 };
 
+void TestQJsonRpcHttpClient::properties()
+{
+    QJsonRpcHttpClient client;
+    client.setEndPoint("testing");
+    QCOMPARE(client.endPoint(), QUrl("http://testing"));
+    client.setEndPoint(QUrl("http://www.google.com"));
+    QCOMPARE(client.endPoint(), QUrl("http://www.google.com"));
+
+    QNetworkAccessManager manager;
+    QJsonRpcHttpClient withManager(&manager);
+    QCOMPARE(withManager.networkAccessManager(), &manager);
+}
+
 void TestQJsonRpcHttpClient::basicRequest()
 {
     TestHttpServer server;
@@ -91,6 +98,61 @@ void TestQJsonRpcHttpClient::basicRequest()
     QJsonRpcMessage response = client.sendMessageBlocking(message);
     QVERIFY(response.type() != QJsonRpcMessage::Error);
     QCOMPARE(response.result().toString(), QLatin1String("some response data"));
+}
+
+void TestQJsonRpcHttpClient::invalidResponse_data()
+{
+    QTest::addColumn<QByteArray>("responseData");
+    QTest::addColumn<QJsonRpc::ErrorCode>("expectedError");
+
+    QTest::newRow("empty-data") <<
+        QByteArray("HTTP/1.0 200\r\nContent-Type: application/json\r\nContent-length: 0\r\n\r\n") << QJsonRpc::ParseError;
+    QTest::newRow("invalid-json") <<
+        QByteArray("HTTP/1.0 200\r\nContent-Type: application/json\r\nContent-length: 2\r\n\r\n{}") << QJsonRpc::InternalError;
+}
+
+void TestQJsonRpcHttpClient::invalidResponse()
+{
+    QFETCH(QByteArray, responseData);
+    QFETCH(QJsonRpc::ErrorCode, expectedError);
+
+    TestHttpServer server;
+    server.setResponseData(responseData);
+    QVERIFY(server.listen());
+
+    QString url =
+        QString("%1://localhost:%2").arg("http").arg(server.serverPort());
+    QJsonRpcHttpClient client(url);
+    QJsonRpcMessage message = QJsonRpcMessage::createRequest("someMethod");
+    QJsonRpcMessage response = client.sendMessageBlocking(message);
+    QCOMPARE(response.type(), QJsonRpcMessage::Error);
+    QCOMPARE(response.errorCode(), int(expectedError));
+}
+
+void TestQJsonRpcHttpClient::connectionRefused()
+{
+    QString url =
+        QString("%1://localhost:%2").arg("http").arg(9191);
+    QJsonRpcHttpClient client(url);
+    QJsonRpcMessage message = QJsonRpcMessage::createRequest("someMethod");
+    QJsonRpcMessage response = client.sendMessageBlocking(message);
+    QCOMPARE(response.type(), QJsonRpcMessage::Error);
+    QCOMPARE(response.errorCode(), int(QJsonRpc::InternalError));
+}
+
+void TestQJsonRpcHttpClient::requestTimedOut()
+{
+    TestHttpServer server;
+    server.setResponseData("HTTP/1.0 200\r\n\r\n");
+    QVERIFY(server.listen());
+
+    QString url =
+        QString("%1://localhost:%2").arg("http").arg(server.serverPort());
+    QJsonRpcHttpClient client(url);
+    QJsonRpcMessage message = QJsonRpcMessage::createRequest("someMethod");
+    QJsonRpcMessage response = client.sendMessageBlocking(message, 1);
+    QCOMPARE(response.type(), QJsonRpcMessage::Error);
+    QCOMPARE(response.errorCode(), int(QJsonRpc::TimeoutError));
 }
 
 QTEST_MAIN(TestQJsonRpcHttpClient)
