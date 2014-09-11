@@ -359,6 +359,13 @@ QJsonValue QJsonRpcMessage::errorData() const
     return error.value(QLatin1String("data"));
 }
 
+#if QT_VERSION < 0x050000
+bool QJsonRpcMessage::isDetached() const
+{
+    return d && d->ref == 1;
+}
+#endif
+
 static QDebug operator<<(QDebug dbg, QJsonRpcMessage::Type type)
 {
     switch (type) {

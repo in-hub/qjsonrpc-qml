@@ -43,6 +43,10 @@ public:
     QJsonRpcMessage &operator=(const QJsonRpcMessage &other);
     ~QJsonRpcMessage();
 
+#if QT_VERSION >= 0x050000
+    inline void swap(QJsonRpcMessage &other) { qSwap(d, other.d); }
+#endif
+
     enum Type {
         Invalid,
         Request,
@@ -92,9 +96,22 @@ private:
     friend class QJsonRpcMessagePrivate;
     QSharedDataPointer<QJsonRpcMessagePrivate> d;
 
+#if QT_VERSION < 0x050000
+public:
+    typedef QSharedDataPointer<QJsonRpcMessagePrivate> DataPtr;
+    inline DataPtr &data_ptr() { return d; }
+
+    // internal
+    bool isDetached() const;
+#endif
 };
 
 QJSONRPC_EXPORT QDebug operator<<(QDebug, const QJsonRpcMessage &);
 Q_DECLARE_METATYPE(QJsonRpcMessage)
+
+#if QT_VERSION < 0x050000
+Q_DECLARE_TYPEINFO(QJsonRpcMessage, Q_MOVABLE_TYPE);
+#endif
+Q_DECLARE_SHARED(QJsonRpcMessage)
 
 #endif
