@@ -292,10 +292,13 @@ int QJsonRpcMessage::id() const
     if (d->type == QJsonRpcMessage::Notification || !d->object)
         return -1;
 
+    const QJsonValue &value = d->object->value(QLatin1String("id"));
+    if (value.isString())
+        return value.toString().toInt();
 #if QT_VERSION >= 0x050200
-    return d->object->value(QLatin1String("id")).toInt();
+    return value.toInt();
 #else
-    return d->object->value(QLatin1String("id")).toDouble();
+    return value.toDouble();
 #endif
 }
 
@@ -332,10 +335,13 @@ int QJsonRpcMessage::errorCode() const
 
     QJsonObject error =
         d->object->value(QLatin1String("error")).toObject();
+    const QJsonValue &value = error.value(QLatin1String("code"));
+    if (value.isString())
+        return value.toString().toInt();
 #if QT_VERSION >= 0x050200
-    return error.value(QLatin1String("code")).toInt();
+    return value.toInt();
 #else
-    return error.value(QLatin1String("code")).toDouble();
+    return value.toDouble();
 #endif
 }
 
