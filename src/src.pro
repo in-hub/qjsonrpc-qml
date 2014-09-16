@@ -9,6 +9,7 @@ DEFINES += QJSONRPC_BUILD
 CONFIG += $${QJSONRPC_LIBRARY_TYPE}
 VERSION = $${QJSONRPC_VERSION}
 win32:DESTDIR = $$OUT_PWD
+macx:QMAKE_LFLAGS_SONAME = -Wl,-install_name,@rpath/
 
 # check if we need to build qjson
 lessThan(QT_MAJOR_VERSION, 5) {
