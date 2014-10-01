@@ -114,7 +114,7 @@ void TestQJsonRpcSocket::noParameters()
     QScopedPointer<QJsonRpcServiceReply> reply;
     reply.reset(serviceSocket.sendMessage(request));
 
-    QJsonRpcMessage bufferMessage(buffer.data());
+    QJsonRpcMessage bufferMessage = QJsonRpcMessage::fromJson(buffer.data());
     QCOMPARE(request.id(), bufferMessage.id());
     QCOMPARE(request.type(), bufferMessage.type());
     QCOMPARE(request.method(), bufferMessage.method());
@@ -140,7 +140,7 @@ void TestQJsonRpcSocket::multiParameter()
     QScopedPointer<QJsonRpcServiceReply> reply;
     reply.reset(serviceSocket.sendMessage(request));
 
-    QJsonRpcMessage bufferMessage(buffer.data());
+    QJsonRpcMessage bufferMessage = QJsonRpcMessage::fromJson(buffer.data());
     QCOMPARE(request.id(), bufferMessage.id());
     QCOMPARE(request.type(), bufferMessage.type());
     QCOMPARE(request.method(), bufferMessage.method());
@@ -163,7 +163,7 @@ void TestQJsonRpcSocket::notification()
     QScopedPointer<QJsonRpcServiceReply> reply;
     reply.reset(serviceSocket.sendMessage(notification));
 
-    QJsonRpcMessage bufferMessage(buffer.data());
+    QJsonRpcMessage bufferMessage = QJsonRpcMessage::fromJson(buffer.data());
     QCOMPARE(notification.id(), bufferMessage.id());
     QCOMPARE(notification.type(), bufferMessage.type());
     QCOMPARE(notification.method(), bufferMessage.method());
@@ -186,7 +186,7 @@ void TestQJsonRpcSocket::response()
     QScopedPointer<QJsonRpcServiceReply> reply;
     reply.reset(serviceSocket.sendMessage(response));
 
-    QJsonRpcMessage bufferMessage(buffer.data());
+    QJsonRpcMessage bufferMessage = QJsonRpcMessage::fromJson(buffer.data());
     QCOMPARE(response.id(), bufferMessage.id());
     QCOMPARE(response.type(), bufferMessage.type());
     QCOMPARE(response.method(), bufferMessage.method());

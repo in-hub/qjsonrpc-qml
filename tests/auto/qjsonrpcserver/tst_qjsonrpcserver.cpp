@@ -624,7 +624,7 @@ void TestQJsonRpcServer::invalidRequest()
     server->addService(new TestService);
 
     QSignalSpy spyMessageReceived(clientSocket.data(), SIGNAL(messageReceived(QJsonRpcMessage)));
-    QJsonRpcMessage request("{\"jsonrpc\": \"2.0\", \"id\": 666}");
+    QJsonRpcMessage request = QJsonRpcMessage::fromJson("{\"jsonrpc\": \"2.0\", \"id\": 666}");
     clientSocket->sendMessageBlocking(request);
 
     QCOMPARE(spyMessageReceived.count(), 1);
@@ -641,7 +641,7 @@ void TestQJsonRpcServer::qVariantMapInvalidParam()
 
     QSignalSpy spyMessageReceived(clientSocket.data(), SIGNAL(messageReceived(QJsonRpcMessage)));
     const char *invalid = "{\"jsonrpc\": \"2.0\", \"id\": 0, \"method\": \"service.variantMapInvalidParam\",\"params\": [[{\"foo\":\"bar\",\"baz\":\"quux\"}, {\"foo\":\"bar\"}]]}";
-    QJsonRpcMessage request(invalid);
+    QJsonRpcMessage request = QJsonRpcMessage::fromJson(invalid);
     clientSocket->sendMessageBlocking(request);
 
     QCOMPARE(spyMessageReceived.count(), 1);

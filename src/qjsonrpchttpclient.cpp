@@ -74,7 +74,7 @@ private Q_SLOTS:
                                                    QString::fromUtf8(data));
             } else {
                 qJsonRpcDebug() << "received: " << doc.toJson();
-                QJsonRpcMessage response = QJsonRpcMessage(doc.object());
+                QJsonRpcMessage response = QJsonRpcMessage::fromObject(doc.object());
                 if (d->request.type() == QJsonRpcMessage::Request &&
                     d->request.id() != response.id()) {
                     d->response =

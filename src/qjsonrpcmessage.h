@@ -37,8 +37,6 @@ class QJSONRPC_EXPORT QJsonRpcMessage
 {
 public:
     QJsonRpcMessage();
-    QJsonRpcMessage(const QJsonObject &message);
-    QJsonRpcMessage(const QByteArray &message);
     QJsonRpcMessage(const QJsonRpcMessage &other);
     QJsonRpcMessage &operator=(const QJsonRpcMessage &other);
     ~QJsonRpcMessage();
@@ -88,7 +86,11 @@ public:
     QJsonValue errorData() const;
 
     QJsonObject toObject() const;
+    static QJsonRpcMessage fromObject(const QJsonObject &object);
+
     QByteArray toJson() const;
+    static QJsonRpcMessage fromJson(const QByteArray &data);
+
     bool operator==(const QJsonRpcMessage &message) const;
     inline bool operator!=(const QJsonRpcMessage &message) const { return !(operator==(message)); }
 

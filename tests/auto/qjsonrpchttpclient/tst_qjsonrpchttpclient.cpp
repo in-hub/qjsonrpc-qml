@@ -57,7 +57,7 @@ public:
     {
         Q_UNUSED(operation)
         Q_UNUSED(request)
-        QJsonRpcMessage requestMessage(body);
+        QJsonRpcMessage requestMessage = QJsonRpcMessage::fromJson(body);
         QJsonRpcMessage responseMessage =
             requestMessage.createResponse(QLatin1String("some response data"));
         QByteArray responseData = responseMessage.toJson();

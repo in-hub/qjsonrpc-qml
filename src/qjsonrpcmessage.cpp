@@ -128,28 +128,30 @@ bool QJsonRpcMessage::operator==(const QJsonRpcMessage &message) const
     return false;
 }
 
-QJsonRpcMessage::QJsonRpcMessage(const QByteArray &message)
-    : d(new QJsonRpcMessagePrivate)
+QJsonRpcMessage QJsonRpcMessage::fromJson(const QByteArray &message)
 {
+    QJsonRpcMessage result;
     QJsonParseError error;
     QJsonDocument document = QJsonDocument::fromJson(message, &error);
     if (error.error != QJsonParseError::NoError) {
         qJsonRpcDebug() << Q_FUNC_INFO << error.errorString();
-        return;
+        return result;
     }
 
     if (!document.isObject()) {
         qJsonRpcDebug() << Q_FUNC_INFO << "invalid message: " << message;
-        return;
+        return result;
     }
 
-    d->initializeWithObject(document.object());
+    result.d->initializeWithObject(document.object());
+    return result;
 }
 
-QJsonRpcMessage::QJsonRpcMessage(const QJsonObject &message)
-    : d(new QJsonRpcMessagePrivate)
+QJsonRpcMessage QJsonRpcMessage::fromObject(const QJsonObject &message)
 {
-    d->initializeWithObject(message);
+    QJsonRpcMessage result;
+    result.d->initializeWithObject(message);
+    return result;
 }
 
 QJsonObject QJsonRpcMessage::toObject() const

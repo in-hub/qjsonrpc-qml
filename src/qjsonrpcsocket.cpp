@@ -298,7 +298,7 @@ void QJsonRpcSocketPrivate::_q_processIncomingData()
             */
         } else if (document.isObject()){
             qJsonRpcDebug() << "received: " << document.toJson();
-            QJsonRpcMessage message(document.object());
+            QJsonRpcMessage message = QJsonRpcMessage::fromObject(document.object());
             Q_EMIT q->messageReceived(message);
 
             if (message.type() == QJsonRpcMessage::Response ||

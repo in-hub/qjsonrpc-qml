@@ -47,7 +47,7 @@ private slots:
 void TestQJsonRpcMessage::invalidData()
 {
     QJsonObject invalidData;
-    QJsonRpcMessage message(invalidData);
+    QJsonRpcMessage message = QJsonRpcMessage::fromObject(invalidData);
     QCOMPARE(message.isValid(), false);
     QCOMPARE(message.type(), QJsonRpcMessage::Invalid);
     QVERIFY(message.toObject().isEmpty());
@@ -63,7 +63,7 @@ void TestQJsonRpcMessage::invalidStringData_data()
 void TestQJsonRpcMessage::invalidStringData()
 {
     QFETCH(QByteArray, stringData);
-    QJsonRpcMessage message(stringData);
+    QJsonRpcMessage message = QJsonRpcMessage::fromJson(stringData);
     QCOMPARE(message.isValid(), false);
     QCOMPARE(message.type(), QJsonRpcMessage::Invalid);
     QVERIFY(message.toObject().isEmpty());
@@ -76,7 +76,7 @@ void TestQJsonRpcMessage::invalidDataResponseWithId()
 {
     // invalid with id
     const char *invalid = "{\"jsonrpc\": \"2.0\", \"params\": [], \"id\": 666}";
-    QJsonRpcMessage request(invalid);
+    QJsonRpcMessage request = QJsonRpcMessage::fromJson(invalid);
     QJsonRpcMessage error =
         request.createErrorResponse(QJsonRpc::NoError, QString());
     QJsonRpcMessage response = request.createResponse(QString());
@@ -89,7 +89,7 @@ void TestQJsonRpcMessage::invalidDataResponseWithoutId()
 {
     // invalid without id
     const char *invalid = "{\"jsonrpc\": \"2.0\", \"params\": []}";
-    QJsonRpcMessage request(invalid);
+    QJsonRpcMessage request = QJsonRpcMessage::fromJson(invalid);
     QJsonRpcMessage error =
         request.createErrorResponse(QJsonRpc::NoError, QString());
     QJsonRpcMessage response = request.createResponse(QString());
@@ -156,17 +156,19 @@ void TestQJsonRpcMessage::equivalence_data()
         // REQUESTS
         const char *simpleData =
             "{\"jsonrpc\": \"2.0\", \"id\": 1, \"method\": \"request\" }";
-        QJsonRpcMessage simpleRequest(simpleData);
+        QJsonRpcMessage simpleRequest = QJsonRpcMessage::fromJson(simpleData);
         QJsonRpcMessage simpleRequestCopyCtor(simpleRequest);
         QJsonRpcMessage simpleRequestEqualsOp = simpleRequest;
 
         const char *withParametersData =
             "{\"jsonrpc\": \"2.0\", \"id\": 1, \"method\": \"request\", \"params\": [\"with\", \"parameters\"]}";
-        QJsonRpcMessage simpleRequestWithParameters(withParametersData);
+        QJsonRpcMessage simpleRequestWithParameters =
+            QJsonRpcMessage::fromJson(withParametersData);
 
         const char *withNamedParametersData =
             "{\"jsonrpc\": \"2.0\", \"id\": 1, \"method\": \"request\", \"params\": {\"firstName\": \"yogi\", \"lastName\": \"thebear\"}}";
-        QJsonRpcMessage simpleRequestWithNamedParameters(withNamedParametersData);
+        QJsonRpcMessage simpleRequestWithNamedParameters =
+            QJsonRpcMessage::fromJson(withNamedParametersData);
 
         QTest::newRow("simpleRequestCopiesEqual_1") << simpleRequest << simpleRequestCopyCtor << true;
         QTest::newRow("simpleRequestCopiesEqual_2") << simpleRequest << simpleRequestEqualsOp << true;
@@ -256,7 +258,7 @@ void TestQJsonRpcMessage::withVariantListArgs()
     int id = requestFromQJsonRpc.id();
     QByteArray varListArgs = QString(varListArgsFormat).arg(id).toLatin1();
 
-    QJsonRpcMessage requestFromData(varListArgs);
+    QJsonRpcMessage requestFromData = QJsonRpcMessage::fromJson(varListArgs);
     QCOMPARE(requestFromQJsonRpc, requestFromData);
 }
 
@@ -284,12 +286,12 @@ void TestQJsonRpcMessage::idSentAsString()
         QJsonRpcMessage::createRequest("service.someMethod", params);
     int id = requestFromQJsonRpc.id();
     QByteArray messageData = QString(messageWithStringId).arg(id).toLatin1();
-    QJsonRpcMessage requestFromData(messageData);
+    QJsonRpcMessage requestFromData = QJsonRpcMessage::fromJson(messageData);
 
     QJsonRpcMessage errorFromQJsonRpc =
         requestFromQJsonRpc.createErrorResponse(QJsonRpc::MethodNotFound);
     QByteArray errorData = QString(errorMessageWithStringId).arg(id).toLatin1();
-    QJsonRpcMessage errorFromData(errorData);
+    QJsonRpcMessage errorFromData = QJsonRpcMessage::fromJson(errorData);
 
     QCOMPARE(requestFromQJsonRpc, requestFromData);
     QCOMPARE(errorFromQJsonRpc, errorFromData);
