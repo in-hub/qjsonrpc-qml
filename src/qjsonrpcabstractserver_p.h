@@ -17,8 +17,6 @@
 #ifndef QJSONRPCABSTRACTSERVER_P_H
 #define QJSONRPCABSTRACTSERVER_P_H
 
-#include <QObjectCleanupHandler>
-
 #if QT_VERSION >= 0x050000
 #include <QJsonDocument>
 #else
@@ -26,17 +24,6 @@
 #endif
 
 #include "qjsonrpcabstractserver.h"
-
-class QJsonRpcService;
-class QJsonRpcServiceProviderPrivate
-{
-public:
-    QByteArray serviceName(QJsonRpcService *service);
-
-    QHash<QByteArray, QJsonRpcService*> services;
-    QObjectCleanupHandler cleanupHandler;
-
-};
 
 class QJsonRpcSocket;
 #if defined(USE_QT_PRIVATE_HEADERS)

@@ -26,28 +26,10 @@
 #include "json/qjsondocument.h"
 #endif
 
-#include "qjsonrpcmessage.h"
+#include "qjsonrpcserviceprovider.h"
 #include "qjsonrpcglobal.h"
 
-class QJsonRpcService;
-class QJsonRpcAbstractSocket;
-class QJsonRpcServiceProviderPrivate;
-class QJSONRPC_EXPORT QJsonRpcServiceProvider
-{
-public:
-    ~QJsonRpcServiceProvider();
-    virtual bool addService(QJsonRpcService *service);
-    virtual bool removeService(QJsonRpcService *service);
-
-protected:
-    QJsonRpcServiceProvider();
-    void processMessage(QJsonRpcAbstractSocket *socket, const QJsonRpcMessage &message);
-
-private:
-    QScopedPointer<QJsonRpcServiceProviderPrivate> d;
-
-};
-
+class QJsonRpcMessage;
 class QJsonRpcAbstractServerPrivate;
 class QJSONRPC_EXPORT QJsonRpcAbstractServer : public QObject, public QJsonRpcServiceProvider
 {
