@@ -28,15 +28,13 @@
 #include "json/qjsondocument.h"
 #endif
 
-#include "qjsonrpcabstractserver_p.h"
 #include "qjsonrpcabstractserver.h"
 #include "qjsonrpclocalserver.h"
 #include "qjsonrpctcpserver.h"
 #include "qjsonrpcsocket.h"
-#include "qjsonrpcservice_p.h"
-#include "qjsonrpcservice.h"
 #include "qjsonrpcmessage.h"
 #include "qjsonrpcservicereply.h"
+#include "testservices.h"
 
 bool waitForSignal(QObject *obj, const char *signal, int delay = 5)
 {
@@ -112,118 +110,6 @@ Q_DECLARE_METATYPE(QJsonDocument::JsonFormat)
 #if QT_VERSION < 0x050000
 Q_DECLARE_METATYPE(QJsonArray)
 #endif
-
-class TestService : public QJsonRpcService
-{
-    Q_OBJECT
-    Q_CLASSINFO("serviceName", "service")
-public:
-    TestService(QObject *parent = 0)
-        : QJsonRpcService(parent),
-          m_called(0)
-    {}
-
-    void resetCount() { m_called = 0; }
-    int callCount() const { return m_called; }
-
-public Q_SLOTS:
-    void noParam() const {}
-    QString singleParam(const QString &string) const { return string; }
-    QString multipleParam(const QString &first,
-                          const QString &second,
-                          const QString &third) const
-    {
-        return first + second + third;
-    }
-
-    void numberParameters(int intParam, double doubleParam, float floatParam)
-    {
-        Q_UNUSED(intParam)
-        Q_UNUSED(doubleParam)
-        Q_UNUSED(floatParam)
-    }
-
-    bool variantParameter(const QVariant &variantParam) const
-    {
-        return variantParam.toBool();
-    }
-
-    QVariantList variantListParameter(const QVariantList &data) {
-        return data;
-    }
-
-    QVariant variantStringResult() {
-        return "hello";
-    }
-
-    QVariantList variantListResult() {
-        return QVariantList() << "one" << 2 << 3.0;
-    }
-
-    QVariantMap variantMapResult() {
-        QVariantMap result;
-        result["one"] = 1;
-        result["two"] = 2.0;
-        return result;
-    }
-
-    void increaseCalled() {
-        m_called++;
-    }
-
-    /* NOTE: suppress binding warnings
-    bool methodWithListOfInts(const QList<int> &list) {
-        if (list.size() < 3)
-            return false;
-        if (list.at(0) != 300)
-            return false;
-        if (list.at(1) != 30)
-            return false;
-        if (list.at(2) != 3)
-            return false;
-        return true;
-    }
-    */
-
-    QString variantMapInvalidParam(const QVariantMap &map) {
-        return map["foo"].toString();
-    }
-
-    void outputParameter(int in1, int &out, int in2)
-    {
-        out = in1 + out + in2;
-    }
-
-    void outputParameterWithStrings(const QString &first, QString &output, const QString &last)
-    {
-        if (output.isEmpty())
-            output = QString("%1 %2").arg(first).arg(last);
-        else
-            output.append(QString(" %1 %2").arg(first).arg(last));
-    }
-
-    bool overloadedMethod(int input) { Q_UNUSED(input) return true; }
-    bool overloadedMethod(const QString &input) { Q_UNUSED(input) return false; }
-
-    bool stringListParameter(int one, const QString &two, const QString &three, const QStringList &list)
-    {
-        Q_UNUSED(one);
-        Q_UNUSED(two);
-        Q_UNUSED(three);
-        Q_UNUSED(list);
-        return true;
-    }
-
-    bool delayedResponse()
-    {
-        QTest::qSleep(100);
-        return true;
-    }
-
-private:
-    int m_called;
-
-};
 
 TestQJsonRpcServer::TestQJsonRpcServer()
     : server(0),
@@ -585,28 +471,6 @@ void TestQJsonRpcServer::notifyConnectedClients()
     }
 }
 
-class TestNumberParamsService : public QJsonRpcService
-{
-    Q_OBJECT
-    Q_CLASSINFO("serviceName", "service")
-public:
-    TestNumberParamsService(QObject *parent = 0)
-        : QJsonRpcService(parent), m_called(0) {}
-
-    int callCount() const { return m_called; }
-
-public Q_SLOTS:
-    void numberParameters(int intParam, double doubleParam)
-    {
-        if (intParam == 10 && doubleParam == 3.14159)
-            m_called++;
-    }
-
-private:
-    int m_called;
-
-};
-
 void TestQJsonRpcServer::numberParameters()
 {
     TestNumberParamsService *service = new TestNumberParamsService;
@@ -621,26 +485,6 @@ void TestQJsonRpcServer::numberParameters()
     QCOMPARE(service->callCount(), 1);
 }
 
-class TestHugeResponseService : public QJsonRpcService
-{
-    Q_OBJECT
-    Q_CLASSINFO("serviceName", "service")
-public:
-    TestHugeResponseService(QObject *parent = 0)
-        : QJsonRpcService(parent) {}
-
-public Q_SLOTS:
-    QVariantMap hugeResponse()
-    {
-        QVariantMap result;
-        for (int i = 0; i < 1000; i++) {
-            QString key = QString("testKeyForHugeResponse%1").arg(i);
-            result[key] = "some sample data to make the response larger";
-        }
-        return result;
-    }
-};
-
 void TestQJsonRpcServer::hugeResponse()
 {
     QVERIFY(server->addService(new TestHugeResponseService));
@@ -650,18 +494,6 @@ void TestQJsonRpcServer::hugeResponse()
     QCOMPARE(spyMessageReceived.count(), 1);
     QVERIFY(response.isValid());
 }
-
-class TestComplexMethodService : public QJsonRpcService
-{
-    Q_OBJECT
-    Q_CLASSINFO("serviceName", "service.complex.prefix.for")
-public:
-    TestComplexMethodService(QObject *parent = 0)
-        : QJsonRpcService(parent) {}
-
-public Q_SLOTS:
-    void testMethod() {}
-};
 
 void TestQJsonRpcServer::complexMethod()
 {
@@ -674,27 +506,6 @@ void TestQJsonRpcServer::complexMethod()
     QVERIFY(response.errorCode() == QJsonRpc::NoError);
     QCOMPARE(request.id(), response.id());
 }
-
-class TestDefaultParametersService : public QJsonRpcService
-{
-    Q_OBJECT
-    Q_CLASSINFO("serviceName", "service")
-public:
-    TestDefaultParametersService(QObject *parent = 0)
-        : QJsonRpcService(parent) {}
-
-public Q_SLOTS:
-    QString testMethod(const QString &name = QString()) {
-        if (name.isEmpty())
-            return "empty string";
-        return QString("hello %1").arg(name);
-    }
-
-    QString testMethod2(const QString &name = QString(), int year = 2012)
-    {
-        return QString("%1%2").arg(name).arg(year);
-    }
-};
 
 void TestQJsonRpcServer::defaultParameters()
 {
@@ -721,20 +532,6 @@ void TestQJsonRpcServer::defaultParameters()
     QVERIFY(response.type() != QJsonRpcMessage::Error);
     QCOMPARE(response.result().toString(), QLatin1String("KONY2012"));
 }
-
-class TestNotifyService : public QJsonRpcService
-{
-    Q_OBJECT
-    Q_CLASSINFO("serviceName", "service")
-public:
-    TestNotifyService(QObject *parent = 0)
-        : QJsonRpcService(parent)
-    {
-    }
-
-public Q_SLOTS:
-    void testMethod() { qJsonRpcDebug() << "text"; }
-};
 
 /*
 void TestQJsonRpcServer::notifyServiceSocket()
@@ -880,21 +677,6 @@ void TestQJsonRpcServer::addRemoveService()
     QVERIFY(response.errorCode() == QJsonRpc::MethodNotFound);
     QVERIFY(server->errorString().isEmpty());
 }
-
-class TestServiceWithoutServiceName : public QJsonRpcService
-{
-    Q_OBJECT
-public:
-    TestServiceWithoutServiceName(QObject *parent = 0)
-        : QJsonRpcService(parent)
-    {}
-
-public Q_SLOTS:
-    QString testMethod(const QString &string) const {
-        return string;
-    }
-
-};
 
 void TestQJsonRpcServer::serviceWithNoGivenName()
 {
