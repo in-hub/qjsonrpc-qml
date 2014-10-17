@@ -33,11 +33,6 @@ public:
     explicit QJsonRpcAbstractSocket(QObject *parent = 0);
     ~QJsonRpcAbstractSocket();
 
-#if QT_VERSION >= 0x050100 || QT_VERSION <= 0x050000
-    QJsonDocument::JsonFormat wireFormat() const;
-    void setWireFormat(QJsonDocument::JsonFormat format);
-#endif
-
     virtual bool isValid() const;
 
 Q_SIGNALS:
@@ -94,7 +89,6 @@ protected:
 private:
     Q_DECLARE_PRIVATE(QJsonRpcSocket)
     Q_DISABLE_COPY(QJsonRpcSocket)
-
     Q_PRIVATE_SLOT(d_func(), void _q_processIncomingData())
 
 #if !defined(USE_QT_PRIVATE_HEADERS)
@@ -102,8 +96,7 @@ private:
 #endif
 };
 
-class QJSONRPC_EXPORT QJsonRpcServiceSocket : public QJsonRpcSocket,
-                                              public QJsonRpcServiceProvider
+class QJSONRPC_EXPORT QJsonRpcServiceSocket : public QJsonRpcSocket, public QJsonRpcServiceProvider
 {
     Q_OBJECT
 public:

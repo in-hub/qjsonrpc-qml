@@ -60,8 +60,6 @@ public:
 
 private Q_SLOTS:
     void initTestCase_data();
-    void initTestCase();
-    void cleanupTestCase();
     void init();
     void cleanup();
 
@@ -105,7 +103,6 @@ private:
 };
 Q_DECLARE_METATYPE(TestQJsonRpcServer::ServerType)
 Q_DECLARE_METATYPE(QJsonRpcMessage::Type)
-Q_DECLARE_METATYPE(QJsonDocument::JsonFormat)
 
 #if QT_VERSION < 0x050000
 Q_DECLARE_METATYPE(QJsonArray)
@@ -120,36 +117,14 @@ TestQJsonRpcServer::TestQJsonRpcServer()
 
 void TestQJsonRpcServer::initTestCase_data()
 {
-#if QT_VERSION >= 0x050100 || QT_VERSION <= 0x050000
-    QTest::addColumn<ServerType>("serverType");
-    QTest::addColumn<QJsonDocument::JsonFormat>("wireFormat");
-
-    QTest::newRow("tcp-indented") << TcpServer << QJsonDocument::Indented;
-    QTest::newRow("tcp-compact") << TcpServer << QJsonDocument::Compact;
-    QTest::newRow("local-indented") << LocalServer << QJsonDocument::Indented;
-    QTest::newRow("local-compact") << LocalServer << QJsonDocument::Compact;
-#else
     QTest::addColumn<ServerType>("serverType");
     QTest::newRow("tcp") << TcpServer;
     QTest::newRow("local") << LocalServer;
-#endif
-}
-
-void TestQJsonRpcServer::initTestCase()
-{
-    qRegisterMetaType<QJsonRpcMessage>("QJsonRpcMessage");
-}
-
-void TestQJsonRpcServer::cleanupTestCase()
-{
 }
 
 void TestQJsonRpcServer::init()
 {
     QFETCH_GLOBAL(ServerType, serverType);
-#if QT_VERSION >= 0x050100 || QT_VERSION <= 0x050000
-    QFETCH_GLOBAL(QJsonDocument::JsonFormat, wireFormat);
-#endif
     if (serverType == LocalServer) {
         QJsonRpcLocalServer *s = new QJsonRpcLocalServer(this);
         QVERIFY(s->listen("qjsonrpc-test-local-server"));
@@ -172,16 +147,6 @@ void TestQJsonRpcServer::init()
 
     QVERIFY(waitForSignal(server.data(), SIGNAL(clientConnected())));
     QCOMPARE(server->connectedClientCount(), 1);
-
-#if QT_VERSION >= 0x050100 || QT_VERSION <= 0x050000
-    server->setWireFormat(wireFormat);
-    clientSocket->setWireFormat(wireFormat);
-    if (serverSocket)
-        serverSocket->setWireFormat(wireFormat);
-
-    QCOMPARE(server->wireFormat(), wireFormat);
-    QCOMPARE(clientSocket->wireFormat(), wireFormat);
-#endif
 }
 
 void TestQJsonRpcServer::cleanup()
@@ -425,7 +390,6 @@ void TestQJsonRpcServer::notifyConnectedClients_data()
     parameters.append(QLatin1String("test"));
     QTest::newRow("request-message") << "testRequest" << QJsonRpcMessage::Request << parameters << true;
     QTest::newRow("request-direct") << "testRequest" << QJsonRpcMessage::Request << parameters << false;
-
 }
 
 void TestQJsonRpcServer::notifyConnectedClients()

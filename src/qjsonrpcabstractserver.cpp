@@ -46,20 +46,6 @@ bool QJsonRpcAbstractServer::removeService(QJsonRpcService *service)
     return true;
 }
 
-#if QT_VERSION >= 0x050100 || QT_VERSION <= 0x050000
-QJsonDocument::JsonFormat QJsonRpcAbstractServer::wireFormat() const
-{
-    Q_D(const QJsonRpcAbstractServer);
-    return d->format;
-}
-
-void QJsonRpcAbstractServer::setWireFormat(QJsonDocument::JsonFormat format)
-{
-    Q_D(QJsonRpcAbstractServer);
-    d->format = format;
-}
-#endif
-
 void QJsonRpcAbstractServer::close()
 {
 }

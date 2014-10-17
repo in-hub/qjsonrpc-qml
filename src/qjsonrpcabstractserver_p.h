@@ -17,12 +17,6 @@
 #ifndef QJSONRPCABSTRACTSERVER_P_H
 #define QJSONRPCABSTRACTSERVER_P_H
 
-#if QT_VERSION >= 0x050000
-#include <QJsonDocument>
-#else
-#include "json/qjsondocument.h"
-#endif
-
 #include "qjsonrpcabstractserver.h"
 
 class QJsonRpcSocket;
@@ -35,17 +29,9 @@ class QJsonRpcAbstractServerPrivate
 #endif
 {
 public:
-#if QT_VERSION >= 0x050100 || QT_VERSION <= 0x050000
-    QJsonDocument::JsonFormat format;
-    QJsonRpcAbstractServerPrivate(QJsonRpcAbstractServer *server)
-        : format(QJsonDocument::Compact),
-          q_ptr(server)
-    {}
-#else
     QJsonRpcAbstractServerPrivate(QJsonRpcAbstractServer *server)
         : q_ptr(server)
     {}
-#endif
 
 #if !defined(USE_QT_PRIVATE_HEADERS)
     virtual ~QJsonRpcAbstractServerPrivate() {}

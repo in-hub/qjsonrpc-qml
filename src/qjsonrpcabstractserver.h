@@ -20,12 +20,6 @@
 #include <QObject>
 #include <QScopedPointer>
 
-#if QT_VERSION >= 0x050000
-#include <QJsonDocument>
-#else
-#include "json/qjsondocument.h"
-#endif
-
 #include "qjsonrpcserviceprovider.h"
 #include "qjsonrpcglobal.h"
 
@@ -39,11 +33,6 @@ public:
     virtual QString errorString() const = 0;
     virtual bool addService(QJsonRpcService *service);
     virtual bool removeService(QJsonRpcService *service);
-
-#if QT_VERSION >= 0x050100 || QT_VERSION <= 0x050000
-    QJsonDocument::JsonFormat wireFormat() const;
-    void setWireFormat(QJsonDocument::JsonFormat format);
-#endif
 
     virtual void close();
     int connectedClientCount() const;

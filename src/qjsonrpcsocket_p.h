@@ -21,12 +21,6 @@
 #include <QHash>
 #include <QIODevice>
 
-#if QT_VERSION >= 0x050000
-#include <QJsonDocument>
-#else
-#include "json/qjsondocument.h"
-#endif
-
 #include "qjsonrpcsocket.h"
 #include "qjsonrpcmessage.h"
 #include "qjsonrpcglobal.h"
@@ -40,14 +34,7 @@ class QJSONRPC_EXPORT QJsonRpcAbstractSocketPrivate
 #endif
 {
 public:
-#if QT_VERSION >= 0x050100 || QT_VERSION <= 0x050000
-    QJsonDocument::JsonFormat format;
-    QJsonRpcAbstractSocketPrivate()
-        : format(QJsonDocument::Compact)
-    {}
-#else
     QJsonRpcAbstractSocketPrivate() {}
-#endif
 
 #if !defined(USE_QT_PRIVATE_HEADERS)
     virtual ~QJsonRpcAbstractSocketPrivate() {}

@@ -2,6 +2,12 @@
 #include <QEventLoop>
 #include <QDebug>
 
+#if QT_VERSION >= 0x050000
+#include <QJsonDocument>
+#else
+#include "json/qjsondocument.h"
+#endif
+
 #include "qjsonrpcservice.h"
 #include "qjsonrpcservicereply_p.h"
 #include "qjsonrpcservicereply.h"
@@ -65,9 +71,8 @@ int QJsonRpcSocketPrivate::findJsonDocumentEnd(const QByteArray &jsonData)
 void QJsonRpcSocketPrivate::writeData(const QJsonRpcMessage &message)
 {
     QJsonDocument doc = QJsonDocument(message.toObject());
-
 #if QT_VERSION >= 0x050100 || QT_VERSION <= 0x050000
-    QByteArray data = doc.toJson(format);
+    QByteArray data = doc.toJson(QJsonDocument::Compact);
 #else
     QByteArray data = doc.toJson();
 #endif
@@ -99,20 +104,6 @@ QJsonRpcAbstractSocket::QJsonRpcAbstractSocket(QJsonRpcAbstractSocketPrivate &dd
 #endif
 {
 }
-
-#if QT_VERSION >= 0x050100 || QT_VERSION <= 0x050000
-QJsonDocument::JsonFormat QJsonRpcAbstractSocket::wireFormat() const
-{
-    Q_D(const QJsonRpcAbstractSocket);
-    return d->format;
-}
-
-void QJsonRpcAbstractSocket::setWireFormat(QJsonDocument::JsonFormat format)
-{
-    Q_D(QJsonRpcAbstractSocket);
-    d->format = format;
-}
-#endif
 
 bool QJsonRpcAbstractSocket::isValid() const
 {

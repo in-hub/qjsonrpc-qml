@@ -63,10 +63,6 @@ void QJsonRpcLocalServerPrivate::_q_processIncomingConnection()
 
     QIODevice *device = qobject_cast<QIODevice*>(localSocket);
     QJsonRpcSocket *socket = new QJsonRpcSocket(device, q);
-#if QT_VERSION >= 0x050100 || QT_VERSION <= 0x050000
-    socket->setWireFormat(format);
-#endif
-
     QObject::connect(socket, SIGNAL(messageReceived(QJsonRpcMessage)),
                           q, SLOT(_q_processMessage(QJsonRpcMessage)));
     clients.append(socket);
