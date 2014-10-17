@@ -29,22 +29,14 @@ class QJsonRpcAbstractServerPrivate
 #endif
 {
 public:
-    QJsonRpcAbstractServerPrivate(QJsonRpcAbstractServer *server)
-        : q_ptr(server)
-    {}
-
 #if !defined(USE_QT_PRIVATE_HEADERS)
     virtual ~QJsonRpcAbstractServerPrivate() {}
 #endif
 
-    virtual void _q_processIncomingConnection() = 0;
-    virtual void _q_clientDisconnected() = 0;
-    void _q_processMessage(const QJsonRpcMessage &message);
+    void _q_notifyConnectedClients(const QJsonRpcMessage &message);
+    void _q_notifyConnectedClients(const QString &method, const QJsonArray &params);
 
     QList<QJsonRpcSocket*> clients;
-
-    QJsonRpcAbstractServer * const q_ptr;
-    Q_DECLARE_PUBLIC(QJsonRpcAbstractServer)
 };
 
 #endif

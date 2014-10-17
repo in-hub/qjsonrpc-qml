@@ -17,26 +17,44 @@
 #ifndef QJSONRPCLOCALSERVER_H
 #define QJSONRPCLOCALSERVER_H
 
+#include <QLocalServer>
 #include "qjsonrpcabstractserver.h"
 
 class QJsonRpcLocalServerPrivate;
-class QJSONRPC_EXPORT QJsonRpcLocalServer : public QJsonRpcAbstractServer
+class QJSONRPC_EXPORT QJsonRpcLocalServer : public QLocalServer, public QJsonRpcAbstractServer
 {
     Q_OBJECT
 public:
     explicit QJsonRpcLocalServer(QObject *parent = 0);
     ~QJsonRpcLocalServer();
 
-    QString errorString() const;
-    bool listen(const QString &service);
-    virtual void close();
+    virtual int connectedClientCount() const;
+
+    // reimp
+    bool addService(QJsonRpcService *service);
+    bool removeService(QJsonRpcService *service);
+
+Q_SIGNALS:
+    void clientConnected();
+    void clientDisconnected();
+
+public Q_SLOTS:
+    void notifyConnectedClients(const QJsonRpcMessage &message);
+    void notifyConnectedClients(const QString &method, const QJsonArray &params);
+
+protected:
+    virtual void incomingConnection(quintptr socketDescriptor);
+
+private Q_SLOTS:
+    void _q_clientDisconnected();
+    void _q_processMessage(const QJsonRpcMessage &message);
 
 private:
     Q_DECLARE_PRIVATE(QJsonRpcLocalServer)
     Q_DISABLE_COPY(QJsonRpcLocalServer)
-    Q_PRIVATE_SLOT(d_func(), void _q_processIncomingConnection())
-    Q_PRIVATE_SLOT(d_func(), void _q_clientDisconnected())
-
+#if !defined(USE_QT_PRIVATE_HEADERS)
+    QScopedPointer<QJsonRpcAbstractServerPrivate> d_ptr;
+#endif
 };
 
 #endif

@@ -17,6 +17,7 @@
 #ifndef QJSONRPCGLOBAL_H
 #define QJSONRPCGLOBAL_H
 
+#include <QtGlobal>
 #include <QMetaType>
 
 // error codes defined by spec

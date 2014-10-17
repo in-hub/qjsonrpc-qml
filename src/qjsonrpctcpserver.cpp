@@ -7,23 +7,17 @@
 
 class QJsonRpcTcpServerPrivate : public QJsonRpcAbstractServerPrivate
 {
-    Q_DECLARE_PUBLIC(QJsonRpcTcpServer)
 public:
-    QJsonRpcTcpServerPrivate(QJsonRpcTcpServer *q)
-        : QJsonRpcAbstractServerPrivate(q),
-          server(0)
-    {
-    }
-
-    virtual void _q_processIncomingConnection();
-    virtual void _q_clientDisconnected();
-
-    QTcpServer *server;
     QHash<QTcpSocket*, QJsonRpcSocket*> socketLookup;
 };
 
 QJsonRpcTcpServer::QJsonRpcTcpServer(QObject *parent)
-    : QJsonRpcAbstractServer(*new QJsonRpcTcpServerPrivate(this), parent)
+#if defined(USE_QT_PRIVATE_HEADERS)
+    : QTcpServer(*new QJsonRpcTcpServerPrivate, parent)
+#else
+    : QTcpServer(parent),
+      d_ptr(new QJsonRpcTcpServerPrivate)
+#endif
 {
 }
 
@@ -33,67 +27,106 @@ QJsonRpcTcpServer::~QJsonRpcTcpServer()
     foreach (QTcpSocket *socket, d->socketLookup.keys())
         socket->deleteLater();
     d->socketLookup.clear();
+
+    foreach (QJsonRpcSocket *client, d->clients)
+        client->deleteLater();
+    d->clients.clear();
 }
 
-bool QJsonRpcTcpServer::listen(const QHostAddress &address, quint16 port)
+bool QJsonRpcTcpServer::addService(QJsonRpcService *service)
+{
+    if (!QJsonRpcServiceProvider::addService(service))
+        return false;
+
+    connect(service, SIGNAL(notifyConnectedClients(QJsonRpcMessage)),
+               this, SLOT(notifyConnectedClients(QJsonRpcMessage)));
+    connect(service, SIGNAL(notifyConnectedClients(QString,QJsonArray)),
+               this, SLOT(notifyConnectedClients(QString,QJsonArray)));
+    return true;
+}
+
+bool QJsonRpcTcpServer::removeService(QJsonRpcService *service)
+{
+    if (!QJsonRpcServiceProvider::removeService(service))
+        return false;
+
+    disconnect(service, SIGNAL(notifyConnectedClients(QJsonRpcMessage)),
+                  this, SLOT(notifyConnectedClients(QJsonRpcMessage)));
+    disconnect(service, SIGNAL(notifyConnectedClients(QString,QJsonArray)),
+                  this, SLOT(notifyConnectedClients(QString,QJsonArray)));
+    return true;
+}
+
+int QJsonRpcTcpServer::connectedClientCount() const
+{
+    Q_D(const QJsonRpcTcpServer);
+    return d->clients.size();
+}
+
+#if QT_VERSION >= QT_VERSION_CHECK(5,0,0)
+void QJsonRpcTcpServer::incomingConnection(qintptr socketDescriptor)
+#else
+void QJsonRpcTcpServer::incomingConnection(int socketDescriptor)
+#endif
 {
     Q_D(QJsonRpcTcpServer);
-    if (!d->server) {
-        d->server = new QTcpServer(this);
-        connect(d->server, SIGNAL(newConnection()), this, SLOT(_q_processIncomingConnection()));
-    }
-
-    return d->server->listen(address, port);
-}
-
-void QJsonRpcTcpServer::close()
-{
-    Q_D(QJsonRpcTcpServer);
-    d->server->close();
-}
-
-void QJsonRpcTcpServerPrivate::_q_processIncomingConnection()
-{
-    Q_Q(QJsonRpcTcpServer);
-    QTcpSocket *tcpSocket = server->nextPendingConnection();
-    if (!tcpSocket) {
-        qJsonRpcDebug() << Q_FUNC_INFO << "nextPendingConnection is null";
+    QTcpSocket *tcpSocket = new QTcpSocket(this);
+    if (!tcpSocket->setSocketDescriptor(socketDescriptor)) {
+        qJsonRpcDebug() << Q_FUNC_INFO << "can't set socket descriptor";
+        tcpSocket->deleteLater();
         return;
     }
 
     QIODevice *device = qobject_cast<QIODevice*>(tcpSocket);
-    QJsonRpcSocket *socket = new QJsonRpcSocket(device, q);
-    QObject::connect(socket, SIGNAL(messageReceived(QJsonRpcMessage)),
-                          q, SLOT(_q_processMessage(QJsonRpcMessage)));
-    clients.append(socket);
-    QObject::connect(tcpSocket, SIGNAL(disconnected()), q, SLOT(_q_clientDisconnected()));
-    socketLookup.insert(tcpSocket, socket);
-    Q_EMIT q->clientConnected();
+    QJsonRpcSocket *socket = new QJsonRpcSocket(device, this);
+    connect(socket, SIGNAL(messageReceived(QJsonRpcMessage)),
+              this, SLOT(_q_processMessage(QJsonRpcMessage)));
+    d->clients.append(socket);
+    connect(tcpSocket, SIGNAL(disconnected()), this, SLOT(_q_clientDisconnected()));
+    d->socketLookup.insert(tcpSocket, socket);
+    Q_EMIT clientConnected();
 }
 
-void QJsonRpcTcpServerPrivate::_q_clientDisconnected()
+void QJsonRpcTcpServer::_q_clientDisconnected()
 {
-    Q_Q(QJsonRpcTcpServer);
-    QTcpSocket *tcpSocket = static_cast<QTcpSocket*>(q->sender());
+    Q_D(QJsonRpcTcpServer);
+    QTcpSocket *tcpSocket = static_cast<QTcpSocket*>(sender());
     if (!tcpSocket) {
         qJsonRpcDebug() << Q_FUNC_INFO << "called with invalid socket";
         return;
     }
 
-    if (socketLookup.contains(tcpSocket)) {
-        QJsonRpcSocket *socket = socketLookup.take(tcpSocket);
-        clients.removeAll(socket);
+    if (d->socketLookup.contains(tcpSocket)) {
+        QJsonRpcSocket *socket = d->socketLookup.take(tcpSocket);
+        d->clients.removeAll(socket);
         socket->deleteLater();
     }
 
     tcpSocket->deleteLater();
-    Q_EMIT q->clientDisconnected();
+    Q_EMIT clientDisconnected();
 }
 
-QString QJsonRpcTcpServer::errorString() const
+void QJsonRpcTcpServer::_q_processMessage(const QJsonRpcMessage &message)
 {
-    Q_D(const QJsonRpcTcpServer);
-    return d->server->errorString();
+    QJsonRpcSocket *socket = static_cast<QJsonRpcSocket*>(sender());
+    if (!socket) {
+        qJsonRpcDebug() << Q_FUNC_INFO << "called without service socket";
+        return;
+    }
+
+    processMessage(socket, message);
+}
+
+void QJsonRpcTcpServer::notifyConnectedClients(const QJsonRpcMessage &message)
+{
+    Q_D(QJsonRpcTcpServer);
+    d->_q_notifyConnectedClients(message);
+}
+
+void QJsonRpcTcpServer::notifyConnectedClients(const QString &method, const QJsonArray &params)
+{
+    Q_D(QJsonRpcTcpServer);
+    d->_q_notifyConnectedClients(method, params);
 }
 
 #include "moc_qjsonrpctcpserver.cpp"

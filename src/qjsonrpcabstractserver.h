@@ -17,44 +17,26 @@
 #ifndef QJSONRPCABSTRACTSERVER_H
 #define QJSONRPCABSTRACTSERVER_H
 
-#include <QObject>
-#include <QScopedPointer>
-
 #include "qjsonrpcserviceprovider.h"
 #include "qjsonrpcglobal.h"
 
+class QJsonArray;
 class QJsonRpcMessage;
 class QJsonRpcAbstractServerPrivate;
-class QJSONRPC_EXPORT QJsonRpcAbstractServer : public QObject, public QJsonRpcServiceProvider
+class QJSONRPC_EXPORT QJsonRpcAbstractServer : public QJsonRpcServiceProvider
 {
-    Q_OBJECT
 public:
     virtual ~QJsonRpcAbstractServer();
-    virtual QString errorString() const = 0;
-    virtual bool addService(QJsonRpcService *service);
-    virtual bool removeService(QJsonRpcService *service);
+    virtual int connectedClientCount() const = 0;
 
-    virtual void close();
-    int connectedClientCount() const;
+// Q_SIGNALS:
+    virtual void clientConnected() = 0;
+    virtual void clientDisconnected() = 0;
 
-Q_SIGNALS:
-    void clientConnected();
-    void clientDisconnected();
+// public Q_SLOTS:
+    virtual void notifyConnectedClients(const QJsonRpcMessage &message) = 0;
+    virtual void notifyConnectedClients(const QString &method, const QJsonArray &params) = 0;
 
-public Q_SLOTS:
-    void notifyConnectedClients(const QJsonRpcMessage &message);
-    void notifyConnectedClients(const QString &method, const QJsonArray &params);
-
-protected:
-    explicit QJsonRpcAbstractServer(QJsonRpcAbstractServerPrivate &dd, QObject *parent);
-
-    Q_DECLARE_PRIVATE(QJsonRpcAbstractServer)
-    Q_DISABLE_COPY(QJsonRpcAbstractServer)
-    Q_PRIVATE_SLOT(d_func(), void _q_processMessage(const QJsonRpcMessage &message))
-
-#if !defined(USE_QT_PRIVATE_HEADERS)
-    QScopedPointer<QJsonRpcAbstractServerPrivate> d_ptr;
-#endif
 };
 
 #endif
