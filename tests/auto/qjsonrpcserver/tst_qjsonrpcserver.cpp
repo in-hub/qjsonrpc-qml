@@ -26,15 +26,6 @@
 #include <QJsonDocument>
 #else
 #include "json/qjsondocument.h"
-
-template <typename T>
-struct QScopedPointerObjectDeleteLater
-{
-    static inline void cleanup(T *pointer) { if (pointer) pointer->deleteLater(); }
-};
-
-class QObject;
-typedef QScopedPointerObjectDeleteLater<QObject> QScopedPointerDeleteLater;
 #endif
 
 #include "qjsonrpcabstractserver.h"
@@ -89,15 +80,18 @@ private Q_SLOTS:
     void cantAddServiceTwice();
 
 private:
-    QJsonRpcAbstractServer *server;
-    QScopedPointer<QJsonRpcSocket> clientSocket;
-    QScopedPointer<QJsonRpcSocket> serverSocket;
+    QJsonRpcSocket *createClient();
 
+    // client related
+    QScopedPointer<QJsonRpcSocket> clientSocket;
+    QList<QTcpSocket*> tcpSockets;
+    QList<QLocalSocket*> localSockets;
+
+    // server related
+    QJsonRpcAbstractServer *server;
     QThread serverThread;
-    QScopedPointer<QJsonRpcTcpServer, QScopedPointerDeleteLater> tcpServer;
-    QPointer<QTcpSocket> tcpSocket;
-    QScopedPointer<QJsonRpcLocalServer, QScopedPointerDeleteLater> localServer;
-    QPointer<QLocalSocket> localSocket;
+    QScopedPointer<QJsonRpcTcpServer> tcpServer;
+    QScopedPointer<QJsonRpcLocalServer> localServer;
 
 private:
     // temporarily disabled
@@ -115,9 +109,7 @@ Q_DECLARE_METATYPE(QJsonArray)
 #endif
 
 TestQJsonRpcServer::TestQJsonRpcServer()
-    : server(0),
-      clientSocket(0),
-      serverSocket(0)
+    : server(0)
 {
 }
 
@@ -139,6 +131,42 @@ void TestQJsonRpcServer::cleanupTestCase()
     QVERIFY(serverThread.wait());
 }
 
+QJsonRpcSocket *TestQJsonRpcServer::createClient()
+{
+    QFETCH_GLOBAL(ServerType, serverType);
+
+    QJsonRpcSocket *socket = 0;
+    if (serverType == LocalServer) {
+        QLocalSocket *localSocket = new QLocalSocket;
+        connect(localServer.data(), SIGNAL(clientConnected()),
+                &QTestEventLoop::instance(), SLOT(exitLoop()));
+        localSocket->connectToServer("qjsonrpc-test-local-server");
+        QTestEventLoop::instance().enterLoop(5);
+        if (QTestEventLoop::instance().timeout() || !localSocket->waitForConnected()) {
+            delete localSocket;
+            return 0;
+        }
+
+        socket = new QJsonRpcSocket(localSocket);
+        localSockets.append(localSocket);
+    } else if (serverType == TcpServer) {
+        QTcpSocket *tcpSocket = new QTcpSocket;
+        connect(tcpServer.data(), SIGNAL(clientConnected()),
+                &QTestEventLoop::instance(), SLOT(exitLoop()));
+        tcpSocket->connectToHost(QHostAddress::LocalHost, quint16(91919));
+        QTestEventLoop::instance().enterLoop(5);
+        if (QTestEventLoop::instance().timeout() || !tcpSocket->waitForConnected()) {
+            delete tcpSocket;
+            return 0;
+        }
+
+        socket = new QJsonRpcSocket(tcpSocket);
+        tcpSockets.append(tcpSocket);
+    }
+
+    return socket;
+}
+
 void TestQJsonRpcServer::init()
 {
     QFETCH_GLOBAL(ServerType, serverType);
@@ -147,62 +175,56 @@ void TestQJsonRpcServer::init()
         QVERIFY(localServer->listen("qjsonrpc-test-local-server"));
         localServer->moveToThread(&serverThread);
         server = localServer.data();
-
-        localSocket = new QLocalSocket(this);
-        connect(localServer.data(), SIGNAL(clientConnected()),
-                &QTestEventLoop::instance(), SLOT(exitLoop()));
-        localSocket->connectToServer("qjsonrpc-test-local-server");
-        QTestEventLoop::instance().enterLoop(5);
-        QVERIFY(!QTestEventLoop::instance().timeout());
-        QVERIFY(localSocket->waitForConnected());
-        clientSocket.reset(new QJsonRpcSocket(localSocket, this));
-
     } else if (serverType == TcpServer) {
         tcpServer.reset(new QJsonRpcTcpServer);
         QVERIFY(tcpServer->listen(QHostAddress::LocalHost, quint16(91919)));
         tcpServer->moveToThread(&serverThread);
         server = tcpServer.data();
-
-        tcpSocket = new QTcpSocket(this);
-        connect(tcpServer.data(), SIGNAL(clientConnected()),
-                &QTestEventLoop::instance(), SLOT(exitLoop()));
-        tcpSocket->connectToHost(QHostAddress::LocalHost, quint16(91919));
-        QTestEventLoop::instance().enterLoop(5);
-        QVERIFY(!QTestEventLoop::instance().timeout());
-        QVERIFY(tcpSocket->waitForConnected());
-        clientSocket.reset(new QJsonRpcSocket(tcpSocket, this));
     }
 
+    clientSocket.reset(createClient());
+    QVERIFY(!clientSocket.isNull());
     QCOMPARE(server->connectedClientCount(), 1);
 }
 
 void TestQJsonRpcServer::cleanup()
 {
     QFETCH_GLOBAL(ServerType, serverType);
-    if (serverType == TcpServer || serverType == LocalServer) {
-        if (!tcpSocket.isNull() && tcpSocket->state() == QAbstractSocket::ConnectedState) {
-            connect(tcpServer.data(), SIGNAL(clientDisconnected()),
-                    &QTestEventLoop::instance(), SLOT(exitLoop()));
-            tcpSocket->disconnectFromHost();
-            QTestEventLoop::instance().enterLoop(5);
-            QVERIFY(!QTestEventLoop::instance().timeout());
+    if (serverType == TcpServer) {
+        // disconnect clients
+        while (!tcpSockets.isEmpty()) {
+            QTcpSocket *tcpSocket = tcpSockets.takeFirst();
+            connect(tcpServer.data(), SIGNAL(clientDisconnected()), &QTestEventLoop::instance(), SLOT(exitLoop()));
+            if (tcpSocket->state() == QAbstractSocket::ConnectedState) {
+                tcpSocket->disconnectFromHost();
+                QTestEventLoop::instance().enterLoop(5);
+                QVERIFY(!QTestEventLoop::instance().timeout());
+            }
+
+            delete tcpSocket;
         }
 
-        if (!localSocket.isNull() && localSocket->state() == QLocalSocket::ConnectedState) {
-            connect(localServer.data(), SIGNAL(clientDisconnected()),
-                    &QTestEventLoop::instance(), SLOT(exitLoop()));
-            localSocket->disconnectFromServer();
-            QTestEventLoop::instance().enterLoop(5);
-            QVERIFY(!QTestEventLoop::instance().timeout());
+        // close server
+        tcpServer->close();
+    } else if (serverType == LocalServer) {
+        // disconnect clients
+        while (!localSockets.isEmpty()) {
+            QLocalSocket *localSocket = localSockets.takeFirst();
+            connect(localServer.data(), SIGNAL(clientDisconnected()), &QTestEventLoop::instance(), SLOT(exitLoop()));
+            if (localSocket->state() == QLocalSocket::ConnectedState) {
+                localSocket->disconnectFromServer();
+                QTestEventLoop::instance().enterLoop(5);
+                QVERIFY(!QTestEventLoop::instance().timeout());
+            }
+
+            delete localSocket;
         }
 
-        QCOMPARE(server->connectedClientCount(), 0);
+        // close server
+        localServer->close();
     }
 
-    if (serverType == TcpServer)
-        tcpServer->close();
-    else if (serverType == LocalServer)
-        localServer->close();
+    QCOMPARE(server->connectedClientCount(), 0);
 }
 
 void TestQJsonRpcServer::noParameter()
