@@ -208,7 +208,11 @@ static inline QVariant convertArgument(const QJsonValue &argument,
                                        const QJsonRpcServicePrivate::ParameterInfo &info)
 {
     if (argument.isUndefined())
-        return QVariant(info.type, NULL);
+#if QT_VERSION >= 0x050000
+        return QVariant(info.type, Q_NULLPTR);
+#else
+        return QVariant(info.type, (const void *) NULL);
+#endif
 
 #if QT_VERSION >= 0x050200
     if (info.type == QMetaType::QJsonValue || info.type == QMetaType::QVariant ||
@@ -329,8 +333,13 @@ bool QJsonRpcService::dispatch(const QJsonRpcMessage &request)
             idx = methodIndex;
             arguments.reserve(info.parameters.size());
             returnType = static_cast<QMetaType::Type>(info.returnType);
+#if QT_VERSION >= 0x050000
             returnValue = (returnType == QMetaType::Void) ?
-                            QVariant() : QVariant(returnType, NULL);
+                QVariant() : QVariant(returnType, Q_NULLPTR);
+#else
+            returnValue = (returnType == QMetaType::Void) ?
+                QVariant() : QVariant(returnType, (const void *) NULL);
+#endif
             if (returnType == QMetaType::QVariant)
                 parameters.append(&returnValue);
             else
