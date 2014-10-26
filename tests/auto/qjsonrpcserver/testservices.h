@@ -51,6 +51,10 @@ public Q_SLOTS:
     bool stringListParameter(int one, const QString &two, const QString &three, const QStringList &list);
     bool delayedResponse();
 
+    // return values
+    QJsonArray returnQJsonArray();
+    QJsonObject returnQJsonObject();
+
 private:
     int m_called;
 

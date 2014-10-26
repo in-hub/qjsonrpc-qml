@@ -73,6 +73,9 @@ private Q_SLOTS:
     void qVariantMapInvalidParam();
     void stringListParameter();
     void outputParameter();
+#if QT_VERSION >= 0x050200
+    void jsonReturnTypes();
+#endif
 
     void addRemoveService();
     void serviceWithNoGivenName();
@@ -694,6 +697,37 @@ void TestQJsonRpcServer::userDeletedReplyOnDelayedResponse()
     for (int i = 0; i < 10; i++)
         qApp->processEvents();
 }
+
+#if QT_VERSION >= 0x050200
+void TestQJsonRpcServer::jsonReturnTypes()
+{
+    QVERIFY(server->addService(new TestService));
+
+    {
+        QJsonArray array;
+        array.append(1);
+        array.append(QLatin1String("two"));
+        array.append(true);
+        QJsonRpcMessage request =
+            QJsonRpcMessage::createRequest("service.returnQJsonArray");
+        QJsonRpcMessage response = clientSocket->sendMessageBlocking(request);
+        QVERIFY(response.type() != QJsonRpcMessage::Error);
+        QCOMPARE(response.result().toArray(), array);
+    }
+
+    {
+        QJsonObject object;
+        object.insert("one", QLatin1String("one"));
+        object.insert("two", 2);
+        object.insert("three", true);
+        QJsonRpcMessage request =
+            QJsonRpcMessage::createRequest("service.returnQJsonObject");
+        QJsonRpcMessage response = clientSocket->sendMessageBlocking(request);
+        QVERIFY(response.type() != QJsonRpcMessage::Error);
+        QCOMPARE(response.result().toObject(), object);
+    }
+}
+#endif
 
 void TestQJsonRpcServer::addRemoveService()
 {

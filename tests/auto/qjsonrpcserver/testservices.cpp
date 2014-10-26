@@ -146,6 +146,24 @@ bool TestService::delayedResponse()
     return true;
 }
 
+QJsonArray TestService::returnQJsonArray()
+{
+    QJsonArray array;
+    array.append(1);
+    array.append(QLatin1String("two"));
+    array.append(true);
+    return array;
+}
+
+QJsonObject TestService::returnQJsonObject()
+{
+    QJsonObject object;
+    object.insert("one", QLatin1String("one"));
+    object.insert("two", 2);
+    object.insert("three", true);
+    return object;
+}
+
 TestNumberParamsService::TestNumberParamsService(QObject *parent)
     : QJsonRpcService(parent),
       m_called(0)

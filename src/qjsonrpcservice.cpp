@@ -255,6 +255,11 @@ static inline QVariant convertArgument(const QJsonValue &argument,
 static inline QJsonValue convertReturnValue(QVariant &returnValue)
 {
 #if QT_VERSION >= 0x050200
+    if (static_cast<int>(returnValue.type()) == qMetaTypeId<QJsonObject>())
+        return QJsonValue(returnValue.toJsonObject());
+    else if (static_cast<int>(returnValue.type()) == qMetaTypeId<QJsonArray>())
+        return QJsonValue(returnValue.toJsonArray());
+
     switch (returnValue.type()) {
     case QMetaType::Bool:
     case QMetaType::Int:
