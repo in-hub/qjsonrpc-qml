@@ -29,10 +29,12 @@
 
 class TestQJsonRpcService: public QObject
 {
-    Q_OBJECT  
+    Q_OBJECT
 private slots:
+    void dispatch_data();
     void dispatch();
     void ambiguousDispatch();
+    void dispatchSignals_data();
     void dispatchSignals();
 
 };
@@ -93,42 +95,62 @@ public:
     TestServiceProvider() {}
 };
 
+void TestQJsonRpcService::dispatch_data()
+{
+    QTest::addColumn<QJsonRpcMessage>("request");
+    QTest::addColumn<bool>("shouldSucceed");
+
+    {
+        QJsonRpcMessage request =
+            QJsonRpcMessage::createRequest("service.testMethod", QLatin1String("testParam"));
+        QTest::newRow("valid-request-dispatch") << request << true;
+
+        QJsonRpcMessage response = request.createResponse(QLatin1String("testResult"));
+        QTest::newRow("invalid-response-dispatch") << response << false;
+    }
+
+    {
+        QJsonObject namedParameters;
+        namedParameters.insert("string", QLatin1String("testParam"));
+        QJsonRpcMessage request =
+            QJsonRpcMessage::createRequest("service.testMethod", namedParameters);
+        QTest::newRow("valid-request-dispatch-with-named-parameters") << request << true;
+    }
+
+    {
+        QJsonObject invalidNamedParameters;
+        invalidNamedParameters.insert("testParameter", QLatin1String("testParam"));
+        QJsonRpcMessage request =
+            QJsonRpcMessage::createRequest("service.testMethod", invalidNamedParameters);
+        QTest::newRow("invalid-request-dispatch-with-named-parameters") << request << false;
+    }
+
+    {
+        QJsonRpcMessage request =
+            QJsonRpcMessage::createNotification("service.testMethod", QLatin1String("testParam"));
+        QTest::newRow("valid-notification-dispatch") << request << true;
+    }
+
+    {
+        QJsonObject namedParameters;
+        namedParameters.insert("string", QLatin1String("testParam"));
+        QJsonRpcMessage request =
+            QJsonRpcMessage::createNotification("service.testMethod", namedParameters);
+        QTest::newRow("valid-notification-dispatch-with-named-parameters") << request << true;
+    }
+
+    QTest::newRow("invalid-dispatch") << QJsonRpcMessage() << false;
+}
+
 void TestQJsonRpcService::dispatch()
 {
+    QFETCH(QJsonRpcMessage, request);
+    QFETCH(bool, shouldSucceed);
+
     TestServiceProvider provider;
     TestService service;
     provider.addService(&service);
-
-    QJsonRpcMessage validRequestDispatch =
-        QJsonRpcMessage::createRequest("service.testMethod", QLatin1String("testParam"));
-    QVERIFY(service.testDispatch(validRequestDispatch));
-
-    QJsonObject namedParameters;
-    namedParameters.insert("string", QLatin1String("testParam"));
-    QJsonRpcMessage validRequestDispatchWithNamedParameters =
-        QJsonRpcMessage::createRequest("service.testMethod", namedParameters);
-    QVERIFY(service.testDispatch(validRequestDispatchWithNamedParameters));
-
-    QJsonObject invalidNamedParameters;
-    invalidNamedParameters.insert("testParameter", QLatin1String("testParam"));
-    QJsonRpcMessage invalidRequestDispatchWithNamedParameters =
-        QJsonRpcMessage::createRequest("service.testMethod", invalidNamedParameters);
-    QVERIFY(!service.testDispatch(invalidRequestDispatchWithNamedParameters));
-
-    QJsonRpcMessage validNotificationDispatch =
-        QJsonRpcMessage::createNotification("service.testMethod", QLatin1String("testParam"));
-    QVERIFY(service.testDispatch(validNotificationDispatch));
-
-    QJsonRpcMessage validNotificationDispatchWithNamedParameters =
-        QJsonRpcMessage::createNotification("service.testMethod", namedParameters);
-    QVERIFY(service.testDispatch(validNotificationDispatchWithNamedParameters));
-
-    QJsonRpcMessage invalidResponseDispatch =
-        validRequestDispatch.createResponse(QLatin1String("testResult"));
-    QVERIFY(!service.testDispatch(invalidResponseDispatch));
-
-    QJsonRpcMessage invalidDispatch;
-    QVERIFY(!service.testDispatch(invalidDispatch));
+    QCOMPARE(service.testDispatch(request), shouldSucceed);
 }
 
 void TestQJsonRpcService::ambiguousDispatch()
@@ -160,23 +182,38 @@ void TestQJsonRpcService::ambiguousDispatch()
     QCOMPARE(service.variantCount(), 1);
 }
 
+void TestQJsonRpcService::dispatchSignals_data()
+{
+    QTest::addColumn<QJsonRpcMessage>("request");
+    QTest::addColumn<bool>("shouldSucceed");
+
+    {
+        QJsonRpcMessage request = QJsonRpcMessage::createRequest("service.testSignal");
+        QTest::newRow("valid-request-signal-dispatch") << request << true;
+    }
+
+    {
+        QJsonRpcMessage request =
+            QJsonRpcMessage::createRequest("service.testSignalWithParameter", QLatin1String("testParam"));
+        QTest::newRow("valid-request-signal-with-param-dispatch") << request << true;
+    }
+
+    {
+        QJsonRpcMessage request =
+            QJsonRpcMessage::createRequest("service.testSignal", QLatin1String("testParam"));
+        QTest::newRow("invalid-request-signal-dispatch") << request << false;
+    }
+}
+
 void TestQJsonRpcService::dispatchSignals()
 {
+    QFETCH(QJsonRpcMessage, request);
+    QFETCH(bool, shouldSucceed);
+
     TestServiceProvider provider;
     TestService service;
     provider.addService(&service);
-
-    QJsonRpcMessage validRequestSignalDispatch =
-        QJsonRpcMessage::createRequest("service.testSignal");
-    QVERIFY(service.testDispatch(validRequestSignalDispatch));
-
-    QJsonRpcMessage validRequestSignalWithParamDispatch =
-        QJsonRpcMessage::createRequest("service.testSignalWithParameter", QLatin1String("testParam"));
-    QVERIFY(service.testDispatch(validRequestSignalWithParamDispatch));
-
-    QJsonRpcMessage invalidRequestSignalDispatch =
-        QJsonRpcMessage::createRequest("service.testSignal", QLatin1String("testParam"));
-    QCOMPARE(service.testDispatch(invalidRequestSignalDispatch), false);
+    QCOMPARE(service.testDispatch(request), shouldSucceed);
 }
 
 QTEST_MAIN(TestQJsonRpcService)
