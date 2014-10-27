@@ -46,6 +46,7 @@
 
 #include <QtCore/qglobal.h>
 #include <QtCore/qstring.h>
+#include <QtCore/qmetatype.h>
 
 QT_BEGIN_NAMESPACE
 
@@ -188,6 +189,8 @@ private:
     uint is_object : 1;
     uint index : 31;
 };
+
+Q_DECLARE_METATYPE(QJsonValue)
 
 #if !defined(QT_NO_DEBUG_STREAM) && !defined(QT_JSON_READONLY)
 QJSON_EXPORT QDebug operator<<(QDebug, const QJsonValue &);

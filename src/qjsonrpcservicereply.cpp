@@ -41,6 +41,12 @@ QJsonRpcServiceReply::QJsonRpcServiceReply(QJsonRpcServiceReplyPrivate &dd, QObj
 {
 }
 
+QJsonRpcMessage QJsonRpcServiceReply::request() const
+{
+    Q_D(const QJsonRpcServiceReply);
+    return d->request;
+}
+
 QJsonRpcMessage QJsonRpcServiceReply::response() const
 {
     Q_D(const QJsonRpcServiceReply);

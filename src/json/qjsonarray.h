@@ -44,6 +44,7 @@
 
 #include "qjsonvalue.h"
 
+#include <QtCore/qmetatype.h>
 #include <QtCore/qiterator.h>
 
 
@@ -220,6 +221,8 @@ private:
     QJsonPrivate::Data *d;
     QJsonPrivate::Array *a;
 };
+
+Q_DECLARE_METATYPE(QJsonArray)
 
 #if !defined(QT_NO_DEBUG_STREAM) && !defined(QT_JSON_READONLY)
 QJSON_EXPORT QDebug operator<<(QDebug, const QJsonArray &);

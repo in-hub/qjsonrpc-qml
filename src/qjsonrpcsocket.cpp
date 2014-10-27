@@ -105,11 +105,6 @@ QJsonRpcAbstractSocket::QJsonRpcAbstractSocket(QJsonRpcAbstractSocketPrivate &dd
 {
 }
 
-bool QJsonRpcAbstractSocket::isValid() const
-{
-    return false;
-}
-
 QJsonRpcSocket::QJsonRpcSocket(QIODevice *device, QObject *parent)
 #if defined(USE_QT_PRIVATE_HEADERS)
     : QJsonRpcAbstractSocket(*new QJsonRpcSocketPrivate(this), parent)
@@ -187,6 +182,7 @@ QJsonRpcServiceReply *QJsonRpcSocket::sendMessage(const QJsonRpcMessage &message
 
     notify(message);
     QPointer<QJsonRpcServiceReply> reply(new QJsonRpcServiceReply);
+    reply->d_func()->request = message;
     d->replies.insert(message.id(), reply);
     return reply;
 }

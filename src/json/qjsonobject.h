@@ -44,6 +44,7 @@
 
 #include "qjsonvalue.h"
 
+#include <QtCore/qmetatype.h>
 #include <QtCore/qiterator.h>
 
 QT_BEGIN_NAMESPACE
@@ -206,6 +207,8 @@ private:
     QJsonPrivate::Data *d;
     QJsonPrivate::Object *o;
 };
+
+Q_DECLARE_METATYPE(QJsonObject)
 
 #if !defined(QT_NO_DEBUG_STREAM) && !defined(QT_JSON_READONLY)
 QJSON_EXPORT QDebug operator<<(QDebug, const QJsonObject &);

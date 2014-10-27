@@ -33,7 +33,7 @@ public:
     explicit QJsonRpcAbstractSocket(QObject *parent = 0);
     ~QJsonRpcAbstractSocket();
 
-    virtual bool isValid() const;
+    virtual bool isValid() const = 0;
 
 Q_SIGNALS:
     void messageReceived(const QJsonRpcMessage &message);

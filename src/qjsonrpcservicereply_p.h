@@ -28,6 +28,7 @@ class QJsonRpcServiceReplyPrivate
 #endif
 {
 public:
+    QJsonRpcMessage request;
     QJsonRpcMessage response;
 };
 

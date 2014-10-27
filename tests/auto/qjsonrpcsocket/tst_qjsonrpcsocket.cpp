@@ -66,12 +66,14 @@ public:
 class TestQJsonRpcSocket: public QObject
 {
     Q_OBJECT
-private Q_SLOTS:
-    void initTestCase();
-    void cleanupTestCase();
-    void init();
-    void cleanup();
+public:
+    enum InvokeType {
+        SendMessage,
+        InvokeRemoteMethod
+    };
 
+private Q_SLOTS:
+    void initTestCase_data();
     void noParameters();
     void multiParameter();
     void notification();
@@ -82,26 +84,19 @@ private:
     // benchmark parsing speed
     void jsonParsingBenchmark();
 };
+Q_DECLARE_METATYPE(TestQJsonRpcSocket::InvokeType)
 
-void TestQJsonRpcSocket::initTestCase()
+void TestQJsonRpcSocket::initTestCase_data()
 {
-    qRegisterMetaType<QJsonRpcMessage>("QJsonRpcMessage");
-}
-
-void TestQJsonRpcSocket::cleanupTestCase()
-{
-}
-
-void TestQJsonRpcSocket::init()
-{
-}
-
-void TestQJsonRpcSocket::cleanup()
-{
+    QTest::addColumn<InvokeType>("invokeType");
+    QTest::newRow("sendMessage") << SendMessage;
+    QTest::newRow("invokeRemoteMethod") << InvokeRemoteMethod;
 }
 
 void TestQJsonRpcSocket::noParameters()
 {
+    QFETCH_GLOBAL(InvokeType, invokeType);
+
     QBuffer buffer;
     buffer.open(QIODevice::ReadWrite);
     QJsonRpcSocket serviceSocket(&buffer, this);
@@ -109,10 +104,15 @@ void TestQJsonRpcSocket::noParameters()
                                   SIGNAL(messageReceived(QJsonRpcMessage)));
     QVERIFY(serviceSocket.isValid());
 
-    QJsonRpcMessage request = QJsonRpcMessage::createRequest(QString("test.noParam"));
-
+    QJsonRpcMessage request;
     QScopedPointer<QJsonRpcServiceReply> reply;
-    reply.reset(serviceSocket.sendMessage(request));
+    if (invokeType == SendMessage) {
+        request = QJsonRpcMessage::createRequest(QString("test.noParam"));
+        reply.reset(serviceSocket.sendMessage(request));
+    } else if (invokeType == InvokeRemoteMethod) {
+        reply.reset(serviceSocket.invokeRemoteMethod("test.noParam"));
+        request = reply->request();
+    }
 
     QJsonRpcMessage bufferMessage = QJsonRpcMessage::fromJson(buffer.data());
     QCOMPARE(request.id(), bufferMessage.id());
@@ -124,6 +124,8 @@ void TestQJsonRpcSocket::noParameters()
 
 void TestQJsonRpcSocket::multiParameter()
 {
+    QFETCH_GLOBAL(InvokeType, invokeType);
+
     QBuffer buffer;
     buffer.open(QIODevice::ReadWrite);
     QJsonRpcSocket serviceSocket(&buffer, this);
@@ -134,11 +136,20 @@ void TestQJsonRpcSocket::multiParameter()
     QJsonArray params;
     params.append(false);
     params.append(true);
-    QJsonRpcMessage request =
-        QJsonRpcMessage::createRequest("test.multiParam", params);
-
+    QJsonRpcMessage request;
     QScopedPointer<QJsonRpcServiceReply> reply;
-    reply.reset(serviceSocket.sendMessage(request));
+    if (invokeType == SendMessage) {
+        request = QJsonRpcMessage::createRequest("test.multiParam", params);
+        reply.reset(serviceSocket.sendMessage(request));
+    } else if (invokeType == InvokeRemoteMethod) {
+#if QT_VERSION <= 0x050000
+        QVariant paramsVariant = QVariant::fromValue(params);
+        reply.reset(serviceSocket.invokeRemoteMethod("test.multiParam", paramsVariant));
+#else
+        reply.reset(serviceSocket.invokeRemoteMethod("test.multiParam", params));
+#endif
+        request = reply->request();
+    }
 
     QJsonRpcMessage bufferMessage = QJsonRpcMessage::fromJson(buffer.data());
     QCOMPARE(request.id(), bufferMessage.id());
@@ -150,6 +161,8 @@ void TestQJsonRpcSocket::multiParameter()
 
 void TestQJsonRpcSocket::notification()
 {
+    QFETCH_GLOBAL(InvokeType, invokeType);
+
     QBuffer buffer;
     buffer.open(QIODevice::ReadWrite);
     QJsonRpcSocket serviceSocket(&buffer, this);
@@ -157,11 +170,15 @@ void TestQJsonRpcSocket::notification()
                                   SIGNAL(messageReceived(QJsonRpcMessage)));
     QVERIFY(serviceSocket.isValid());
 
-    QJsonRpcMessage notification =
-        QJsonRpcMessage::createNotification("test.notify");
-
+    QJsonRpcMessage notification;
     QScopedPointer<QJsonRpcServiceReply> reply;
-    reply.reset(serviceSocket.sendMessage(notification));
+    if (invokeType == SendMessage) {
+        notification = QJsonRpcMessage::createRequest("test.notify");
+        reply.reset(serviceSocket.sendMessage(notification));
+    } else if (invokeType == InvokeRemoteMethod) {
+        reply.reset(serviceSocket.invokeRemoteMethod("test.notify"));
+        notification = reply->request();
+    }
 
     QJsonRpcMessage bufferMessage = QJsonRpcMessage::fromJson(buffer.data());
     QCOMPARE(notification.id(), bufferMessage.id());

@@ -76,6 +76,7 @@ private Q_SLOTS:
 #if QT_VERSION >= 0x050200
     void jsonReturnTypes();
 #endif
+    void notifyServiceSocket();
 
     void addRemoveService();
     void serviceWithNoGivenName();
@@ -106,10 +107,6 @@ private:
 };
 Q_DECLARE_METATYPE(TestQJsonRpcServer::ServerType)
 Q_DECLARE_METATYPE(QJsonRpcMessage::Type)
-
-#if QT_VERSION < 0x050000
-Q_DECLARE_METATYPE(QJsonArray)
-#endif
 
 TestQJsonRpcServer::TestQJsonRpcServer()
     : server(0)
@@ -509,7 +506,7 @@ void TestQJsonRpcServer::notifyConnectedClients()
 
 void TestQJsonRpcServer::numberParameters()
 {
-    TestNumberParamsService *service = new TestNumberParamsService;
+    TestService *service = new TestService;
     QVERIFY(server->addService(service));
 
     QJsonArray params;
@@ -523,7 +520,7 @@ void TestQJsonRpcServer::numberParameters()
 
 void TestQJsonRpcServer::hugeResponse()
 {
-    QVERIFY(server->addService(new TestHugeResponseService));
+    QVERIFY(server->addService(new TestService));
     QSignalSpy spyMessageReceived(clientSocket.data(), SIGNAL(messageReceived(QJsonRpcMessage)));
     QJsonRpcMessage request = QJsonRpcMessage::createRequest("service.hugeResponse");
     QJsonRpcMessage response = clientSocket->sendMessageBlocking(request);
@@ -545,54 +542,59 @@ void TestQJsonRpcServer::complexMethod()
 
 void TestQJsonRpcServer::defaultParameters()
 {
-    QVERIFY(server->addService(new TestDefaultParametersService));
+    QVERIFY(server->addService(new TestService));
 
     // test without name
     QJsonRpcMessage noNameRequest =
-        QJsonRpcMessage::createRequest("service.testMethod");
+        QJsonRpcMessage::createRequest("service.defaultParametersMethod");
     QJsonRpcMessage response = clientSocket->sendMessageBlocking(noNameRequest);
     QVERIFY(response.type() != QJsonRpcMessage::Error);
     QCOMPARE(response.result().toString(), QLatin1String("empty string"));
 
     // test with name
     QJsonRpcMessage nameRequest =
-        QJsonRpcMessage::createRequest("service.testMethod", QLatin1String("matt"));
+        QJsonRpcMessage::createRequest("service.defaultParametersMethod", QLatin1String("matt"));
     response = clientSocket->sendMessageBlocking(nameRequest);
     QVERIFY(response.type() != QJsonRpcMessage::Error);
     QCOMPARE(response.result().toString(), QLatin1String("hello matt"));
 
     // test multiparameter
     QJsonRpcMessage konyRequest =
-        QJsonRpcMessage::createRequest("service.testMethod2", QLatin1String("KONY"));
+        QJsonRpcMessage::createRequest("service.defaultParametersMethod2", QLatin1String("KONY"));
     response = clientSocket->sendMessageBlocking(konyRequest);
     QVERIFY(response.type() != QJsonRpcMessage::Error);
     QCOMPARE(response.result().toString(), QLatin1String("KONY2012"));
 }
 
-/*
 void TestQJsonRpcServer::notifyServiceSocket()
 {
+    QFETCH_GLOBAL(ServerType, serverType);
+    QScopedPointer<QJsonRpcServiceSocket> serviceSocket;
 
-    // Connect to the socket.
-    QLocalSocket socket;
-    socket.connectToServer("test");
-    QVERIFY(socket.waitForConnected());
+    clientSocket.reset();   // we only want a service socket, this would override that
+    if (serverType == TcpServer) {
+        serviceSocket.reset(new QJsonRpcServiceSocket(tcpSockets.first()));
+    } else if (serverType == LocalServer) {
+        serviceSocket.reset(new QJsonRpcServiceSocket(localSockets.first()));
+    }
 
-    QJsonRpcServiceSocket serviceSocket(&socket);
-    TestNumberParamsService *service = new TestNumberParamsService;
-    serviceSocket.addService(service);
+    TestService *service = new TestService;
+    QVERIFY(serviceSocket->addService(service));
     QCOMPARE(service->callCount(), 0);
+    connect(service, SIGNAL(numberParametersCalled()), &QTestEventLoop::instance(), SLOT(exitLoop()), Qt::QueuedConnection);
 
-    QEventLoop test;
-    QTimer::singleShot(10, &test, SLOT(quit()));
-    test.exec();
-    serviceProvider.notifyConnectedClients("service.numberParameters", QJsonArray() << 10 << 3.14159);
-    QTimer::singleShot(10, &test, SLOT(quit()));
-    test.exec();
-
+    QJsonArray params;
+    params.append(10);
+    params.append(3.14159);
+    QJsonRpcMessage notification = QJsonRpcMessage::createNotification("service.numberParameters", params);
+    if (serverType == TcpServer)
+        QMetaObject::invokeMethod(tcpServer.data(), "notifyConnectedClients", Q_ARG(QJsonRpcMessage, notification));
+    else if (serverType == LocalServer)
+        QMetaObject::invokeMethod(localServer.data(), "notifyConnectedClients", Q_ARG(QJsonRpcMessage, notification));
+    QTestEventLoop::instance().enterLoop(5);
+    QVERIFY(!QTestEventLoop::instance().timeout());
     QCOMPARE(service->callCount(), 1);
 }
-*/
 
 /*
 Q_DECLARE_METATYPE(QList<int>)

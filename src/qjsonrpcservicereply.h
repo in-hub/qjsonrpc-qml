@@ -31,6 +31,7 @@ public:
     explicit QJsonRpcServiceReply(QObject *parent = 0);
     virtual ~QJsonRpcServiceReply();
 
+    QJsonRpcMessage request() const;
     QJsonRpcMessage response() const;
 
 Q_SIGNALS:
@@ -41,6 +42,7 @@ protected:
     Q_DISABLE_COPY(QJsonRpcServiceReply)
     QJsonRpcServiceReply(QJsonRpcServiceReplyPrivate &dd, QObject *parent = 0);
     friend class QJsonRpcSocketPrivate;
+    friend class QJsonRpcSocket;
 
 #if !defined(USE_QT_PRIVATE_HEADERS)
     QScopedPointer<QJsonRpcServiceReplyPrivate> d_ptr;

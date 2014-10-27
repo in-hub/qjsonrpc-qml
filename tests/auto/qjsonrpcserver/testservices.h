@@ -29,16 +29,22 @@ public:
     void resetCount();
     int callCount() const;
 
+Q_SIGNALS:
+    void numberParametersCalled();
+
 public Q_SLOTS:
     void noParam() const;
     QString singleParam(const QString &string) const;
     QString multipleParam(const QString &first, const QString &second, const QString &third) const;
-    void numberParameters(int intParam, double doubleParam, float floatParam);
+    void numberParameters(int intParam, double doubleParam);
     bool variantParameter(const QVariant &variantParam) const;
     QVariantList variantListParameter(const QVariantList &data);
     QVariant variantStringResult();
     QVariantList variantListResult();
     QVariantMap variantMapResult();
+    QVariantMap hugeResponse();
+    QString defaultParametersMethod(const QString &name = QString());
+    QString defaultParametersMethod2(const QString &name = QString(), int year = 2012);
 
     // NOTE: suppress binding warnings
     // bool methodWithListOfInts(const QList<int> &list);
@@ -57,34 +63,6 @@ public Q_SLOTS:
 
 private:
     int m_called;
-
-};
-
-class TestNumberParamsService : public QJsonRpcService
-{
-    Q_OBJECT
-    Q_CLASSINFO("serviceName", "service")
-public:
-    TestNumberParamsService(QObject *parent = 0);
-    int callCount() const;
-
-public Q_SLOTS:
-    void numberParameters(int intParam, double doubleParam);
-
-private:
-    int m_called;
-
-};
-
-class TestHugeResponseService : public QJsonRpcService
-{
-    Q_OBJECT
-    Q_CLASSINFO("serviceName", "service")
-public:
-    TestHugeResponseService(QObject *parent = 0);
-
-public Q_SLOTS:
-    QVariantMap hugeResponse();
 
 };
 
@@ -110,32 +88,5 @@ public Q_SLOTS:
     void testMethod();
 };
 
-class TestDefaultParametersService : public QJsonRpcService
-{
-    Q_OBJECT
-    Q_CLASSINFO("serviceName", "service")
-public:
-    TestDefaultParametersService(QObject *parent = 0);
-
-public Q_SLOTS:
-    QString testMethod(const QString &name = QString());
-    QString testMethod2(const QString &name = QString(), int year = 2012);
-};
-
-/*
-class TestNotifyService : public QJsonRpcService
-{
-    Q_OBJECT
-    Q_CLASSINFO("serviceName", "service")
-public:
-    TestNotifyService(QObject *parent = 0)
-        : QJsonRpcService(parent)
-    {
-    }
-
-public Q_SLOTS:
-    void testMethod() { qJsonRpcDebug() << "text"; }
-};
-*/
 
 #endif  // TESTSERVICES_H

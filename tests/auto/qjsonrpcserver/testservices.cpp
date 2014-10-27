@@ -49,11 +49,12 @@ QString TestService::multipleParam(const QString &first, const QString &second, 
     return first + second + third;
 }
 
-void TestService::numberParameters(int intParam, double doubleParam, float floatParam)
+void TestService::numberParameters(int intParam, double doubleParam)
 {
-    Q_UNUSED(intParam)
-    Q_UNUSED(doubleParam)
-    Q_UNUSED(floatParam)
+    if (intParam == 10 && doubleParam == 3.14159) {
+        m_called++;
+        Q_EMIT numberParametersCalled();
+    }
 }
 
 bool TestService::variantParameter(const QVariant &variantParam) const
@@ -164,29 +165,7 @@ QJsonObject TestService::returnQJsonObject()
     return object;
 }
 
-TestNumberParamsService::TestNumberParamsService(QObject *parent)
-    : QJsonRpcService(parent),
-      m_called(0)
-{
-}
-
-int TestNumberParamsService::callCount() const
-{
-    return m_called;
-}
-
-void TestNumberParamsService::numberParameters(int intParam, double doubleParam)
-{
-    if (intParam == 10 && doubleParam == 3.14159)
-        m_called++;
-}
-
-TestHugeResponseService::TestHugeResponseService(QObject *parent)
-    : QJsonRpcService(parent)
-{
-}
-
-QVariantMap TestHugeResponseService::hugeResponse()
+QVariantMap TestService::hugeResponse()
 {
     QVariantMap result;
     for (int i = 0; i < 1000; i++) {
@@ -195,6 +174,18 @@ QVariantMap TestHugeResponseService::hugeResponse()
     }
 
     return result;
+}
+
+QString TestService::defaultParametersMethod(const QString &name)
+{
+    if (name.isEmpty())
+        return "empty string";
+    return QString("hello %1").arg(name);
+}
+
+QString TestService::defaultParametersMethod2(const QString &name, int year)
+{
+    return QString("%1%2").arg(name).arg(year);
 }
 
 TestServiceWithoutServiceName::TestServiceWithoutServiceName(QObject *parent)
@@ -214,21 +205,4 @@ TestComplexMethodService::TestComplexMethodService(QObject *parent)
 
 void TestComplexMethodService::testMethod()
 {
-}
-
-TestDefaultParametersService::TestDefaultParametersService(QObject *parent)
-    : QJsonRpcService(parent)
-{
-}
-
-QString TestDefaultParametersService::testMethod(const QString &name)
-{
-    if (name.isEmpty())
-        return "empty string";
-    return QString("hello %1").arg(name);
-}
-
-QString TestDefaultParametersService::testMethod2(const QString &name, int year)
-{
-    return QString("%1%2").arg(name).arg(year);
 }
