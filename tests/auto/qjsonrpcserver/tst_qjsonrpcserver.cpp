@@ -77,6 +77,7 @@ private Q_SLOTS:
     void jsonReturnTypes();
 #endif
     void notifyServiceSocket();
+    void userDeletesReplyOnDelayedResponse();
 
     void addRemoveService();
     void serviceWithNoGivenName();
@@ -99,11 +100,7 @@ private:
 
 private:
     // temporarily disabled
-    void userDeletedReplyOnDelayedResponse();
-
     // void testListOfInts();
-    // void notifyServiceSocket();
-
 };
 Q_DECLARE_METATYPE(TestQJsonRpcServer::ServerType)
 Q_DECLARE_METATYPE(QJsonRpcMessage::Type)
@@ -685,19 +682,18 @@ void TestQJsonRpcServer::outputParameter()
     QCOMPARE(response.result().toString(), QLatin1String("Hello Sherlock Holmes"));
 }
 
-void TestQJsonRpcServer::userDeletedReplyOnDelayedResponse()
+void TestQJsonRpcServer::userDeletesReplyOnDelayedResponse()
 {
-    // NOTE: I'm not sure this is a valid test, look into this
-
     QVERIFY(server->addService(new TestService));
     QJsonRpcMessage request =
         QJsonRpcMessage::createRequest("service.delayedResponse");
+
+    connect(clientSocket.data(), SIGNAL(messageReceived(QJsonRpcMessage)),
+            &QTestEventLoop::instance(), SLOT(exitLoop()));
     QJsonRpcServiceReply *reply = clientSocket->sendMessage(request);
     delete reply;
-
-    // this is cheesy...
-    for (int i = 0; i < 10; i++)
-        qApp->processEvents();
+    QTestEventLoop::instance().enterLoop(5);
+    QVERIFY(!QTestEventLoop::instance().timeout());
 }
 
 #if QT_VERSION >= 0x050200
