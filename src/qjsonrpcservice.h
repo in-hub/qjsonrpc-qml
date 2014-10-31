@@ -18,9 +18,32 @@
 #define QJSONRPCSERVICE_H
 
 #include <QVariant>
+#include <QPointer>
+
 #include "qjsonrpcmessage.h"
 
 class QJsonRpcAbstractSocket;
+class QJsonRpcServiceRequestPrivate;
+class QJsonRpcServiceRequest
+{
+public:
+    QJsonRpcServiceRequest();
+    QJsonRpcServiceRequest(const QJsonRpcServiceRequest &other);
+    QJsonRpcServiceRequest(const QJsonRpcMessage &request, QJsonRpcAbstractSocket *socket);
+    QJsonRpcServiceRequest &operator=(const QJsonRpcServiceRequest &other);
+    ~QJsonRpcServiceRequest();
+
+    bool isValid() const;
+    QJsonRpcMessage request() const;
+    QJsonRpcAbstractSocket *socket() const;
+
+    bool respond(const QJsonRpcMessage &response);
+    bool respond(QVariant returnValue);
+
+private:
+    QSharedDataPointer<QJsonRpcServiceRequestPrivate> d;
+};
+
 class QJsonRpcServiceProvider;
 class QJsonRpcServicePrivate;
 class QJSONRPC_EXPORT QJsonRpcService : public QObject
@@ -36,7 +59,8 @@ Q_SIGNALS:
     void notifyConnectedClients(const QString &method, const QJsonArray &params = QJsonArray());
 
 protected:
-    QJsonRpcAbstractSocket *senderSocket() const;
+    QJsonRpcServiceRequest currentRequest() const;
+    void beginDelayedResponse();
 
 protected Q_SLOTS:
     bool dispatch(const QJsonRpcMessage &request);

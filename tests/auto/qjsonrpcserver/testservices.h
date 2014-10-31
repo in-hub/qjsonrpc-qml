@@ -88,5 +88,28 @@ public Q_SLOTS:
     void testMethod();
 };
 
+class TestDelayedResponseService : public QJsonRpcService
+{
+    Q_OBJECT
+    Q_CLASSINFO("serviceName", "service")
+public:
+    TestDelayedResponseService(QObject *parent = 0);
+
+Q_SIGNALS:
+    void responseResult(bool result);
+
+public Q_SLOTS:
+    void delayedResponse();
+    void delayedResponseWithClosedSocket();
+    QString immediateResponse();
+
+private Q_SLOTS:
+    void delayedResponseComplete();
+    void delayedResponseWithClosedSocketComplete();
+
+private:
+    QJsonRpcServiceRequest m_request;
+
+};
 
 #endif  // TESTSERVICES_H

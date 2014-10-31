@@ -16,7 +16,10 @@
  */
 #include <QEventLoop>
 #include <QTimer>
+#include <QDebug>
+#include <QtTest>
 
+#include "qjsonrpcsocket.h"
 #include "testservices.h"
 
 TestService::TestService(QObject *parent)
@@ -205,4 +208,43 @@ TestComplexMethodService::TestComplexMethodService(QObject *parent)
 
 void TestComplexMethodService::testMethod()
 {
+}
+
+TestDelayedResponseService::TestDelayedResponseService(QObject *parent)
+    : QJsonRpcService(parent)
+{
+}
+
+void TestDelayedResponseService::delayedResponse()
+{
+    QVERIFY(currentRequest().isValid());
+    beginDelayedResponse();
+    m_request = currentRequest();
+    QTimer::singleShot(250, this, SLOT(delayedResponseComplete()));
+}
+
+void TestDelayedResponseService::delayedResponseWithClosedSocket()
+{
+    QVERIFY(currentRequest().isValid());
+    beginDelayedResponse();
+    m_request = currentRequest();
+    QTimer::singleShot(250, this, SLOT(delayedResponseWithClosedSocketComplete()));
+}
+
+QString TestDelayedResponseService::immediateResponse()
+{
+    return QLatin1String("immediate");
+}
+
+void TestDelayedResponseService::delayedResponseComplete()
+{
+    m_request.respond(QLatin1String("delayed"));
+}
+
+void TestDelayedResponseService::delayedResponseWithClosedSocketComplete()
+{
+    QJsonRpcMessage requestMessage = m_request.request();
+    QJsonRpcMessage responseMessage = requestMessage.createResponse(QLatin1String("delayed"));
+    bool result = m_request.respond(responseMessage);
+    Q_EMIT responseResult(result);
 }

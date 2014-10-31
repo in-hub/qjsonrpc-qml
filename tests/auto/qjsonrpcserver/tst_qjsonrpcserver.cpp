@@ -78,6 +78,8 @@ private Q_SLOTS:
 #endif
     void notifyServiceSocket();
     void userDeletesReplyOnDelayedResponse();
+    void delayedResponseBasic();
+    void delayedResponseSocketClosed();
 
     void addRemoveService();
     void serviceWithNoGivenName();
@@ -726,6 +728,92 @@ void TestQJsonRpcServer::jsonReturnTypes()
     }
 }
 #endif
+
+class QJsonRpcServiceReplySpy : public QObject
+{
+    Q_OBJECT
+public:
+    explicit QJsonRpcServiceReplySpy(int expectedReplies, QObject *parent = 0)
+        : QObject(parent),
+          m_expectedReplies(expectedReplies)
+    {
+    }
+
+    QList<QJsonRpcMessage> responses() const { return m_responses; }
+
+Q_SIGNALS:
+    void finished();
+
+public Q_SLOTS:
+    void replyFinished() {
+        QJsonRpcServiceReply *reply = qobject_cast<QJsonRpcServiceReply*>(sender());
+        if (!reply)
+            return;
+
+        m_responses.append(reply->response());
+        reply->deleteLater();
+
+        if (m_responses.size() == m_expectedReplies)
+            Q_EMIT finished();
+    }
+
+private:
+    int m_expectedReplies;
+    QList<QJsonRpcMessage> m_responses;
+
+};
+
+void TestQJsonRpcServer::delayedResponseBasic()
+{
+    QVERIFY(server->addService(new TestDelayedResponseService));
+    QJsonRpcServiceReplySpy spy(6);
+    connect(&spy, SIGNAL(finished()), &QTestEventLoop::instance(), SLOT(exitLoop()));
+
+    int delayedMessageId = 0;
+    {
+        QJsonRpcMessage request = QJsonRpcMessage::createRequest("service.delayedResponse");
+        QJsonRpcServiceReply *reply = clientSocket->sendMessage(request);
+        connect(reply, SIGNAL(finished()), &spy, SLOT(replyFinished()));
+        delayedMessageId = request.id();
+    }
+
+    QList<int> expectedMessageOrder;
+    for (int i = 0; i < 5; ++i) {
+        QJsonRpcMessage request = QJsonRpcMessage::createRequest("service.immediateResponse");
+        QJsonRpcServiceReply *reply = clientSocket->sendMessage(request);
+        connect(reply, SIGNAL(finished()), &spy, SLOT(replyFinished()));
+        expectedMessageOrder.append(request.id());
+    }
+    expectedMessageOrder.append(delayedMessageId);
+
+    QTestEventLoop::instance().enterLoop(10);
+    QVERIFY(!QTestEventLoop::instance().timeout());
+    QList<int> actualMessageOrder;
+    foreach (QJsonRpcMessage response, spy.responses())
+        actualMessageOrder.append(response.id());
+    QCOMPARE(expectedMessageOrder, actualMessageOrder);
+}
+
+void TestQJsonRpcServer::delayedResponseSocketClosed()
+{
+    QFETCH_GLOBAL(ServerType, serverType);
+    TestDelayedResponseService *service = new TestDelayedResponseService;
+    QVERIFY(server->addService(service));
+
+    QSignalSpy spy(service, SIGNAL(responseResult(bool)));
+    connect(service, SIGNAL(responseResult(bool)), &QTestEventLoop::instance(), SLOT(exitLoop()));
+    QJsonRpcMessage request = QJsonRpcMessage::createRequest("service.delayedResponseWithClosedSocket");
+    QScopedPointer<QJsonRpcServiceReply> reply(clientSocket->sendMessage(request));
+    if (serverType == TcpServer)
+        tcpSockets.first()->disconnectFromHost();
+    else if (serverType == LocalServer)
+        localSockets.first()->disconnectFromServer();
+
+    QTestEventLoop::instance().enterLoop(5);
+    QVERIFY(!QTestEventLoop::instance().timeout());
+    QList<QVariant> arguments = spy.takeFirst();
+    QCOMPARE(arguments.at(0).toBool(), false);
+}
 
 void TestQJsonRpcServer::addRemoveService()
 {

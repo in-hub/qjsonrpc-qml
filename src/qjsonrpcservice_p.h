@@ -23,7 +23,16 @@
 #include <QVarLengthArray>
 #include <QStringList>
 
+#include "qjsonrpcservice.h"
+
 class QJsonRpcAbstractSocket;
+class QJsonRpcServiceRequestPrivate : public QSharedData
+{
+public:
+    QJsonRpcMessage request;
+    QPointer<QJsonRpcAbstractSocket> socket;
+};
+
 class QJsonRpcService;
 #if defined(USE_QT_PRIVATE_HEADERS)
 #include <private/qobject_p.h>
@@ -35,13 +44,15 @@ class QJsonRpcServicePrivate
 {
 public:
     QJsonRpcServicePrivate(QJsonRpcService *parent)
-        : q_ptr(parent)
+        : delayedResponse(false),
+          q_ptr(parent)
     {
     }
 
     void cacheInvokableInfo();
     static int qjsonRpcMessageType;
     static int convertVariantTypeToJSType(int type);
+    static QJsonValue convertReturnValue(QVariant &returnValue);
 
     struct ParameterInfo
     {
@@ -66,7 +77,8 @@ public:
 
     QHash<int, MethodInfo > methodInfoHash;
     QHash<QByteArray, QList<int> > invokableMethodHash;
-    QPointer<QJsonRpcAbstractSocket> socket;
+    QJsonRpcServiceRequest currentRequest;
+    bool delayedResponse;
 
     QJsonRpcService * const q_ptr;
     Q_DECLARE_PUBLIC(QJsonRpcService)

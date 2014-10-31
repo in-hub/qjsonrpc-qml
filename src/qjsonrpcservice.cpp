@@ -24,6 +24,72 @@
 #include "qjsonrpcservice_p.h"
 #include "qjsonrpcservice.h"
 
+QJsonRpcServiceRequest::QJsonRpcServiceRequest()
+    : d(new QJsonRpcServiceRequestPrivate)
+{
+}
+
+QJsonRpcServiceRequest::QJsonRpcServiceRequest(const QJsonRpcServiceRequest &other)
+    : d (other.d)
+{
+}
+
+QJsonRpcServiceRequest::QJsonRpcServiceRequest(const QJsonRpcMessage &request,
+                                               QJsonRpcAbstractSocket *socket)
+    : d(new QJsonRpcServiceRequestPrivate)
+{
+    d->request = request;
+    d->socket = socket;
+}
+
+QJsonRpcServiceRequest &QJsonRpcServiceRequest::operator=(const QJsonRpcServiceRequest &other)
+{
+    d = other.d;
+    return *this;
+}
+
+QJsonRpcServiceRequest::~QJsonRpcServiceRequest()
+{
+}
+
+bool QJsonRpcServiceRequest::isValid() const
+{
+    return (d && d->request.isValid() && !d->socket.isNull());
+}
+
+QJsonRpcMessage QJsonRpcServiceRequest::request() const
+{
+    return d->request;
+}
+
+QJsonRpcAbstractSocket *QJsonRpcServiceRequest::socket() const
+{
+    return d->socket;
+}
+
+bool QJsonRpcServiceRequest::respond(QVariant returnValue)
+{
+    if (!d->socket) {
+        qJsonRpcDebug() << Q_FUNC_INFO << "socket was closed";
+        return false;
+    }
+
+    QJsonRpcMessage response =
+        d->request.createResponse(QJsonRpcServicePrivate::convertReturnValue(returnValue));
+    return respond(response);
+}
+
+bool QJsonRpcServiceRequest::respond(const QJsonRpcMessage &response)
+{
+    if (!d->socket) {
+        qJsonRpcDebug() << Q_FUNC_INFO << "socket was closed";
+        return false;
+    }
+
+    QMetaObject::invokeMethod(d->socket, "notify", Q_ARG(QJsonRpcMessage, response));
+    return true;
+}
+
 QJsonRpcServicePrivate::ParameterInfo::ParameterInfo(const QString &n, int t, bool o)
     : type(t),
       jsType(convertVariantTypeToJSType(t)),
@@ -97,10 +163,16 @@ QJsonRpcService::~QJsonRpcService()
 {
 }
 
-QJsonRpcAbstractSocket *QJsonRpcService::senderSocket() const
+QJsonRpcServiceRequest QJsonRpcService::currentRequest() const
 {
     Q_D(const QJsonRpcService);
-    return d->socket.data();
+    return d->currentRequest;
+}
+
+void QJsonRpcService::beginDelayedResponse()
+{
+    Q_D(QJsonRpcService);
+    d->delayedResponse = true;
 }
 
 int QJsonRpcServicePrivate::convertVariantTypeToJSType(int type)
@@ -256,7 +328,7 @@ static inline QVariant convertArgument(const QJsonValue &argument,
 #endif
 }
 
-static inline QJsonValue convertReturnValue(QVariant &returnValue)
+QJsonValue QJsonRpcServicePrivate::convertReturnValue(QVariant &returnValue)
 {
 #if QT_VERSION >= 0x050200
     if (static_cast<int>(returnValue.type()) == qMetaTypeId<QJsonObject>())
@@ -390,13 +462,20 @@ bool QJsonRpcService::dispatch(const QJsonRpcMessage &request)
             request.createErrorResponse(QJsonRpc::InvalidRequest, message);
         Q_EMIT result(error);
         return false;
-    } else if (info.hasOut) {
+    }
+
+    if (d->delayedResponse) {
+        d->delayedResponse = false;
+        return true;
+    }
+
+    if (info.hasOut) {
         QJsonArray ret;
         if (info.returnType != QMetaType::Void)
-            ret.append(convertReturnValue(returnValue));
+            ret.append(QJsonRpcServicePrivate::convertReturnValue(returnValue));
         for (int i = 0; i < info.parameters.size(); ++i)
             if (info.parameters.at(i).out)
-                ret.append(convertReturnValue(arguments[i]));
+                ret.append(QJsonRpcServicePrivate::convertReturnValue(arguments[i]));
         if (ret.size() > 1)
             Q_EMIT result(request.createResponse(ret));
         else
@@ -404,6 +483,6 @@ bool QJsonRpcService::dispatch(const QJsonRpcMessage &request)
         return true;
     }
 
-    Q_EMIT result(request.createResponse(convertReturnValue(returnValue)));
+    Q_EMIT result(request.createResponse(QJsonRpcServicePrivate::convertReturnValue(returnValue)));
     return true;
 }

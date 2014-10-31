@@ -70,6 +70,7 @@ int QJsonRpcSocketPrivate::findJsonDocumentEnd(const QByteArray &jsonData)
 
 void QJsonRpcSocketPrivate::writeData(const QJsonRpcMessage &message)
 {
+    Q_Q(QJsonRpcSocket);
     QJsonDocument doc = QJsonDocument(message.toObject());
 #if QT_VERSION >= 0x050100 || QT_VERSION <= 0x050000
     QByteArray data = doc.toJson(QJsonDocument::Compact);
@@ -78,7 +79,7 @@ void QJsonRpcSocketPrivate::writeData(const QJsonRpcMessage &message)
 #endif
 
     device.data()->write(data);
-    qJsonRpcDebug() << "sending: " << data;
+    qJsonRpcDebug() << "sending(" << q << "): " << data;
 }
 
 QJsonRpcAbstractSocket::QJsonRpcAbstractSocket(QObject *parent)
@@ -284,7 +285,7 @@ void QJsonRpcSocketPrivate::_q_processIncomingData()
             }
             */
         } else if (document.isObject()){
-            qJsonRpcDebug() << "received: " << document.toJson();
+            qJsonRpcDebug() << "received(" << q << "): " << document.toJson(QJsonDocument::Compact);
             QJsonRpcMessage message = QJsonRpcMessage::fromObject(document.object());
             Q_EMIT q->messageReceived(message);
 
