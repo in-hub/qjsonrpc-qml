@@ -24,6 +24,7 @@
 #include "json/qjsondocument.h"
 #endif
 
+#include "qjsonrpcsocket_p.h"
 #include "qjsonrpcservicereply_p.h"
 #include "qjsonrpchttpclient.h"
 
@@ -114,13 +115,7 @@ private:
 
 };
 
-#if defined(USE_QT_PRIVATE_HEADERS)
-#include <private/qobject_p.h>
-
-class QJsonRpcHttpClientPrivate : public QObjectPrivate
-#else
-class QJsonRpcHttpClientPrivate
-#endif
+class QJsonRpcHttpClientPrivate : public QJsonRpcAbstractSocketPrivate
 {
 public:
     void initializeNetworkAccessManager(QJsonRpcHttpClient *client) {
@@ -133,22 +128,22 @@ public:
     QNetworkReply *writeMessage(const QJsonRpcMessage &message) {
         QNetworkRequest request(endPoint);
         request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
-        QByteArray data = QJsonDocument(message.toObject()).toJson();
+        request.setRawHeader("Accept", "application/json-rpc");
+        if (!sslConfiguration.isNull())
+            request.setSslConfiguration(sslConfiguration);
+
+        QByteArray data = message.toJson();
         qJsonRpcDebug() << "sending: " << data;
         return networkAccessManager->post(request, data);
     }
 
     QUrl endPoint;
     QNetworkAccessManager *networkAccessManager;
+    QSslConfiguration sslConfiguration;
 };
 
 QJsonRpcHttpClient::QJsonRpcHttpClient(QObject *parent)
-#if defined(USE_QT_PRIVATE_HEADERS)
-    : QObject(*new QJsonRpcHttpClientPrivate, parent)
-#else
-    : QObject(parent),
-      d_ptr(new QJsonRpcHttpClientPrivate)
-#endif
+    : QJsonRpcAbstractSocket(*new QJsonRpcHttpClientPrivate, parent)
 {
     Q_D(QJsonRpcHttpClient);
     d->networkAccessManager = new QNetworkAccessManager(this);
@@ -156,12 +151,7 @@ QJsonRpcHttpClient::QJsonRpcHttpClient(QObject *parent)
 }
 
 QJsonRpcHttpClient::QJsonRpcHttpClient(QNetworkAccessManager *manager, QObject *parent)
-#if defined(USE_QT_PRIVATE_HEADERS)
-    : QObject(*new QJsonRpcHttpClientPrivate, parent)
-#else
-    : QObject(parent),
-      d_ptr(new QJsonRpcHttpClientPrivate)
-#endif
+    : QJsonRpcAbstractSocket(*new QJsonRpcHttpClientPrivate, parent)
 {
     Q_D(QJsonRpcHttpClient);
     d->networkAccessManager = manager;
@@ -169,12 +159,7 @@ QJsonRpcHttpClient::QJsonRpcHttpClient(QNetworkAccessManager *manager, QObject *
 }
 
 QJsonRpcHttpClient::QJsonRpcHttpClient(const QString &endPoint, QObject *parent)
-#if defined(USE_QT_PRIVATE_HEADERS)
-    : QObject(*new QJsonRpcHttpClientPrivate, parent)
-#else
-    : QObject(parent),
-      d_ptr(new QJsonRpcHttpClientPrivate)
-#endif
+    : QJsonRpcAbstractSocket(*new QJsonRpcHttpClientPrivate, parent)
 {
     Q_D(QJsonRpcHttpClient);
     d->endPoint = QUrl::fromUserInput(endPoint);
@@ -184,6 +169,12 @@ QJsonRpcHttpClient::QJsonRpcHttpClient(const QString &endPoint, QObject *parent)
 
 QJsonRpcHttpClient::~QJsonRpcHttpClient()
 {
+}
+
+bool QJsonRpcHttpClient::isValid() const
+{
+    Q_D(const QJsonRpcHttpClient);
+    return d->networkAccessManager && !d->endPoint.isEmpty() && d->endPoint.isValid();
 }
 
 QUrl QJsonRpcHttpClient::endPoint() const
@@ -202,6 +193,18 @@ void QJsonRpcHttpClient::setEndPoint(const QString &endPoint)
 {
     Q_D(QJsonRpcHttpClient);
     d->endPoint = QUrl::fromUserInput(endPoint);
+}
+
+QSslConfiguration QJsonRpcHttpClient::sslConfiguration() const
+{
+    Q_D(const QJsonRpcHttpClient);
+    return d->sslConfiguration;
+}
+
+void QJsonRpcHttpClient::setSslConfiguration(const QSslConfiguration &sslConfiguration)
+{
+    Q_D(QJsonRpcHttpClient);
+    d->sslConfiguration = sslConfiguration;
 }
 
 QNetworkAccessManager *QJsonRpcHttpClient::networkAccessManager()

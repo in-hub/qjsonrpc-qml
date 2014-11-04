@@ -25,6 +25,7 @@
 #include "qjsonrpcmessage.h"
 #include "qjsonrpcglobal.h"
 
+class QJsonRpcServiceReply;
 class QJsonRpcAbstractSocketPrivate;
 class QJSONRPC_EXPORT QJsonRpcAbstractSocket : public QObject
 {
@@ -40,20 +41,22 @@ Q_SIGNALS:
 
 public Q_SLOTS:
     virtual void notify(const QJsonRpcMessage &message) = 0;
+    virtual QJsonRpcMessage sendMessageBlocking(const QJsonRpcMessage &message, int msecs = 30000) = 0;
+    virtual QJsonRpcServiceReply *sendMessage(const QJsonRpcMessage &message) = 0;
 
 protected:
     QJsonRpcAbstractSocket(QJsonRpcAbstractSocketPrivate &dd, QObject *parent = 0);
+
+#if !defined(USE_QT_PRIVATE_HEADERS)
+    QScopedPointer<QJsonRpcAbstractSocketPrivate> d_ptr;
+#endif
 
 private:
     Q_DECLARE_PRIVATE(QJsonRpcAbstractSocket)
     Q_DISABLE_COPY(QJsonRpcAbstractSocket)
 
-#if !defined(USE_QT_PRIVATE_HEADERS)
-    QScopedPointer<QJsonRpcAbstractSocketPrivate> d_ptr;
-#endif
 };
 
-class QJsonRpcServiceReply;
 class QJsonRpcSocketPrivate;
 class QJSONRPC_EXPORT QJsonRpcSocket : public QJsonRpcAbstractSocket
 {
@@ -66,9 +69,8 @@ public:
 
 public Q_SLOTS:
     virtual void notify(const QJsonRpcMessage &message);
-    QJsonRpcMessage sendMessageBlocking(const QJsonRpcMessage &message, int msecs = 30000);
-    QJsonRpcServiceReply *sendMessage(const QJsonRpcMessage &message);
-//  void sendMessage(const QList<QJsonRpcMessage> &bulk);
+    virtual QJsonRpcMessage sendMessageBlocking(const QJsonRpcMessage &message, int msecs = 30000);
+    virtual QJsonRpcServiceReply *sendMessage(const QJsonRpcMessage &message);
     QJsonRpcMessage invokeRemoteMethodBlocking(const QString &method, const QVariant &arg1 = QVariant(),
                                                const QVariant &arg2 = QVariant(), const QVariant &arg3 = QVariant(),
                                                const QVariant &arg4 = QVariant(), const QVariant &arg5 = QVariant(),

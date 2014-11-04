@@ -19,9 +19,11 @@
 
 #include <QObject>
 #include <QNetworkReply>
+#include <QSslConfiguration>
 
 #include "qjsonrpcglobal.h"
 #include "qjsonrpcmessage.h"
+#include "qjsonrpcsocket.h"
 #include "qjsonrpcservicereply.h"
 
 class QNetwokReply;
@@ -29,7 +31,7 @@ class QAuthenticator;
 class QSslError;
 class QNetworkAccessManager;
 class QJsonRpcHttpClientPrivate;
-class QJSONRPC_EXPORT QJsonRpcHttpClient : public QObject
+class QJSONRPC_EXPORT QJsonRpcHttpClient : public QJsonRpcAbstractSocket
 {
     Q_OBJECT
 public:
@@ -38,16 +40,21 @@ public:
     QJsonRpcHttpClient(QNetworkAccessManager *manager, QObject *parent = 0);
     ~QJsonRpcHttpClient();
 
+    virtual bool isValid() const;
+
     QUrl endPoint() const;
     void setEndPoint(const QUrl &endPoint);
     void setEndPoint(const QString &endPoint);
 
     QNetworkAccessManager *networkAccessManager();
 
+    QSslConfiguration sslConfiguration() const;
+    void setSslConfiguration(const QSslConfiguration &sslConfiguration);
+
 public Q_SLOTS:
     virtual void notify(const QJsonRpcMessage &message);
-    QJsonRpcMessage sendMessageBlocking(const QJsonRpcMessage &message, int msecs = 30000);
-    QJsonRpcServiceReply *sendMessage(const QJsonRpcMessage &message);
+    virtual QJsonRpcMessage sendMessageBlocking(const QJsonRpcMessage &message, int msecs = 30000);
+    virtual QJsonRpcServiceReply *sendMessage(const QJsonRpcMessage &message);
 
 protected Q_SLOTS:
     virtual void handleAuthenticationRequired(QNetworkReply *reply, QAuthenticator * authenticator);
@@ -57,9 +64,6 @@ private:
     Q_DISABLE_COPY(QJsonRpcHttpClient)
     Q_DECLARE_PRIVATE(QJsonRpcHttpClient)
 
-#if !defined(USE_QT_PRIVATE_HEADERS)
-    QScopedPointer<QJsonRpcHttpClientPrivate> d_ptr;
-#endif
 };
 
 #endif
