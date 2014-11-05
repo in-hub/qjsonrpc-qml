@@ -31,7 +31,6 @@
 class QJsonRpcHttpReplyPrivate : public QJsonRpcServiceReplyPrivate
 {
 public:
-    QJsonRpcMessage request;
     QNetworkReply *reply;
 };
 
