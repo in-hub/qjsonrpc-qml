@@ -23,6 +23,12 @@ class TestQJsonRpcHttpServer: public QObject
 private Q_SLOTS:
     void initTestCase();
     void quickTest();
+    void statusCodes_data();
+    void statusCodes();
+    void invalidMethod_data();
+    void invalidMethod();
+    void missingHeaders_data();
+    void missingHeaders();
 
 private:
     // temporarily disabled
@@ -33,6 +39,8 @@ private:
     QSslConfiguration clientSslConfiguration;
 
 };
+
+Q_DECLARE_METATYPE(QNetworkAccessManager::Operation)
 
 class TestService : public QJsonRpcService
 {
@@ -90,19 +98,6 @@ public Q_SLOTS:
         m_called++;
     }
 
-    bool methodWithListOfInts(const QList<int> &list) {
-        if (list.size() < 3)
-            return false;
-
-        if (list.at(0) != 300)
-            return false;
-        if (list.at(1) != 30)
-            return false;
-        if (list.at(2) != 3)
-            return false;
-        return true;
-    }
-
 private:
     int m_called;
 };
@@ -148,6 +143,165 @@ void TestQJsonRpcHttpServer::sslTest()
     QVERIFY(response.type() != QJsonRpcMessage::Error);
     QCOMPARE(request.id(), response.id());
 }
+
+void TestQJsonRpcHttpServer::statusCodes_data()
+{
+    QTest::addColumn<QByteArray>("body");
+    QTest::addColumn<int>("statusCode");
+    QTest::addColumn<QByteArray>("statusReason");
+
+    {
+        QJsonRpcMessage invalidMethod = QJsonRpcMessage::createRequest("invalidMethod");
+        QTest::newRow("404-not-found") << invalidMethod.toJson() << 404 << QByteArray("Not Found");
+    }
+
+    {
+        QTest::newRow("400-bad-request") << QByteArray("{\"jsonrpc\": \"2.0\", \"id\": 666}")
+                                         << 400 << QByteArray("Bad Request");
+    }
+
+    {
+        QJsonRpcMessage invalidParameters =
+            QJsonRpcMessage::createRequest("service.numberParameters", false);
+        QTest::newRow("500-internal-server-error") << invalidParameters.toJson()
+                                                   << 500 << QByteArray("Internal Server Error");
+    }
+
+    {
+        QJsonRpcMessage request = QJsonRpcMessage::createRequest("service.noParam");
+        QTest::newRow("200-ok") << request.toJson() << 200 << QByteArray("OK");
+    }
+
+    /*
+     * TODO: support notifications
+    {
+        QJsonRpcMessage notification = QJsonRpcMessage::createNotification("service.noParam");
+        QTest::newRow("204-no-content") << notification.toJson() << 204 << QByteArray("No Content");
+    }
+    */
+}
+
+void TestQJsonRpcHttpServer::statusCodes()
+{
+    QFETCH(QByteArray, body);
+    QFETCH(int, statusCode);
+    QFETCH(QByteArray, statusReason);
+
+    QJsonRpcHttpServer server;
+    server.addService(new TestService);
+    QVERIFY(server.listen(QHostAddress::LocalHost, 8118));
+
+    QNetworkAccessManager manager;
+    QNetworkRequest request(QUrl("http://127.0.0.1:8118"));
+    request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+    request.setRawHeader("Accept", "application/json-rpc");
+
+    QScopedPointer<QNetworkReply> reply(manager.post(request, body));
+    connect(reply.data(), SIGNAL(finished()), &QTestEventLoop::instance(), SLOT(exitLoop()));
+    connect(reply.data(), SIGNAL(error(QNetworkReply::NetworkError)), &QTestEventLoop::instance(), SLOT(exitLoop()));
+    QTestEventLoop::instance().enterLoop(5);
+    QVERIFY(!QTestEventLoop::instance().timeout());
+
+    QCOMPARE(reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt(), statusCode);
+    QCOMPARE(reply->attribute(QNetworkRequest::HttpReasonPhraseAttribute).toByteArray(), statusReason);
+}
+
+void TestQJsonRpcHttpServer::invalidMethod_data()
+{
+    QTest::addColumn<QNetworkAccessManager::Operation>("operation");
+    QTest::newRow("head-request") << QNetworkAccessManager::HeadOperation;
+    QTest::newRow("put-request") << QNetworkAccessManager::PutOperation;
+    QTest::newRow("delete-request") << QNetworkAccessManager::DeleteOperation;
+}
+
+void TestQJsonRpcHttpServer::invalidMethod()
+{
+    QJsonRpcHttpServer server;
+    server.addService(new TestService);
+    QVERIFY(server.listen(QHostAddress::LocalHost, 8118));
+
+    QNetworkAccessManager manager;
+    QNetworkRequest request(QUrl("http://127.0.0.1:8118"));
+    request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+    request.setRawHeader("Accept", "application/json-rpc");
+    QJsonRpcMessage requestMessage = QJsonRpcMessage::createRequest("service.noParam");
+
+    QScopedPointer<QNetworkReply> reply;
+    QFETCH(QNetworkAccessManager::Operation, operation);
+    switch (operation) {
+    case QNetworkAccessManager::HeadOperation:
+        reply.reset(manager.head(request));
+        break;
+
+    case QNetworkAccessManager::PutOperation:
+        reply.reset(manager.put(request, requestMessage.toJson()));
+        break;
+
+    case QNetworkAccessManager::DeleteOperation:
+        reply.reset(manager.deleteResource(request));
+        break;
+
+    default:
+        QFAIL("untested operation");
+    }
+
+    connect(reply.data(), SIGNAL(finished()), &QTestEventLoop::instance(), SLOT(exitLoop()));
+    connect(reply.data(), SIGNAL(error(QNetworkReply::NetworkError)), &QTestEventLoop::instance(), SLOT(exitLoop()));
+    QTestEventLoop::instance().enterLoop(5);
+    QVERIFY(!QTestEventLoop::instance().timeout());
+
+    QCOMPARE(reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt(), 405);
+    QCOMPARE(reply->attribute(QNetworkRequest::HttpReasonPhraseAttribute).toByteArray(), QByteArray("Method Not Allowed"));
+}
+
+void TestQJsonRpcHttpServer::missingHeaders_data()
+{
+    QTest::addColumn<QNetworkRequest>("request");
+
+    {
+        QNetworkRequest request(QUrl("http://127.0.0.1:8118"));
+        request.setRawHeader("Accept", "application/json-rpc");
+        QTest::newRow("no-content-type") << request;
+    }
+
+    {
+        QNetworkRequest request(QUrl("http://127.0.0.1:8118"));
+        request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+        QTest::newRow("no-accept") << request;
+    }
+
+    {
+        QNetworkRequest request(QUrl("http://127.0.0.1:8118"));
+        request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+        request.setRawHeader("Accept", "application/invalid");
+        QTest::newRow("no-invalid-accept") << request;
+    }
+
+    {
+        QNetworkRequest request(QUrl("http://127.0.0.1:8118"));
+        QTest::newRow("no-jsonpc-headers") << request;
+    }
+}
+
+void TestQJsonRpcHttpServer::missingHeaders()
+{
+    QJsonRpcHttpServer server;
+    server.addService(new TestService);
+    QVERIFY(server.listen(QHostAddress::LocalHost, 8118));
+
+    QFETCH(QNetworkRequest, request);
+    QNetworkAccessManager manager;
+    QJsonRpcMessage requestMessage = QJsonRpcMessage::createRequest("service.noParam");
+    QScopedPointer<QNetworkReply> reply(manager.post(request, requestMessage.toJson()));
+    connect(reply.data(), SIGNAL(finished()), &QTestEventLoop::instance(), SLOT(exitLoop()));
+    connect(reply.data(), SIGNAL(error(QNetworkReply::NetworkError)), &QTestEventLoop::instance(), SLOT(exitLoop()));
+    QTestEventLoop::instance().enterLoop(5);
+    QVERIFY(!QTestEventLoop::instance().timeout());
+
+    QCOMPARE(reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt(), 400);
+    QCOMPARE(reply->attribute(QNetworkRequest::HttpReasonPhraseAttribute).toByteArray(), QByteArray("Bad Request"));
+}
+
 
 QTEST_MAIN(TestQJsonRpcHttpServer)
 #include "tst_qjsonrpchttpserver.moc"

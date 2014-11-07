@@ -2,22 +2,36 @@
 #define QJSONRPCHTTPSERVER_P_H
 
 #include <QHash>
+#include <QSslSocket>
+#include <QSslConfiguration>
+
+#include "qjsonrpcsocket.h"
+#include "qjsonrpcmessage.h"
+#include "qjsonrpcabstractserver_p.h"
+
 #include "http_parser.h"
-#include "qjsonrpcservice.h"
+
+class QJsonRpcHttpServerRpcSocket : public QJsonRpcSocket
+{
+public:
+    explicit QJsonRpcHttpServerRpcSocket(QIODevice *device, QObject *parent = 0);
+};
 
 class QAbstractSocket;
-class QJsonRpcHttpRequest : public QIODevice
+class QJsonRpcHttpServerSocket : public QSslSocket
 {
     Q_OBJECT
 public:
-    explicit QJsonRpcHttpRequest(QAbstractSocket *socket, QObject *parent = 0);
-    ~QJsonRpcHttpRequest();
+    explicit QJsonRpcHttpServerSocket(QObject *parent = 0);
+    ~QJsonRpcHttpServerSocket();
 
-    bool isSequential() const;
+    void sendErrorResponse(int statusCode);
+
+Q_SIGNALS:
+    void messageReceived(const QJsonRpcMessage &message);
 
 protected:
-    qint64 readData(char *data, qint64 maxSize);
-    qint64 writeData(const char *data, qint64 maxSize);
+    virtual qint64 writeData(const char *data, qint64 maxSize);
 
 private Q_SLOTS:
     void readIncomingData();
@@ -32,9 +46,7 @@ private:
     static int onMessageComplete(http_parser *parser);
 
 private:
-    Q_DISABLE_COPY(QJsonRpcHttpRequest)
-
-    QAbstractSocket *m_requestSocket;
+    Q_DISABLE_COPY(QJsonRpcHttpServerSocket)
 
     // request
     QByteArray m_requestPayload;
@@ -49,6 +61,25 @@ private:
     // response
     QByteArray m_responseBuffer;
 
+};
+
+class QJsonRpcHttpServer;
+class QJsonRpcHttpServerPrivate : public QJsonRpcAbstractServerPrivate
+{
+public:
+    QJsonRpcHttpServerPrivate(QJsonRpcHttpServer *qq)
+        : q_ptr(qq)
+    {
+    }
+
+    // slots
+    void _q_socketDisconnected();
+
+    QHash<QJsonRpcHttpServerSocket*, QJsonRpcHttpServerRpcSocket*> requestSocketLookup;
+    QSslConfiguration sslConfiguration;
+
+    QJsonRpcHttpServer * const q_ptr;
+    Q_DECLARE_PUBLIC(QJsonRpcHttpServer)
 };
 
 #endif

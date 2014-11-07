@@ -15,11 +15,17 @@
  * Lesser General Public License for more details.
  */
 #include <QDebug>
+#include <QTimer>
+#include <QEventLoop>
+#include <QThreadPool>
+#include <QRunnable>
+
 #include "testservice.h"
 
 TestService::TestService(QObject *parent)
     : QJsonRpcService(parent)
 {
+    QThreadPool::globalInstance()->setMaxThreadCount(10);
 }
 
 void TestService::testMethod()
@@ -46,7 +52,6 @@ void TestService::testMethodWithVariantParams(const QString &first, bool second,
 
 QString TestService::testMethodWithParamsAndReturnValue(const QString &name)
 {
-    qDebug() << Q_FUNC_INFO << "called" << endl;
     return QString("Hello %1").arg(name);
 }
 
@@ -57,3 +62,47 @@ void TestService::testMethodWithDefaultParameter(const QString &first, const QSt
              << (second.isEmpty() ? "not defined, default parameter" : second) << endl;
 }
 
+QString TestService::immediateResponse()
+{
+    return "immediate";
+}
+
+QString TestService::longTaskWithImmediateResponse()
+{
+    QEventLoop loop;
+    QTimer::singleShot(1000, &loop, SLOT(quit()));
+    loop.exec();
+    return "long immediate";
+}
+
+class DelayedResponseJob : public QRunnable
+{
+public:
+    DelayedResponseJob(const QJsonRpcServiceRequest &request)
+        : m_request(request)
+    {
+    }
+
+protected:
+    virtual void run() {
+        // do some work
+        QEventLoop loop;
+        QTimer::singleShot(1000, &loop, SLOT(quit()));
+        loop.exec();
+
+        // respond
+        QJsonRpcMessage response = m_request.request().createResponse(QLatin1String("long delayed"));
+        m_request.respond(response);
+    }
+
+private:
+    QJsonRpcServiceRequest m_request;
+
+};
+
+QString TestService::longTaskWithDelayedResponse()
+{
+    beginDelayedResponse();
+    QThreadPool::globalInstance()->start(new DelayedResponseJob(currentRequest()));
+    return QString();
+}

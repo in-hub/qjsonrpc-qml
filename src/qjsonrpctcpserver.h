@@ -57,7 +57,7 @@ private:
     Q_DECLARE_PRIVATE(QJsonRpcTcpServer)
     Q_DISABLE_COPY(QJsonRpcTcpServer)
 #if !defined(USE_QT_PRIVATE_HEADERS)
-    QScopedPointer<QJsonRpcAbstractServerPrivate> d_ptr;
+    QScopedPointer<QJsonRpcTcpServerPrivate> d_ptr;
 #endif
 };
 

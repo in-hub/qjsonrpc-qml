@@ -8,8 +8,7 @@
 #include "qjsonrpcabstractserver.h"
 #include "qjsonrpcglobal.h"
 
-class QJsonRpcSocket;
-class QJsonRpcHttpRequest;
+class QJsonRpcHttpServerPrivate;
 class QJSONRPC_EXPORT QJsonRpcHttpServer : public QTcpServer,
                                            public QJsonRpcAbstractServer
 {
@@ -42,9 +41,11 @@ private Q_SLOTS:
     void processIncomingMessage(const QJsonRpcMessage &message);
 
 private:
-    QHash<QJsonRpcSocket *, QTcpSocket *> m_tcpSockets;
-    QHash<QJsonRpcSocket *, QJsonRpcHttpRequest *> m_requests;
-    QSslConfiguration m_sslConfiguration;
+    Q_DECLARE_PRIVATE(QJsonRpcHttpServer)
+    Q_DISABLE_COPY(QJsonRpcHttpServer)
+    QScopedPointer<QJsonRpcHttpServerPrivate> d_ptr;
+
+    Q_PRIVATE_SLOT(d_func(), void _q_socketDisconnected())
 
 };
 

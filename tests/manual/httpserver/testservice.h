@@ -33,6 +33,10 @@ public Q_SLOTS:
     QString testMethodWithParamsAndReturnValue(const QString &name);
     void testMethodWithDefaultParameter(const QString &first, const QString &second = QString());
 
+    QString immediateResponse();
+    QString longTaskWithImmediateResponse();
+    QString longTaskWithDelayedResponse();
+
 };
 
 

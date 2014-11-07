@@ -168,7 +168,7 @@ QJsonRpcAbstractSocket *TestQJsonRpcServer::createClient()
         tcpSockets.append(tcpSocket);
     } else if (serverType == HttpServer) {
         QJsonRpcHttpClient *client = new QJsonRpcHttpClient;
-        client->setEndPoint("http://127.0.0.1:31337");
+        client->setEndPoint("http://127.0.0.1:8118");
         socket = client;
     }
 
@@ -190,7 +190,7 @@ void TestQJsonRpcServer::init()
         server = tcpServer.data();
     } else if (serverType == HttpServer) {
         httpServer.reset(new QJsonRpcHttpServer);
-        QVERIFY(httpServer->listen(QHostAddress::LocalHost, quint16(31337)));
+        QVERIFY(httpServer->listen(QHostAddress::LocalHost, quint16(8118)));
         httpServer->moveToThread(&serverThread);
         server = httpServer.data();
     }
@@ -485,9 +485,7 @@ void TestQJsonRpcServer::notifyConnectedClients()
 
     QVERIFY(server->addService(new TestService));
     QEventLoop loop;
-    connect(clientSocket.data(), SIGNAL(messageReceived(QJsonRpcMessage)),
-            &loop, SLOT(quit()));
-
+    connect(clientSocket.data(), SIGNAL(messageReceived(QJsonRpcMessage)), &loop, SLOT(quit()));
     QSignalSpy spy(clientSocket.data(), SIGNAL(messageReceived(QJsonRpcMessage)));
     QJsonRpcMessage message;
     if (sendAsMessage) {
@@ -515,6 +513,7 @@ void TestQJsonRpcServer::notifyConnectedClients()
             QMetaObject::invokeMethod(localServer.data(), "notifyConnectedClients", Q_ARG(QString, method), Q_ARG(QJsonArray, parameters));
         // server->notifyConnectedClients(method, parameters);
     }
+
     QTimer::singleShot(2000, &loop, SLOT(quit()));
     loop.exec();
 

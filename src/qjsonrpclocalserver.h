@@ -53,7 +53,7 @@ private:
     Q_DECLARE_PRIVATE(QJsonRpcLocalServer)
     Q_DISABLE_COPY(QJsonRpcLocalServer)
 #if !defined(USE_QT_PRIVATE_HEADERS)
-    QScopedPointer<QJsonRpcAbstractServerPrivate> d_ptr;
+    QScopedPointer<QJsonRpcLocalServerPrivate> d_ptr;
 #endif
 };
 
