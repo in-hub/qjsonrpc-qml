@@ -144,6 +144,13 @@ int QJsonRpcHttpServerSocket::onMessageComplete(http_parser *parser)
 int QJsonRpcHttpServerSocket::onHeadersComplete(http_parser *parser)
 {
     QJsonRpcHttpServerSocket *request = (QJsonRpcHttpServerSocket *)parser->data;
+    // need to add the final headers received
+    if (!request->m_currentHeaderField.isEmpty() && !request->m_currentHeaderValue.isEmpty()) {
+        request->m_requestHeaders.insert(request->m_currentHeaderField.toLower(), request->m_currentHeaderValue);
+        request->m_currentHeaderField.clear();
+        request->m_currentHeaderValue.clear();
+    }
+
     if (parser->method != HTTP_GET && parser->method != HTTP_POST) {
         // NOTE: close the socket, cleanup, delete, etc..
         qJsonRpcDebug() << Q_FUNC_INFO << "invalid method: " << parser->method;
@@ -186,14 +193,14 @@ int QJsonRpcHttpServerSocket::onHeaderField(http_parser *parser, const char *at,
         request->m_currentHeaderValue.clear();
     }
 
-    request->m_currentHeaderField.append(QString::fromLatin1(at, length));
+    request->m_currentHeaderField.append(QString::fromUtf8(at, length));
     return 0;
 }
 
 int QJsonRpcHttpServerSocket::onHeaderValue(http_parser *parser, const char *at, size_t length)
 {
     QJsonRpcHttpServerSocket *request = (QJsonRpcHttpServerSocket *)parser->data;
-    request->m_currentHeaderValue.append(QString::fromLatin1(at, length));
+    request->m_currentHeaderValue.append(QString::fromUtf8(at, length));
     return 0;
 }
 
