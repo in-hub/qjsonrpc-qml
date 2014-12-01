@@ -24,7 +24,7 @@
 
 class QJsonRpcAbstractSocket;
 class QJsonRpcServiceRequestPrivate;
-class QJsonRpcServiceRequest
+class QJSONRPC_EXPORT QJsonRpcServiceRequest
 {
 public:
     QJsonRpcServiceRequest();
