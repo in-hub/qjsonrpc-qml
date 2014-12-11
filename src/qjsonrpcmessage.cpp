@@ -315,9 +315,9 @@ QString QJsonRpcMessage::method() const
 QJsonValue QJsonRpcMessage::params() const
 {
     if (d->type == QJsonRpcMessage::Response || d->type == QJsonRpcMessage::Error)
-        return QJsonValue();
+        return QJsonValue(QJsonValue::Undefined);
     if (!d->object)
-        return QJsonValue();
+        return QJsonValue(QJsonValue::Undefined);
 
     return d->object->value(QLatin1String("params"));
 }
@@ -325,7 +325,7 @@ QJsonValue QJsonRpcMessage::params() const
 QJsonValue QJsonRpcMessage::result() const
 {
     if (d->type != QJsonRpcMessage::Response || !d->object)
-        return QJsonValue();
+        return QJsonValue(QJsonValue::Undefined);
 
     return d->object->value(QLatin1String("result"));
 }
@@ -360,7 +360,7 @@ QString QJsonRpcMessage::errorMessage() const
 QJsonValue QJsonRpcMessage::errorData() const
 {
     if (d->type != QJsonRpcMessage::Error || !d->object)
-        return QJsonValue();
+        return QJsonValue(QJsonValue::Undefined);
 
     QJsonObject error =
         d->object->value(QLatin1String("error")).toObject();

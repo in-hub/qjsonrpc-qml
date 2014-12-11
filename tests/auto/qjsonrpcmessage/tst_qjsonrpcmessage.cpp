@@ -104,9 +104,9 @@ void TestQJsonRpcMessage::invalidStringData()
     QCOMPARE(message.isValid(), false);
     QCOMPARE(message.type(), QJsonRpcMessage::Invalid);
     QVERIFY(message.toObject().isEmpty());
-    QVERIFY(message.params().isNull());
-    QVERIFY(message.result().isNull());
-    QVERIFY(message.errorData().isNull());
+    QVERIFY(message.params().isUndefined() || message.params().isNull());
+    QVERIFY(message.result().isUndefined() || message.params().isNull());
+    QVERIFY(message.errorData().isUndefined() || message.params().isNull());
 }
 
 void TestQJsonRpcMessage::invalidDataResponseWithId()

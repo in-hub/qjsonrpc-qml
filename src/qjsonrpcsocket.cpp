@@ -268,9 +268,15 @@ void QJsonRpcSocketPrivate::_q_processIncomingData()
             return;
         }
 
-        QJsonDocument document = QJsonDocument::fromJson(buffer);
-        if (document.isEmpty())
+        QJsonParseError error;
+        QJsonDocument document = QJsonDocument::fromJson(buffer.mid(0, dataSize + 1), &error);
+        if (document.isEmpty()) {
+            if (error.error != QJsonParseError::NoError) {
+                qJsonRpcDebug() << Q_FUNC_INFO << error.errorString();
+            }
+
             break;
+        }
 
         buffer = buffer.mid(dataSize + 1);
         if (document.isArray()) {

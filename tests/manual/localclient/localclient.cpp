@@ -17,8 +17,6 @@
 #include <QLocalSocket>
 #include <QDir>
 
-#include "json/qjsonvalue.h"
-
 #include "qjsonrpcsocket.h"
 #include "qjsonrpcservice.h"
 #include "qjsonrpcservicereply.h"
@@ -52,16 +50,6 @@ void LocalClient::run()
 
     reply = m_client->invokeRemoteMethod("agent.testMethodWithParamsAndReturnValue", "matt");
     connect(reply, SIGNAL(finished()), this, SLOT(processResponse()));
-
-    // test bulk messages
-    /*
-    QJsonRpcMessage first = QJsonRpcMessage::createRequest("agent.testMethodWithParamsAndReturnValue", "testSendMessage");
-    m_client->sendMessage(first);
-
-    QJsonRpcMessage second = QJsonRpcMessage::createRequest("agent.testMethodWithParamsAndReturnValue", "testSendMessages1");
-    QJsonRpcMessage third = QJsonRpcMessage::createRequest("agent.testMethodWithParamsAndReturnValue", "testSendMessages2");
-    m_client->sendMessage(QList<QJsonRpcMessage>() << second << third);
-    */
 }
 
 void LocalClient::processResponse()

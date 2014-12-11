@@ -19,12 +19,6 @@
 #include <QStringList>
 #include <QDebug>
 
-#if QT_VERSION >= 0x050000
-#include <QJsonDocument>
-#else
-#include "json/qjsondocument.h"
-#endif
-
 #include "qjsonrpchttpclient.h"
 
 class HttpClient : public QJsonRpcHttpClient
@@ -89,8 +83,7 @@ int main(int argc, char **argv)
         return -1;
     }
 
-    QJsonDocument doc(response.toObject());
-    qDebug() << doc.toJson();
+    qDebug() << response.toJson();
 }
 
 #include "main.moc"
