@@ -106,6 +106,70 @@ QJsonRpcAbstractSocket::QJsonRpcAbstractSocket(QJsonRpcAbstractSocketPrivate &dd
 {
 }
 
+bool QJsonRpcAbstractSocket::isValid() const
+{
+    return false;
+}
+
+QJsonRpcMessage QJsonRpcAbstractSocket::sendMessageBlocking(const QJsonRpcMessage &message, int msecs)
+{
+    Q_UNUSED(message)
+    Q_UNUSED(msecs)
+
+    return QJsonRpcMessage();
+}
+
+QJsonRpcServiceReply *QJsonRpcAbstractSocket::sendMessage(const QJsonRpcMessage &message)
+{
+    Q_UNUSED(message)
+
+    return 0;
+}
+
+QJsonRpcMessage QJsonRpcAbstractSocket::invokeRemoteMethodBlocking(const QString &method, const QVariant &arg1,
+                                                                   const QVariant &arg2, const QVariant &arg3,
+                                                                   const QVariant &arg4, const QVariant &arg5,
+                                                                   const QVariant &arg6, const QVariant &arg7,
+                                                                   const QVariant &arg8, const QVariant &arg9,
+                                                                   const QVariant &arg10)
+{
+    Q_UNUSED(method)
+    Q_UNUSED(arg1)
+    Q_UNUSED(arg2)
+    Q_UNUSED(arg3)
+    Q_UNUSED(arg4)
+    Q_UNUSED(arg5)
+    Q_UNUSED(arg6)
+    Q_UNUSED(arg7)
+    Q_UNUSED(arg8)
+    Q_UNUSED(arg9)
+    Q_UNUSED(arg10)
+
+    return QJsonRpcMessage();
+}
+
+QJsonRpcServiceReply *QJsonRpcAbstractSocket::invokeRemoteMethod(const QString &method, const QVariant &arg1,
+                                                                 const QVariant &arg2, const QVariant &arg3,
+                                                                 const QVariant &arg4, const QVariant &arg5,
+                                                                 const QVariant &arg6, const QVariant &arg7,
+                                                                 const QVariant &arg8, const QVariant &arg9,
+                                                                 const QVariant &arg10)
+{
+    Q_UNUSED(method)
+    Q_UNUSED(arg1)
+    Q_UNUSED(arg2)
+    Q_UNUSED(arg3)
+    Q_UNUSED(arg4)
+    Q_UNUSED(arg5)
+    Q_UNUSED(arg6)
+    Q_UNUSED(arg7)
+    Q_UNUSED(arg8)
+    Q_UNUSED(arg9)
+    Q_UNUSED(arg10)
+
+    return 0;
+}
+
 QJsonRpcSocket::QJsonRpcSocket(QIODevice *device, QObject *parent)
 #if defined(USE_QT_PRIVATE_HEADERS)
     : QJsonRpcAbstractSocket(*new QJsonRpcSocketPrivate(this), parent)
