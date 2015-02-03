@@ -289,6 +289,10 @@ static inline QVariant convertArgument(const QJsonValue &argument,
 #if QT_VERSION >= 0x050200
     if (info.type == QMetaType::QJsonValue || info.type == QMetaType::QVariant ||
         info.type >= QMetaType::User) {
+
+        if (info.type == QMetaType::QVariant)
+            return argument.toVariant();
+
         QVariant result(argument);
         if (info.type >= QMetaType::User && result.canConvert(info.type))
             result.convert(info.type);
