@@ -92,6 +92,7 @@ private Q_SLOTS:
             }
         }
 
+        reply->deleteLater();
         Q_EMIT finished();
     }
 
@@ -104,6 +105,7 @@ private Q_SLOTS:
             return;
         }
 
+        reply->deleteLater();
         if (code == QNetworkReply::NoError)
             return;
 
