@@ -149,34 +149,45 @@ void TestQJsonRpcHttpServer::statusCodes_data()
     QTest::addColumn<QByteArray>("body");
     QTest::addColumn<int>("statusCode");
     QTest::addColumn<QByteArray>("statusReason");
+    QTest::addColumn<QByteArray>("contentType");
 
     {
         QJsonRpcMessage invalidMethod = QJsonRpcMessage::createRequest("invalidMethod");
-        QTest::newRow("404-not-found") << invalidMethod.toJson() << 404 << QByteArray("Not Found");
+        QTest::newRow("404-not-found") << invalidMethod.toJson() << 404
+                                       << QByteArray("Not Found") << QByteArray("application/json");
     }
 
     {
         QTest::newRow("400-bad-request") << QByteArray("{\"jsonrpc\": \"2.0\", \"id\": 666}")
-                                         << 400 << QByteArray("Bad Request");
+                                         << 400 << QByteArray("Bad Request") << QByteArray("application/json");
     }
 
     {
         QJsonRpcMessage invalidParameters =
             QJsonRpcMessage::createRequest("service.numberParameters", false);
         QTest::newRow("500-internal-server-error") << invalidParameters.toJson()
-                                                   << 500 << QByteArray("Internal Server Error");
+                                                   << 500 << QByteArray("Internal Server Error")
+                                                   << QByteArray("application/json");
     }
 
     {
         QJsonRpcMessage request = QJsonRpcMessage::createRequest("service.noParam");
-        QTest::newRow("200-ok") << request.toJson() << 200 << QByteArray("OK");
+        QTest::newRow("200-ok") << request.toJson() << 200
+                                << QByteArray("OK") << QByteArray("application/json");
+    }
+
+    {
+        QJsonRpcMessage request = QJsonRpcMessage::createRequest("service.noParam");
+        QTest::newRow("200-composite-content-type") << request.toJson() << 200
+                                << QByteArray("OK") << QByteArray("application/json;charset=UTF-8");
     }
 
     /*
      * TODO: support notifications
     {
         QJsonRpcMessage notification = QJsonRpcMessage::createNotification("service.noParam");
-        QTest::newRow("204-no-content") << notification.toJson() << 204 << QByteArray("No Content");
+        QTest::newRow("204-no-content") << notification.toJson() << 204
+                               << QByteArray("No Content") << QByteArray("OK") << QByteArray("application/json");
     }
     */
 }
@@ -186,6 +197,7 @@ void TestQJsonRpcHttpServer::statusCodes()
     QFETCH(QByteArray, body);
     QFETCH(int, statusCode);
     QFETCH(QByteArray, statusReason);
+    QFETCH(QByteArray, contentType);
 
     QJsonRpcHttpServer server;
     server.addService(new TestService);
@@ -193,7 +205,7 @@ void TestQJsonRpcHttpServer::statusCodes()
 
     QNetworkAccessManager manager;
     QNetworkRequest request(QUrl("http://127.0.0.1:8118"));
-    request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+    request.setHeader(QNetworkRequest::ContentTypeHeader, contentType);
     request.setRawHeader("Accept", "application/json-rpc");
 
     QScopedPointer<QNetworkReply> reply(manager.post(request, body));
