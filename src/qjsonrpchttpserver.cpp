@@ -173,8 +173,16 @@ int QJsonRpcHttpServerSocket::onHeadersComplete(http_parser *parser)
     QStringList supportedContentTypes =
         QStringList() << "application/json-rpc" << "application/json" << "application/jsonrequest";
     QString contentType = request->m_requestHeaders.value("content-type");
+    bool foundSupportedContentType = false;
+    foreach (QString supportedContentType, supportedContentTypes) {
+        if (contentType.contains(supportedContentType)) {
+            foundSupportedContentType = true;
+            break;
+        }
+    }
+
     QString acceptType = request->m_requestHeaders.value("accept");
-    if (!supportedContentTypes.contains(contentType) || !supportedContentTypes.contains(acceptType)) {
+    if (!foundSupportedContentType || !supportedContentTypes.contains(acceptType)) {
         // NOTE: signal the error
         qJsonRpcDebug() << Q_FUNC_INFO << "invalid content or accept type";
         request->sendErrorResponse(400);
