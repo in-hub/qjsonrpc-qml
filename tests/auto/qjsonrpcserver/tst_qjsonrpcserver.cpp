@@ -104,6 +104,9 @@ private:
     QScopedPointer<QJsonRpcLocalServer> localServer;
     QScopedPointer<QJsonRpcHttpServer> httpServer;
 
+    quint16 tcpServerPort;
+    quint16 httpServerPort;
+
 private:
     // temporarily disabled
     // void testListOfInts();
@@ -157,7 +160,7 @@ QJsonRpcAbstractSocket *TestQJsonRpcServer::createClient()
         QTcpSocket *tcpSocket = new QTcpSocket;
         connect(tcpServer.data(), SIGNAL(clientConnected()),
                 &QTestEventLoop::instance(), SLOT(exitLoop()));
-        tcpSocket->connectToHost(QHostAddress::LocalHost, quint16(91919));
+        tcpSocket->connectToHost(QHostAddress::LocalHost, tcpServerPort);
         QTestEventLoop::instance().enterLoop(5);
         if (QTestEventLoop::instance().timeout() || !tcpSocket->waitForConnected()) {
             delete tcpSocket;
@@ -168,7 +171,7 @@ QJsonRpcAbstractSocket *TestQJsonRpcServer::createClient()
         tcpSockets.append(tcpSocket);
     } else if (serverType == HttpServer) {
         QJsonRpcHttpClient *client = new QJsonRpcHttpClient;
-        client->setEndPoint("http://127.0.0.1:8118");
+        client->setEndPoint("http://127.0.0.1:" + QString::number(httpServerPort));
         socket = client;
     }
 
@@ -185,12 +188,14 @@ void TestQJsonRpcServer::init()
         server = localServer.data();
     } else if (serverType == TcpServer) {
         tcpServer.reset(new QJsonRpcTcpServer);
-        QVERIFY(tcpServer->listen(QHostAddress::LocalHost, quint16(91919)));
+        tcpServerPort = quint16(91919 + qrand() % 1000);
+        QVERIFY(tcpServer->listen(QHostAddress::LocalHost, tcpServerPort));
         tcpServer->moveToThread(&serverThread);
         server = tcpServer.data();
     } else if (serverType == HttpServer) {
         httpServer.reset(new QJsonRpcHttpServer);
-        QVERIFY(httpServer->listen(QHostAddress::LocalHost, quint16(8118)));
+        httpServerPort = quint16(8118 + qrand() % 1000);
+        QVERIFY(httpServer->listen(QHostAddress::LocalHost, httpServerPort));
         httpServer->moveToThread(&serverThread);
         server = httpServer.data();
     }
