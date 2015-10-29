@@ -51,7 +51,7 @@ public:
           m_variantCount(0)
     {}
 
-    bool testDispatch(const QJsonRpcMessage &message) {
+    QJsonRpcMessage testDispatch(const QJsonRpcMessage &message) {
         return QJsonRpcService::dispatch(message);
     }
 
@@ -150,7 +150,12 @@ void TestQJsonRpcService::dispatch()
     TestServiceProvider provider;
     TestService service;
     provider.addService(&service);
-    QCOMPARE(service.testDispatch(request), shouldSucceed);
+
+    QJsonRpcMessage response = service.testDispatch(request);
+    if (shouldSucceed)
+        QVERIFY(response.type() != QJsonRpcMessage::Error);
+    else
+        QVERIFY(response.type() == QJsonRpcMessage::Error);
 }
 
 void TestQJsonRpcService::ambiguousDispatch()
@@ -213,7 +218,11 @@ void TestQJsonRpcService::dispatchSignals()
     TestServiceProvider provider;
     TestService service;
     provider.addService(&service);
-    QCOMPARE(service.testDispatch(request), shouldSucceed);
+
+    QJsonRpcMessage response = service.testDispatch(request);
+    QJsonRpcMessage::Type messageType = shouldSucceed ?
+        QJsonRpcMessage::Response : QJsonRpcMessage::Error;
+    QCOMPARE(response.type(), messageType);
 }
 
 QTEST_MAIN(TestQJsonRpcService)

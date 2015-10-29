@@ -50,7 +50,7 @@ public:
     TestService(QObject *parent = 0) : QJsonRpcService(parent)
     {}
 
-    bool testDispatch(const QJsonRpcMessage &message) {
+    QJsonRpcMessage testDispatch(const QJsonRpcMessage &message) {
         return QJsonRpcService::dispatch(message);
     }
 
@@ -83,7 +83,8 @@ void TestBenchmark::simple()
     QJsonRpcMessage request =
         QJsonRpcMessage::createRequest("service.singleParam", QString("test"));
     QBENCHMARK {
-        QVERIFY(service.testDispatch(request));
+        QJsonRpcMessage response = service.testDispatch(request);
+        QVERIFY(response.type() != QJsonRpcMessage::Error);
     }
 }
 
@@ -101,7 +102,8 @@ void TestBenchmark::namedParameters()
         QJsonRpcMessage::createRequest("service.namedParams", obj);
 
     QBENCHMARK {
-        QVERIFY(service.testDispatch(request));
+        QJsonRpcMessage response = service.testDispatch(request);
+        QVERIFY(response.type() != QJsonRpcMessage::Error);
     }
 }
 

@@ -120,7 +120,7 @@ public:
         : QJsonRpcService(parent)
     {}
 
-    bool testDispatch(const QJsonRpcMessage &message) {
+    QJsonRpcMessage testDispatch(const QJsonRpcMessage &message) {
         return QJsonRpcService::dispatch(message);
     }
 
@@ -186,26 +186,8 @@ TestService::TestEnum fromJson(const QJsonValue &val)
 
 class TestServiceProvider : public QObject, public QJsonRpcServiceProvider
 {
-    Q_OBJECT
 public:
     TestServiceProvider() {}
-
-    bool addService(QJsonRpcService *service) {
-        if (QJsonRpcServiceProvider::addService(service)) {
-            connect(service, SIGNAL(result(QJsonRpcMessage)),
-                       this, SLOT(reply(QJsonRpcMessage)));
-            return true;
-        }
-
-        return false;
-    }
-
-    QJsonRpcMessage last;
-
-protected Q_SLOTS:
-    void reply(const QJsonRpcMessage &msg) {
-        last = msg;
-    }
 };
 
 void TestQJsonRpcMetaType::initTestCase()
@@ -230,7 +212,8 @@ void TestQJsonRpcMetaType::customParameterTypes()
     CustomClass custom(42);
     QJsonRpcMessage request =
         QJsonRpcMessage::createRequest("service.customParameterType", custom.toJson());
-    QVERIFY(service.testDispatch(request));
+    QJsonRpcMessage response = service.testDispatch(request);
+    QVERIFY(response.type() != QJsonRpcMessage::Error);
 }
 
 void TestQJsonRpcMetaType::customReturnTypes()
@@ -241,11 +224,10 @@ void TestQJsonRpcMetaType::customReturnTypes()
 
     QJsonRpcMessage request =
         QJsonRpcMessage::createRequest("service.customReturnType", CustomClass().toJson());
-    QVERIFY(service.testDispatch(request));
+    QJsonRpcMessage response = service.testDispatch(request);
 
-    QCOMPARE(provider.last.type(), QJsonRpcMessage::Response);
-    QVariant result = provider.last.result();
-
+    QVERIFY(response.type() != QJsonRpcMessage::Error);
+    QVariant result = response.result();
     QVERIFY(result.canConvert<CustomClass>());
     QCOMPARE(result.value<CustomClass>().data, 1);
 }
@@ -260,10 +242,9 @@ void TestQJsonRpcMetaType::invalidParameterTypes()
     QJsonRpcMessage request =
         QJsonRpcMessage::createRequest("service.invalidParameterType",
                 QJsonValue::fromVariant(QVariant::fromValue(CustomClass())));
-    QVERIFY(!service.testDispatch(request));
-
-    QCOMPARE(provider.last.type(), QJsonRpcMessage::Error);
-    QCOMPARE(provider.last.errorCode(), (int) QJsonRpc::MethodNotFound);
+    QJsonRpcMessage response = service.testDispatch(request);
+    QVERIFY(response.type() == QJsonRpcMessage::Error);
+    QCOMPARE(response.errorCode(), (int) QJsonRpc::MethodNotFound);
 }
 
 void TestQJsonRpcMetaType::enums()
@@ -274,10 +255,12 @@ void TestQJsonRpcMetaType::enums()
 
     QJsonRpcMessage request =
         QJsonRpcMessage::createRequest("service.enums", TestService::ONE);
-    QVERIFY(service.testDispatch(request));
+    QJsonRpcMessage response = service.testDispatch(request);
+    QVERIFY(response.type() != QJsonRpcMessage::Error);
 
     request = QJsonRpcMessage::createRequest("service.enums", QLatin1String("ONE"));
-    QVERIFY(service.testDispatch(request));
+    response = service.testDispatch(request);
+    QVERIFY(response.type() != QJsonRpcMessage::Error);
 }
 
 void TestQJsonRpcMetaType::commonMethodName()
@@ -288,16 +271,18 @@ void TestQJsonRpcMetaType::commonMethodName()
 
     QJsonRpcMessage request =
         QJsonRpcMessage::createRequest("service.commonMethodName", CustomClass(42).toJson());
-    QVERIFY(service.testDispatch(request));
-    QCOMPARE(provider.last.type(), QJsonRpcMessage::Response);
-    CustomClass c(CustomClass::fromJson(provider.last.result()));
+    QJsonRpcMessage response = service.testDispatch(request);
+    QVERIFY(response.type() != QJsonRpcMessage::Error);
+
+    CustomClass c(CustomClass::fromJson(response.result()));
     QCOMPARE(c.data, 42);
 
     request = QJsonRpcMessage::createRequest("service.commonMethodName",
                 AnotherCustomClass("test string").toJson());
-    QVERIFY(service.testDispatch(request));
-    QCOMPARE(provider.last.type(), QJsonRpcMessage::Response);
-    AnotherCustomClass ac(AnotherCustomClass::fromJson(provider.last.result()));
+    response = service.testDispatch(request);
+    QVERIFY(response.type() != QJsonRpcMessage::Error);
+
+    AnotherCustomClass ac(AnotherCustomClass::fromJson(response.result()));
     QCOMPARE(ac.data, QLatin1String("test string"));
 }
 
