@@ -84,12 +84,10 @@ void QJsonRpcSocketPrivate::writeData(const QJsonRpcMessage &message)
 
 QJsonRpcAbstractSocket::QJsonRpcAbstractSocket(QObject *parent)
 #if defined(USE_QT_PRIVATE_HEADERS)
-    : QObject(*new QJsonRpcAbstractSocketPrivate, parent),
-      defaultTimeout(DEFAULT_MSECS_TIMEOUT)
+    : QObject(*new QJsonRpcAbstractSocketPrivate, parent)
 #else
     : QObject(parent),
-      d_ptr(new QJsonRpcAbstractSocketPrivate),
-      defaultTimeout(DEFAULT_MSECS_TIMEOUT)
+      d_ptr(new QJsonRpcAbstractSocketPrivate)
 #endif
 {
 }
@@ -100,12 +98,10 @@ QJsonRpcAbstractSocket::~QJsonRpcAbstractSocket()
 
 QJsonRpcAbstractSocket::QJsonRpcAbstractSocket(QJsonRpcAbstractSocketPrivate &dd, QObject *parent)
 #if defined(USE_QT_PRIVATE_HEADERS)
-    : QObject(dd, parent),
-      defaultTimeout(DEFAULT_MSECS_TIMEOUT)
+    : QObject(dd, parent)
 #else
     : QObject(parent),
-      d_ptr(&dd),
-      defaultTimeout(DEFAULT_MSECS_TIMEOUT)
+      d_ptr(&dd)
 #endif
 {
 }
@@ -115,9 +111,23 @@ bool QJsonRpcAbstractSocket::isValid() const
     return false;
 }
 
-void QJsonRpcAbstractSocket::setDefaultTimeout(int msecs)
+void QJsonRpcAbstractSocket::setDefaultRequestTimeout(int msecs)
 {
-    defaultTimeout = msecs;
+    Q_D(QJsonRpcAbstractSocket);
+
+    if (msecs < 0) {
+        qJsonRpcDebug() << "Cannot set a negative request timeout msecs value";
+        return;
+    }
+
+    d->defaultRequestTimeout = msecs;
+}
+
+int QJsonRpcAbstractSocket::getDefaultRequestTimeout()
+{
+    Q_D(QJsonRpcAbstractSocket);
+
+    return d->defaultRequestTimeout;
 }
 
 QJsonRpcMessage QJsonRpcAbstractSocket::sendMessageBlocking(const QJsonRpcMessage &message, int msecs)
@@ -165,7 +175,8 @@ QJsonRpcMessage QJsonRpcAbstractSocket::invokeRemoteMethodBlocking(const QString
                                                                    const QVariant &arg8, const QVariant &arg9,
                                                                    const QVariant &arg10)
 {
-    return invokeRemoteMethodBlocking(method, defaultTimeout, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10);
+    Q_D(QJsonRpcAbstractSocket);
+    return invokeRemoteMethodBlocking(method, d->defaultRequestTimeout, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10);
 }
 
 QJsonRpcServiceReply *QJsonRpcAbstractSocket::invokeRemoteMethod(const QString &method, const QVariant &arg1,
@@ -319,7 +330,8 @@ QJsonRpcMessage QJsonRpcSocket::invokeRemoteMethodBlocking(const QString &method
                                                            const QVariant &param8, const QVariant &param9,
                                                            const QVariant &param10)
 {
-    return invokeRemoteMethodBlocking(method, defaultTimeout, param1, param2, param3, param4, param5, param6, param7, param8, param9, param10);
+    Q_D(QJsonRpcSocket);
+    return invokeRemoteMethodBlocking(method, d->defaultRequestTimeout, param1, param2, param3, param4, param5, param6, param7, param8, param9, param10);
 }
 
 QJsonRpcServiceReply *QJsonRpcSocket::invokeRemoteMethod(const QString &method, const QVariant &param1,

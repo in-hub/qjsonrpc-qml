@@ -53,7 +53,7 @@ public:
 
 public Q_SLOTS:
     virtual void notify(const QJsonRpcMessage &message);
-    virtual QJsonRpcMessage sendMessageBlocking(const QJsonRpcMessage &message, int msecs = DEFAULT_MSECS_TIMEOUT);
+    virtual QJsonRpcMessage sendMessageBlocking(const QJsonRpcMessage &message, int msecs = DEFAULT_MSECS_REQUEST_TIMEOUT);
     virtual QJsonRpcServiceReply *sendMessage(const QJsonRpcMessage &message);
 
     virtual QJsonRpcMessage invokeRemoteMethodBlocking(const QString &method, int msecs, const QVariant &arg1 = QVariant(),

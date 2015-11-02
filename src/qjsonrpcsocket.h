@@ -25,7 +25,7 @@
 #include "qjsonrpcmessage.h"
 #include "qjsonrpcglobal.h"
 
-#define DEFAULT_MSECS_TIMEOUT (30000)
+#define DEFAULT_MSECS_REQUEST_TIMEOUT (30000)
 
 class QJsonRpcServiceReply;
 class QJsonRpcAbstractSocketPrivate;
@@ -37,14 +37,15 @@ public:
     ~QJsonRpcAbstractSocket();
 
     virtual bool isValid() const;
-    void setDefaultTimeout(int msecs);
+    void setDefaultRequestTimeout(int msecs);
+    int getDefaultRequestTimeout();
 
 Q_SIGNALS:
     void messageReceived(const QJsonRpcMessage &message);
 
 public Q_SLOTS:
     virtual void notify(const QJsonRpcMessage &message) = 0;
-    virtual QJsonRpcMessage sendMessageBlocking(const QJsonRpcMessage &message, int msecs = DEFAULT_MSECS_TIMEOUT);
+    virtual QJsonRpcMessage sendMessageBlocking(const QJsonRpcMessage &message, int msecs = DEFAULT_MSECS_REQUEST_TIMEOUT);
     virtual QJsonRpcServiceReply *sendMessage(const QJsonRpcMessage &message);
     virtual QJsonRpcMessage invokeRemoteMethodBlocking(const QString &method, int msecs, const QVariant &arg1 = QVariant(),
                                                const QVariant &arg2 = QVariant(), const QVariant &arg3 = QVariant(),
@@ -66,7 +67,6 @@ public Q_SLOTS:
                                              const QVariant &arg10 = QVariant());
 protected:
     QJsonRpcAbstractSocket(QJsonRpcAbstractSocketPrivate &dd, QObject *parent = 0);
-    int defaultTimeout;
 
 #if !defined(USE_QT_PRIVATE_HEADERS)
     QScopedPointer<QJsonRpcAbstractSocketPrivate> d_ptr;
@@ -90,7 +90,7 @@ public:
 
 public Q_SLOTS:
     virtual void notify(const QJsonRpcMessage &message);
-    virtual QJsonRpcMessage sendMessageBlocking(const QJsonRpcMessage &message, int msecs = DEFAULT_MSECS_TIMEOUT);
+    virtual QJsonRpcMessage sendMessageBlocking(const QJsonRpcMessage &message, int msecs = DEFAULT_MSECS_REQUEST_TIMEOUT);
     virtual QJsonRpcServiceReply *sendMessage(const QJsonRpcMessage &message);
     QJsonRpcMessage invokeRemoteMethodBlocking(const QString &method, int msecs, const QVariant &arg1 = QVariant(),
                                                const QVariant &arg2 = QVariant(), const QVariant &arg3 = QVariant(),
