@@ -123,9 +123,9 @@ void QJsonRpcAbstractSocket::setDefaultRequestTimeout(int msecs)
     d->defaultRequestTimeout = msecs;
 }
 
-int QJsonRpcAbstractSocket::getDefaultRequestTimeout()
+int QJsonRpcAbstractSocket::getDefaultRequestTimeout() const
 {
-    Q_D(QJsonRpcAbstractSocket);
+    Q_D(const QJsonRpcAbstractSocket);
 
     return d->defaultRequestTimeout;
 }

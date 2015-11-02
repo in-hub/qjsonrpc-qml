@@ -38,7 +38,7 @@ public:
 
     virtual bool isValid() const;
     void setDefaultRequestTimeout(int msecs);
-    int getDefaultRequestTimeout();
+    int getDefaultRequestTimeout() const;
 
 Q_SIGNALS:
     void messageReceived(const QJsonRpcMessage &message);
