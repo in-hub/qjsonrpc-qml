@@ -111,6 +111,25 @@ bool QJsonRpcAbstractSocket::isValid() const
     return false;
 }
 
+void QJsonRpcAbstractSocket::setDefaultRequestTimeout(int msecs)
+{
+    Q_D(QJsonRpcAbstractSocket);
+
+    if (msecs < 0) {
+        qJsonRpcDebug() << "Cannot set a negative request timeout msecs value";
+        return;
+    }
+
+    d->defaultRequestTimeout = msecs;
+}
+
+int QJsonRpcAbstractSocket::getDefaultRequestTimeout() const
+{
+    Q_D(const QJsonRpcAbstractSocket);
+
+    return d->defaultRequestTimeout;
+}
+
 QJsonRpcMessage QJsonRpcAbstractSocket::sendMessageBlocking(const QJsonRpcMessage &message, int msecs)
 {
     Q_UNUSED(message)
@@ -126,7 +145,7 @@ QJsonRpcServiceReply *QJsonRpcAbstractSocket::sendMessage(const QJsonRpcMessage 
     return 0;
 }
 
-QJsonRpcMessage QJsonRpcAbstractSocket::invokeRemoteMethodBlocking(const QString &method, const QVariant &arg1,
+QJsonRpcMessage QJsonRpcAbstractSocket::invokeRemoteMethodBlocking(const QString &method, int msecs, const QVariant &arg1,
                                                                    const QVariant &arg2, const QVariant &arg3,
                                                                    const QVariant &arg4, const QVariant &arg5,
                                                                    const QVariant &arg6, const QVariant &arg7,
@@ -134,6 +153,7 @@ QJsonRpcMessage QJsonRpcAbstractSocket::invokeRemoteMethodBlocking(const QString
                                                                    const QVariant &arg10)
 {
     Q_UNUSED(method)
+    Q_UNUSED(msecs)
     Q_UNUSED(arg1)
     Q_UNUSED(arg2)
     Q_UNUSED(arg3)
@@ -146,6 +166,17 @@ QJsonRpcMessage QJsonRpcAbstractSocket::invokeRemoteMethodBlocking(const QString
     Q_UNUSED(arg10)
 
     return QJsonRpcMessage();
+}
+
+QJsonRpcMessage QJsonRpcAbstractSocket::invokeRemoteMethodBlocking(const QString &method, const QVariant &arg1,
+                                                                   const QVariant &arg2, const QVariant &arg3,
+                                                                   const QVariant &arg4, const QVariant &arg5,
+                                                                   const QVariant &arg6, const QVariant &arg7,
+                                                                   const QVariant &arg8, const QVariant &arg9,
+                                                                   const QVariant &arg10)
+{
+    Q_D(QJsonRpcAbstractSocket);
+    return invokeRemoteMethodBlocking(method, d->defaultRequestTimeout, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10);
 }
 
 QJsonRpcServiceReply *QJsonRpcAbstractSocket::invokeRemoteMethod(const QString &method, const QVariant &arg1,
@@ -268,7 +299,7 @@ void QJsonRpcSocket::notify(const QJsonRpcMessage &message)
     d->writeData(message);
 }
 
-QJsonRpcMessage QJsonRpcSocket::invokeRemoteMethodBlocking(const QString &method, const QVariant &param1,
+QJsonRpcMessage QJsonRpcSocket::invokeRemoteMethodBlocking(const QString &method, int msecs, const QVariant &param1,
                                                            const QVariant &param2, const QVariant &param3,
                                                            const QVariant &param4, const QVariant &param5,
                                                            const QVariant &param6, const QVariant &param7,
@@ -289,7 +320,18 @@ QJsonRpcMessage QJsonRpcSocket::invokeRemoteMethodBlocking(const QString &method
 
     QJsonRpcMessage request =
         QJsonRpcMessage::createRequest(method, QJsonArray::fromVariantList(params));
-    return sendMessageBlocking(request);
+    return sendMessageBlocking(request, msecs);
+}
+
+QJsonRpcMessage QJsonRpcSocket::invokeRemoteMethodBlocking(const QString &method, const QVariant &param1,
+                                                           const QVariant &param2, const QVariant &param3,
+                                                           const QVariant &param4, const QVariant &param5,
+                                                           const QVariant &param6, const QVariant &param7,
+                                                           const QVariant &param8, const QVariant &param9,
+                                                           const QVariant &param10)
+{
+    Q_D(QJsonRpcSocket);
+    return invokeRemoteMethodBlocking(method, d->defaultRequestTimeout, param1, param2, param3, param4, param5, param6, param7, param8, param9, param10);
 }
 
 QJsonRpcServiceReply *QJsonRpcSocket::invokeRemoteMethod(const QString &method, const QVariant &param1,
