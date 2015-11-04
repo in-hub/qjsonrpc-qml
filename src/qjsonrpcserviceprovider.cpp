@@ -91,7 +91,9 @@ void QJsonRpcServiceProvider::processMessage(QJsonRpcAbstractSocket *socket, con
                 if (message.type() == QJsonRpcMessage::Request)
                     QObject::connect(service, SIGNAL(result(QJsonRpcMessage)),
                                       socket, SLOT(notify(QJsonRpcMessage)), Qt::UniqueConnection);
-                service->dispatch(message);
+                QJsonRpcMessage response = service->dispatch(message);
+                if (response.isValid())
+                    socket->notify(response);
             }
         }
         break;
