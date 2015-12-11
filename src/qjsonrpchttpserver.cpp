@@ -121,9 +121,22 @@ void QJsonRpcHttpServerSocket::sendOptionsResponse(int statusCode)
     QByteArray responseHeader;
 
     responseHeader += "HTTP/1.1 " + QByteArray::number(statusCode) +" " + statusMessageForCode(statusCode) + "\r\n";
-    responseHeader += "Access-Control-Allow-Origin: " + m_requestHeaders["origin"] + "\r\n";
-    responseHeader += "Access-Control-Allow-Methods: " + m_requestHeaders["access-control-request-method"] + "\r\n";
-    responseHeader += "Access-Control-Allow-Headers: " + m_requestHeaders["access-control-request-headers"] + "\r\n";
+    
+    if(m_requestHeaders.contains("origin")) {
+      QByteArray origin = m_requestHeaders["origin"].toLatin1();
+      responseHeader += "Access-Control-Allow-Origin: " + origin + "\r\n";
+    }
+
+    if(m_requestHeaders.contains("access-control-request-method")) {
+      QByteArray allowed_method = m_requestHeaders["access-control-request-method"].toLatin1();
+      responseHeader += "Access-Control-Allow-Methods: " + allowed_method + "\r\n";
+    }
+
+    if(m_requestHeaders.contains("access-control-request-headers")) {
+      QByteArray allowed_headers = m_requestHeaders["access-control-request-headers"].toLatin1();
+      responseHeader += "Access-Control-Allow-Headers: " + allowed_headers + "\r\n";
+    }
+
     responseHeader += "Content-Type: text/plain\r\n";
     responseHeader += "Connection: keep-alive\r\n";
     responseHeader += "\r\n";

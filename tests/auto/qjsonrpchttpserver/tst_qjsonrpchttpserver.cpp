@@ -30,6 +30,7 @@ private Q_SLOTS:
     void missingHeaders_data();
     void missingHeaders();
     void testAccessControlHeader();
+    void testMissingAccessControlHeader();
 
 private:
     // temporarily disabled
@@ -313,6 +314,30 @@ void TestQJsonRpcHttpServer::missingHeaders()
 
     QCOMPARE(reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt(), 400);
     QCOMPARE(reply->attribute(QNetworkRequest::HttpReasonPhraseAttribute).toByteArray(), QByteArray("Bad Request"));
+}
+
+void TestQJsonRpcHttpServer::testMissingAccessControlHeader()
+{
+    QJsonRpcHttpServer server;
+    server.addService(new TestService);
+    QVERIFY(server.listen(QHostAddress::LocalHost, 8118));
+
+    //OPTIONS call *missing* headers on reply
+    QNetworkAccessManager manager;
+    QNetworkRequest request(QUrl("http://127.0.0.1:8118"));
+    request.setRawHeader("content-type", "text/plain");
+
+    QScopedPointer<QNetworkReply> reply(manager.sendCustomRequest(request,QByteArray("OPTIONS")));
+    QJsonRpcMessage request_client = QJsonRpcMessage::createRequest("service.noParam");
+    connect(reply.data(), SIGNAL(finished()), &QTestEventLoop::instance(), SLOT(exitLoop()));
+    connect(reply.data(), SIGNAL(error(QNetworkReply::NetworkError)), &QTestEventLoop::instance(), SLOT(exitLoop()));
+    QTestEventLoop::instance().enterLoop(1);
+    QVERIFY(!QTestEventLoop::instance().timeout());
+
+    QCOMPARE(reply->rawHeader("Access-Control-Allow-Origin"), QByteArray(""));
+    QCOMPARE(reply->rawHeader("Access-Control-Allow-Methods"), QByteArray(""));
+    QCOMPARE(reply->rawHeader("Access-Control-Allow-Headers"), QByteArray(""));
+    QCOMPARE(reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt(), 200);
 }
 
 void TestQJsonRpcHttpServer::testAccessControlHeader()
