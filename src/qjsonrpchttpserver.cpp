@@ -93,6 +93,12 @@ qint64 QJsonRpcHttpServerSocket::writeData(const char *data, qint64 maxSize)
         // header
         QByteArray responseHeader;
         responseHeader += "HTTP/1.1 " + QByteArray::number(statusCode) +" " + statusMessageForCode(statusCode) + "\r\n";
+
+        if(m_requestHeaders.contains("origin")) {
+          QString origin = m_requestHeaders["origin"];
+          responseHeader += "Access-Control-Allow-Origin: " + origin + "\r\n";
+        }
+
         responseHeader += "Content-Type: application/json-rpc\r\n";
         responseHeader += "Content-Length: " + QByteArray::number(m_responseBuffer.size()) + "\r\n";
         responseHeader += "\r\n";
@@ -108,6 +114,23 @@ qint64 QJsonRpcHttpServerSocket::writeData(const char *data, qint64 maxSize)
     }
 
     return maxSize;
+}
+
+void QJsonRpcHttpServerSocket::sendOptionsResponse(int statusCode, 
+  QString origin, QString allowed_methods, QString allowed_headers)
+{
+    QByteArray responseHeader;
+
+    responseHeader += "HTTP/1.1 " + QByteArray::number(statusCode) +" " + statusMessageForCode(statusCode) + "\r\n";
+    responseHeader += "Access-Control-Allow-Origin: " + origin + "\r\n";
+    responseHeader += "Access-Control-Allow-Methods: " + allowed_methods + "\r\n";
+    responseHeader += "Access-Control-Allow-Headers: " + allowed_headers + "\r\n";
+    responseHeader += "Content-Type: text/plain\r\n";
+    responseHeader += "Connection: keep-alive\r\n";
+    responseHeader += "\r\n";
+
+    QSslSocket::writeData(responseHeader.constData(), responseHeader.size());
+    close();
 }
 
 void QJsonRpcHttpServerSocket::sendErrorResponse(int statusCode)
@@ -145,6 +168,16 @@ int QJsonRpcHttpServerSocket::onMessageComplete(http_parser *parser)
 int QJsonRpcHttpServerSocket::onHeadersComplete(http_parser *parser)
 {
     QJsonRpcHttpServerSocket *request = (QJsonRpcHttpServerSocket *)parser->data;
+
+    if (parser->method == HTTP_OPTIONS) {
+        qJsonRpcDebug() << Q_FUNC_INFO << "OPTIONS method" << parser->method;
+        request->sendOptionsResponse(200, 
+          request->m_requestHeaders["origin"],
+          request->m_requestHeaders["access-control-request-method"],
+          request->m_requestHeaders["access-control-request-headers"]);
+        return 0;
+    }
+
     // need to add the final headers received
     if (!request->m_currentHeaderField.isEmpty() && !request->m_currentHeaderValue.isEmpty()) {
         request->m_requestHeaders.insert(request->m_currentHeaderField.toLower(), request->m_currentHeaderValue);
