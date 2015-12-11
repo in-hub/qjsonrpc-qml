@@ -26,7 +26,7 @@ public:
     ~QJsonRpcHttpServerSocket();
 
     void sendErrorResponse(int statusCode);
-
+    void sendOptionsResponse(int statusCode);
 Q_SIGNALS:
     void messageReceived(const QJsonRpcMessage &message);
 
