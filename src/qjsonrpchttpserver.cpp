@@ -116,15 +116,14 @@ qint64 QJsonRpcHttpServerSocket::writeData(const char *data, qint64 maxSize)
     return maxSize;
 }
 
-void QJsonRpcHttpServerSocket::sendOptionsResponse(int statusCode, 
-  QString origin, QString allowed_methods, QString allowed_headers)
+void QJsonRpcHttpServerSocket::sendOptionsResponse(int statusCode)
 {
     QByteArray responseHeader;
 
     responseHeader += "HTTP/1.1 " + QByteArray::number(statusCode) +" " + statusMessageForCode(statusCode) + "\r\n";
-    responseHeader += "Access-Control-Allow-Origin: " + origin + "\r\n";
-    responseHeader += "Access-Control-Allow-Methods: " + allowed_methods + "\r\n";
-    responseHeader += "Access-Control-Allow-Headers: " + allowed_headers + "\r\n";
+    responseHeader += "Access-Control-Allow-Origin: " + m_requestHeaders["origin"] + "\r\n";
+    responseHeader += "Access-Control-Allow-Methods: " + m_requestHeaders["access-control-request-method"] + "\r\n";
+    responseHeader += "Access-Control-Allow-Headers: " + m_requestHeaders["access-control-request-headers"] + "\r\n";
     responseHeader += "Content-Type: text/plain\r\n";
     responseHeader += "Connection: keep-alive\r\n";
     responseHeader += "\r\n";
@@ -171,10 +170,7 @@ int QJsonRpcHttpServerSocket::onHeadersComplete(http_parser *parser)
 
     if (parser->method == HTTP_OPTIONS) {
         qJsonRpcDebug() << Q_FUNC_INFO << "OPTIONS method" << parser->method;
-        request->sendOptionsResponse(200, 
-          request->m_requestHeaders["origin"],
-          request->m_requestHeaders["access-control-request-method"],
-          request->m_requestHeaders["access-control-request-headers"]);
+        request->sendOptionsResponse(200);
         return 0;
     }
 
