@@ -43,6 +43,7 @@ private Q_SLOTS:
     void invalidResponse();
     void connectionRefused();
     void requestTimedOut();
+    void issue23_doubleFinishedEmitted();
 };
 
 void TestQJsonRpcHttpClient::init()
@@ -131,8 +132,7 @@ void TestQJsonRpcHttpClient::invalidResponse()
 
 void TestQJsonRpcHttpClient::connectionRefused()
 {
-    QString url =
-        QString("%1://localhost:%2").arg("http").arg(9191);
+    QString url = QString("%1://localhost:%2").arg("http").arg(9191);
     QJsonRpcHttpClient client(url);
     QJsonRpcMessage message = QJsonRpcMessage::createRequest("someMethod");
     QJsonRpcMessage response = client.sendMessageBlocking(message);
@@ -153,6 +153,26 @@ void TestQJsonRpcHttpClient::requestTimedOut()
     QJsonRpcMessage response = client.sendMessageBlocking(message, 1);
     QCOMPARE(response.type(), QJsonRpcMessage::Error);
     QCOMPARE(response.errorCode(), int(QJsonRpc::TimeoutError));
+}
+
+void TestQJsonRpcHttpClient::issue23_doubleFinishedEmitted()
+{
+    QString url = QString("%1://localhost:%2").arg("http").arg(9191);
+    QJsonRpcHttpClient client(url);
+    QJsonRpcMessage message = QJsonRpcMessage::createRequest("someMethod");
+    QJsonRpcServiceReply *reply = client.sendMessage(message);
+    QScopedPointer<QJsonRpcServiceReply> replyPtr(reply);
+    QSignalSpy spy(reply, SIGNAL(finished()));
+
+    QEventLoop responseLoop;
+    connect(reply, SIGNAL(finished()), &responseLoop, SLOT(quit()));
+    QTimer::singleShot(10000, &responseLoop, SLOT(quit()));
+    responseLoop.exec();
+
+    QJsonRpcMessage response = reply->response();
+    QCOMPARE(response.type(), QJsonRpcMessage::Error);
+    QCOMPARE(response.errorCode(), int(QJsonRpc::InternalError));
+    QCOMPARE(spy.size(), 1);
 }
 
 QTEST_MAIN(TestQJsonRpcHttpClient)

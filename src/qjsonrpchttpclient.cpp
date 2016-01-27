@@ -105,7 +105,6 @@ private Q_SLOTS:
             return;
         }
 
-        reply->deleteLater();
         if (code == QNetworkReply::NoError)
             return;
 
@@ -118,8 +117,6 @@ private Q_SLOTS:
                                            QString("error with http request: %1").arg(reply->error()),
                                            reply->errorString());
         }
-
-        Q_EMIT finished();
     }
 
 private:
@@ -303,7 +300,7 @@ QJsonRpcMessage QJsonRpcHttpClient::invokeRemoteMethodBlocking(const QString &me
                                                                const QVariant &param6, const QVariant &param7,
                                                                const QVariant &param8, const QVariant &param9,
                                                                const QVariant &param10)
-{   
+{
     Q_D(QJsonRpcHttpClient);
 
     return invokeRemoteMethodBlocking(method, d->defaultRequestTimeout, param1, param2, param3, param4, param5, param6, param7, param8, param9, param10);
