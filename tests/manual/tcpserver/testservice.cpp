@@ -57,3 +57,10 @@ void TestService::testMethodWithDefaultParameter(const QString &first, const QSt
              << (second.isEmpty() ? "not defined, default parameter" : second) << endl;
 }
 
+void TestService::testNotifyConnectedClients(const QString &message)
+{
+    QJsonArray args;
+    args.append(message);
+    Q_EMIT notifyConnectedClients("callback", args);
+}
+

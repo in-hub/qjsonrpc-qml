@@ -50,6 +50,9 @@ void TcpClient::run()
 
     reply = m_client->invokeRemoteMethod("agent.testMethodWithParamsAndReturnValue", "matt");
     connect(reply, SIGNAL(finished()), this, SLOT(processResponse()));
+
+    connect(m_client, SIGNAL(messageReceived(QJsonRpcMessage)), this, SLOT(processMessage(QJsonRpcMessage)));
+    reply = m_client->invokeRemoteMethod("agent.testNotifyConnectedClients", "some data");
 }
 
 void TcpClient::processResponse()
@@ -61,4 +64,10 @@ void TcpClient::processResponse()
     }
 
     qDebug() << "response received: " << reply->response();
+}
+
+void TcpClient::processMessage(const QJsonRpcMessage &message)
+{
+    if (message.method() == "callback")
+      qDebug() << "received message: " << message.method() << message.params();
 }

@@ -30,6 +30,7 @@ public:
 
 private Q_SLOTS:
     void processResponse();
+    void processMessage(const QJsonRpcMessage &message);
 
 private:
     QJsonRpcSocket *m_client;
