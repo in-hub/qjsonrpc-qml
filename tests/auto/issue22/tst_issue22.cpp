@@ -32,6 +32,7 @@
 #include "qjsonrpctcpserver.h"
 #include "qjsonrpcsocket.h"
 #include "qjsonrpcmessage.h"
+#include "signalspy.h"
 
 class TestIssue22: public QObject
 {
@@ -148,9 +149,9 @@ void TestIssue22::testIssue21()
     QVERIFY(tcpServer->addService(new Issue21Service));
 
     TestClientRunnable *fastClient = new TestClientRunnable(false, tcpServerPort);
-    QSignalSpy fastClientSpy(fastClient, SIGNAL(messageReceived(QJsonRpcMessage, QJsonRpcMessage)));
+    SignalSpy fastClientSpy(fastClient, SIGNAL(messageReceived(QJsonRpcMessage, QJsonRpcMessage)));
     TestClientRunnable *slowClient = new TestClientRunnable(true, tcpServerPort);
-    QSignalSpy slowClientSpy(slowClient, SIGNAL(messageReceived(QJsonRpcMessage, QJsonRpcMessage)));
+    SignalSpy slowClientSpy(slowClient, SIGNAL(messageReceived(QJsonRpcMessage, QJsonRpcMessage)));
 
     QThreadPool::globalInstance()->setMaxThreadCount(10);
     QThreadPool::globalInstance()->start(fastClient);
