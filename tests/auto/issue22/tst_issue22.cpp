@@ -45,7 +45,10 @@ private Q_SLOTS:
     void init();
     void cleanup();
 
+
+#if QT_VERSION >= 0x050000
     void testIssue21();
+#endif
 
 private:
     QThread serverThread;
@@ -143,6 +146,7 @@ private:
 
 };
 
+#if QT_VERSION >= 0x050000
 void TestIssue22::testIssue21()
 {
     QVERIFY(tcpServer->addService(new Issue21Service));
@@ -170,6 +174,7 @@ void TestIssue22::testIssue21()
     QJsonRpcMessage slowResponse = slowClientPair.at(1).value<QJsonRpcMessage>();
     QCOMPARE(slowRequest.id(), slowResponse.id());
 }
+#endif
 
 QTEST_MAIN(TestIssue22)
 #include "tst_issue22.moc"
