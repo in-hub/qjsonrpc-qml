@@ -388,7 +388,7 @@ QJsonRpcMessage QJsonRpcService::dispatch(const QJsonRpcMessage &request)
     QVariantList arguments;
     const QList<int> &indexes = d->invokableMethodHash.value(method);
     const QJsonValue &params = request.params();
-    QVarLengthArray<void *, 10> parameters;
+    QList<QVariant> parameters;
     QVariant returnValue;
     QMetaType::Type returnType = QMetaType::Void;
 
@@ -410,10 +410,7 @@ QJsonRpcMessage QJsonRpcService::dispatch(const QJsonRpcMessage &request)
             returnValue = (returnType == QMetaType::Void) ?
                 QVariant() : QVariant(returnType, (const void *) NULL);
 #endif
-            if (returnType == QMetaType::QVariant)
-                parameters.append(&returnValue);
-            else
-                parameters.append(returnValue.data());
+            parameters.reserve(info.parameters.size());
 
             for (int i = 0; i < info.parameters.size(); ++i) {
                 const QJsonRpcServicePrivate::ParameterInfo &parameterInfo = info.parameters.at(i);
@@ -429,11 +426,7 @@ QJsonRpcMessage QJsonRpcService::dispatch(const QJsonRpcMessage &request)
                     return request.createErrorResponse(QJsonRpc::InvalidParams, message);
                 }
 
-                arguments.push_back(argument);
-                if (parameterInfo.type == QMetaType::QVariant)
-                    parameters.append(static_cast<void *>(&arguments.last()));
-                else
-                    parameters.append(const_cast<void *>(arguments.last().constData()));
+                parameters.append( argument );
             }
 
             // found a match
@@ -447,8 +440,19 @@ QJsonRpcMessage QJsonRpcService::dispatch(const QJsonRpcMessage &request)
 
     QJsonRpcServicePrivate::MethodInfo &info = d->methodInfoHash[idx];
 
-    bool success =
-        const_cast<QJsonRpcService*>(this)->qt_metacall(QMetaObject::InvokeMetaMethod, idx, parameters.data()) < 0;
+#define PASS_ARG(index) parameters.count() > index ? Q_ARG(QVariant, parameters[index]) : QGenericArgument()
+
+    bool success = QMetaObject::invokeMethod( this, method.constData(), Q_RETURN_ARG(QVariant, returnValue),
+                                              PASS_ARG(0),
+                                              PASS_ARG(1),
+                                              PASS_ARG(2),
+                                              PASS_ARG(3),
+                                              PASS_ARG(4),
+                                              PASS_ARG(5),
+                                              PASS_ARG(6),
+                                              PASS_ARG(7),
+                                              PASS_ARG(8),
+                                              PASS_ARG(9) );
     if (!success) {
         QString message = QString("dispatch for method '%1' failed").arg(method.constData());
         return request.createErrorResponse(QJsonRpc::InvalidRequest, message);
@@ -463,9 +467,6 @@ QJsonRpcMessage QJsonRpcService::dispatch(const QJsonRpcMessage &request)
         QJsonArray ret;
         if (info.returnType != QMetaType::Void)
             ret.append(QJsonRpcServicePrivate::convertReturnValue(returnValue));
-        for (int i = 0; i < info.parameters.size(); ++i)
-            if (info.parameters.at(i).out)
-                ret.append(QJsonRpcServicePrivate::convertReturnValue(arguments[i]));
         if (ret.size() > 1)
             return request.createResponse(ret);
         return request.createResponse(ret.first());
