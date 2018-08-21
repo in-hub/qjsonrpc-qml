@@ -19,6 +19,7 @@
 #include <QMetaMethod>
 #include <QEventLoop>
 #include <QDebug>
+#include <QJSValue>
 
 #include "qjsonrpcsocket.h"
 #include "qjsonrpcservice_p.h"
@@ -339,6 +340,8 @@ QJsonValue QJsonRpcServicePrivate::convertReturnValue(QVariant &returnValue)
         return QJsonValue(returnValue.toJsonObject());
     else if (static_cast<int>(returnValue.type()) == qMetaTypeId<QJsonArray>())
         return QJsonValue(returnValue.toJsonArray());
+    else if (static_cast<int>(returnValue.userType()) == qMetaTypeId<QJSValue>())
+        return returnValue.value<QJSValue>().toVariant().toJsonValue();
 
     switch (returnValue.type()) {
     case QMetaType::Bool:
