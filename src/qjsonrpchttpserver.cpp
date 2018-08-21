@@ -224,8 +224,18 @@ int QJsonRpcHttpServerSocket::onHeadersComplete(http_parser *parser)
         }
     }
 
+    auto supportedAcceptTypes = supportedContentTypes;
+
     QString acceptType = request->m_requestHeaders.value("accept");
-    if (!foundSupportedContentType || !supportedContentTypes.contains(acceptType)) {
+    bool foundSupportedAcceptType = false;
+    for (const auto & supportedAcceptType : supportedAcceptTypes) {
+        if (acceptType.contains(supportedAcceptType)) {
+              foundSupportedAcceptType = true;
+              break;
+        }
+    }
+
+    if (!foundSupportedContentType || !foundSupportedAcceptType) {
         // NOTE: signal the error
         qJsonRpcDebug() << Q_FUNC_INFO << "invalid content or accept type";
         request->sendErrorResponse(400);
