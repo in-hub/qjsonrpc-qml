@@ -61,12 +61,12 @@ SOURCES += \
 
 # install
 headers.files = $${INSTALL_HEADERS}
-headers.path = $${PREFIX}/include/qjsonrpc
+headers.path = $$[QT_INSTALL_HEADERS]/qjsonrpc
 qjson_headers.files = $${QJSON_INSTALL_HEADERS}
-qjson_headers.path = $${PREFIX}/include/qjsonrpc/json
+qjson_headers.path = $$[QT_INSTALL_HEADERS]/qjsonrpc/json
 private_headers.files = $${PRIVATE_HEADERS}
-private_headers.path = $${PREFIX}/include/qjsonrpc/private
-target.path = $${PREFIX}/$${LIBDIR}
+private_headers.path = $$[QT_INSTALL_HEADERS]/qjsonrpc/private
+target.path = $$[QT_INSTALL_LIBS]
 INSTALLS += headers qjson_headers private_headers target
 
 # pkg-config support
