@@ -4,7 +4,7 @@ include(http-parser/http-parser.pri)
 INCLUDEPATH += .
 TEMPLATE = lib
 TARGET = qjsonrpc
-QT += core network
+QT += core network qml
 QT -= gui
 DEFINES += QJSONRPC_BUILD
 CONFIG += $${QJSONRPC_LIBRARY_TYPE}
