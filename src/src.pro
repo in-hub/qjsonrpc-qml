@@ -81,3 +81,6 @@ equals(QJSONRPC_LIBRARY_TYPE, staticlib) {
 }
 unix:QMAKE_CLEAN += -r pkgconfig lib$${TARGET}.prl
 
+features.files = features/*prf
+features.path = $$[QT_HOST_DATA]/mkspecs/features
+INSTALLS += features
