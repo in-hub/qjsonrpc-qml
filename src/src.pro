@@ -7,6 +7,7 @@ TARGET = qjsonrpc
 QT += core network qml
 QT -= gui
 DEFINES += QJSONRPC_BUILD
+CONFIG += ltcg
 CONFIG += $${QJSONRPC_LIBRARY_TYPE}
 VERSION = $${QJSONRPC_VERSION}
 win32:DESTDIR = $$OUT_PWD
