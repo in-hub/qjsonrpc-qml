@@ -51,6 +51,7 @@ SOURCES += \
     qjsonrpcsocket.cpp \
     qjsonrpcserviceprovider.cpp \
     qjsonrpcabstractserver.cpp \
+    qjsonrpcglobal.cpp \
     qjsonrpcservicereply.cpp \
     qjsonrpchttpserver.cpp
 
