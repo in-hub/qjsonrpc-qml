@@ -34,10 +34,12 @@ namespace QJsonRpc {
         UserError       = -32099,           // Anything after this is user defined
         TimeoutError    = -32100
     };
+
+    extern bool debugEnabled;
 }
 Q_DECLARE_METATYPE(QJsonRpc::ErrorCode)
 
-#define qJsonRpcDebug if (qgetenv("QJSONRPC_DEBUG").isEmpty()); else qDebug
+#define qJsonRpcDebug if (QJsonRpc::debugEnabled == false); else qDebug
 
 #ifdef QJSONRPC_SHARED
 #   ifdef QJSONRPC_BUILD
