@@ -167,7 +167,7 @@ int QJsonRpcHttpServerSocket::onBody(http_parser *parser, const char *at, size_t
 {
     QJsonRpcHttpServerSocket *request = (QJsonRpcHttpServerSocket *)parser->data;
     qJsonRpcDebug() << Q_FUNC_INFO << length << parser->data;
-    request->m_requestPayload = QByteArray(at, length);
+    request->m_requestPayload.append(QByteArray(at, length));
     return 0;
 }
 
