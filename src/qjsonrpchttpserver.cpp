@@ -158,6 +158,7 @@ void QJsonRpcHttpServerSocket::sendErrorResponse(int statusCode)
 void QJsonRpcHttpServerSocket::readIncomingData()
 {
     QByteArray requestBuffer = readAll();
+    qJsonRpcDebug() << Q_FUNC_INFO << requestBuffer.size() << "bytes";
     http_parser_execute(m_requestParser, &m_requestParserSettings,
                         requestBuffer.constData(), requestBuffer.size());
 }
@@ -165,6 +166,7 @@ void QJsonRpcHttpServerSocket::readIncomingData()
 int QJsonRpcHttpServerSocket::onBody(http_parser *parser, const char *at, size_t length)
 {
     QJsonRpcHttpServerSocket *request = (QJsonRpcHttpServerSocket *)parser->data;
+    qJsonRpcDebug() << Q_FUNC_INFO << length << parser->data;
     request->m_requestPayload = QByteArray(at, length);
     return 0;
 }
@@ -172,6 +174,7 @@ int QJsonRpcHttpServerSocket::onBody(http_parser *parser, const char *at, size_t
 int QJsonRpcHttpServerSocket::onMessageComplete(http_parser *parser)
 {
     QJsonRpcHttpServerSocket *request = (QJsonRpcHttpServerSocket *)parser->data;
+    qJsonRpcDebug() << Q_FUNC_INFO << request->m_requestPayload;
     QJsonRpcMessage message = QJsonRpcMessage::fromJson(request->m_requestPayload);
     Q_EMIT request->messageReceived(message);
     return 0;
