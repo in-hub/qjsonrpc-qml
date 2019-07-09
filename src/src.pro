@@ -31,11 +31,8 @@ INSTALL_HEADERS += \
     qjsonrpcsocket.h \
     qjsonrpcserviceprovider.h \
     qjsonrpcabstractserver.h \
-    qjsonrpclocalserver.h \
-    qjsonrpctcpserver.h \
     qjsonrpcglobal.h \
     qjsonrpcservicereply.h \
-    qjsonrpchttpclient.h \
     qjsonrpchttpserver.h
 
 greaterThan(QT_MAJOR_VERSION, 4) {
@@ -54,10 +51,7 @@ SOURCES += \
     qjsonrpcsocket.cpp \
     qjsonrpcserviceprovider.cpp \
     qjsonrpcabstractserver.cpp \
-    qjsonrpclocalserver.cpp \
-    qjsonrpctcpserver.cpp \
     qjsonrpcservicereply.cpp \
-    qjsonrpchttpclient.cpp \
     qjsonrpchttpserver.cpp
 
 # install
