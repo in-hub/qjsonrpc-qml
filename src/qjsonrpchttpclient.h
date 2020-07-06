@@ -48,8 +48,10 @@ public:
 
     QNetworkAccessManager *networkAccessManager();
 
+#ifndef QT_NO_SSL
     QSslConfiguration sslConfiguration() const;
     void setSslConfiguration(const QSslConfiguration &sslConfiguration);
+#endif
 
 public Q_SLOTS:
     virtual void notify(const QJsonRpcMessage &message);
@@ -77,7 +79,9 @@ public Q_SLOTS:
 
 protected Q_SLOTS:
     virtual void handleAuthenticationRequired(QNetworkReply *reply, QAuthenticator * authenticator);
+#ifndef QT_NO_SSL
     virtual void handleSslErrors( QNetworkReply * reply, const QList<QSslError> &errors);
+#endif
 
 private:
     Q_DISABLE_COPY(QJsonRpcHttpClient)
