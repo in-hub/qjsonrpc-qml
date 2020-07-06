@@ -131,16 +131,20 @@ public:
     void initializeNetworkAccessManager(QJsonRpcHttpClient *client) {
         QObject::connect(networkAccessManager, SIGNAL(authenticationRequired(QNetworkReply*,QAuthenticator*)),
                 client, SLOT(handleAuthenticationRequired(QNetworkReply*,QAuthenticator*)));
+#ifndef QT_NO_SSL
         QObject::connect(networkAccessManager, SIGNAL(sslErrors(QNetworkReply*,QList<QSslError>)),
                 client, SLOT(handleSslErrors(QNetworkReply*,QList<QSslError>)));
+#endif
     }
 
     QNetworkReply *writeMessage(const QJsonRpcMessage &message) {
         QNetworkRequest request(endPoint);
         request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
         request.setRawHeader("Accept", "application/json-rpc");
+#ifndef QT_NO_SSL
         if (!sslConfiguration.isNull())
             request.setSslConfiguration(sslConfiguration);
+#endif
 
         QByteArray data = message.toJson();
         qJsonRpcDebug() << "sending: " << data;
@@ -149,7 +153,9 @@ public:
 
     QUrl endPoint;
     QNetworkAccessManager *networkAccessManager;
+#ifndef QT_NO_SSL
     QSslConfiguration sslConfiguration;
+#endif
 };
 
 QJsonRpcHttpClient::QJsonRpcHttpClient(QObject *parent)
@@ -211,6 +217,7 @@ QNetworkAccessManager *QJsonRpcHttpClient::networkAccessManager()
     return d->networkAccessManager;
 }
 
+#ifndef QT_NO_SSL
 QSslConfiguration QJsonRpcHttpClient::sslConfiguration() const
 {
     Q_D(const QJsonRpcHttpClient);
@@ -222,6 +229,7 @@ void QJsonRpcHttpClient::setSslConfiguration(const QSslConfiguration &sslConfigu
     Q_D(QJsonRpcHttpClient);
     d->sslConfiguration = sslConfiguration;
 }
+#endif
 
 void QJsonRpcHttpClient::notify(const QJsonRpcMessage &message)
 {
@@ -336,10 +344,12 @@ void QJsonRpcHttpClient::handleAuthenticationRequired(QNetworkReply *reply, QAut
     Q_UNUSED(authenticator)
 }
 
+#ifndef QT_NO_SSL
 void QJsonRpcHttpClient::handleSslErrors(QNetworkReply *reply, const QList<QSslError> &errors)
 {
     Q_UNUSED(errors)
     reply->ignoreSslErrors();
 }
+#endif
 
 #include "qjsonrpchttpclient.moc"
