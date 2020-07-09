@@ -33,6 +33,7 @@ INSTALL_HEADERS += \
     qjsonrpcabstractserver.h \
     qjsonrpcglobal.h \
     qjsonrpcservicereply.h \
+    qjsonrpchttpclient.h \
     qjsonrpchttpserver.h
 
 greaterThan(QT_MAJOR_VERSION, 4) {
@@ -53,6 +54,7 @@ SOURCES += \
     qjsonrpcabstractserver.cpp \
     qjsonrpcglobal.cpp \
     qjsonrpcservicereply.cpp \
+    qjsonrpchttpclient.cpp \
     qjsonrpchttpserver.cpp
 
 # install
