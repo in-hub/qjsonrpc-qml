@@ -73,7 +73,7 @@ private Q_SLOTS:
             if (doc.isEmpty() || doc.isNull() || !doc.isObject()) {
                 d->response =
                     d->request.createErrorResponse(QJsonRpc::ParseError,
-                                                   "unable to process incoming JSON data",
+                                                   QStringLiteral("unable to process incoming JSON data"),
                                                    QString::fromUtf8(data));
             } else {
                 qJsonRpcDebug() << "received: " << doc.toJson();
@@ -84,7 +84,7 @@ private Q_SLOTS:
                     d->request.id() != response.id()) {
                     d->response =
                         d->request.createErrorResponse(QJsonRpc::InternalError,
-                                                       "invalid response id",
+                                                       QStringLiteral("invalid response id"),
                                                        QString::fromUtf8(data));
                 } else {
                     d->response = response;
@@ -114,7 +114,7 @@ private Q_SLOTS:
             Q_EMIT messageReceived(response);
         } else {
             d->response = d->request.createErrorResponse(QJsonRpc::InternalError,
-                                           QString("error with http request: %1").arg(reply->error()),
+                                           QStringLiteral("error with http request: %1").arg(reply->error()),
                                            reply->errorString());
         }
     }
@@ -139,7 +139,7 @@ public:
 
     QNetworkReply *writeMessage(const QJsonRpcMessage &message) {
         QNetworkRequest request(endPoint);
-        request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+        request.setHeader(QNetworkRequest::ContentTypeHeader, QStringLiteral("application/json"));
         request.setRawHeader("Accept", "application/json-rpc");
 #ifndef QT_NO_SSL
         if (!sslConfiguration.isNull())
@@ -274,7 +274,7 @@ QJsonRpcMessage QJsonRpcHttpClient::sendMessageBlocking(const QJsonRpcMessage &m
     responseLoop.exec();
 
     if (!reply->response().isValid())
-        return message.createErrorResponse(QJsonRpc::TimeoutError, "request timed out");
+        return message.createErrorResponse(QJsonRpc::TimeoutError, QStringLiteral("request timed out"));
     return reply->response();
 }
 

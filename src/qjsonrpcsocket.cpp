@@ -262,7 +262,7 @@ QJsonRpcMessage QJsonRpcSocket::sendMessageBlocking(const QJsonRpcMessage &messa
 
     if (!reply->response().isValid()) {
         d->replies.remove(message.id());
-        return message.createErrorResponse(QJsonRpc::TimeoutError, "request timed out");
+        return message.createErrorResponse(QJsonRpc::TimeoutError, QStringLiteral("request timed out"));
     }
 
     return reply->response();

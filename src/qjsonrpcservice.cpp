@@ -115,7 +115,7 @@ QJsonRpcServicePrivate::MethodInfo::MethodInfo(const QMetaMethod &method)
     returnType = method.returnType();
     if (returnType == QMetaType::UnknownType) {
         qJsonRpcDebug() << "QJsonRpcService: can't bind method's return type"
-                      << QString(method.name());
+                      << QString::fromUtf8(method.name());
         valid = false;
         return;
     }
@@ -141,12 +141,12 @@ QJsonRpcServicePrivate::MethodInfo::MethodInfo(const QMetaMethod &method)
         int type = QMetaType::type(parameterType);
         if (type == 0) {
             qJsonRpcDebug() << "QJsonRpcService: can't bind method's parameter"
-                          << QString(parameterType);
+                          << QString::fromUtf8(parameterType);
             valid = false;
             break;
         }
 
-        parameters.append(ParameterInfo(parameterName, type, out));
+        parameters.append(ParameterInfo(QString::fromUtf8(parameterName), type, out));
     }
 }
 
@@ -371,7 +371,7 @@ QJsonValue QJsonRpcServicePrivate::convertReturnValue(QVariant &returnValue)
 static inline QByteArray methodName(const QJsonRpcMessage &request)
 {
     const QString &methodPath(request.method());
-    return methodPath.midRef(methodPath.lastIndexOf('.') + 1).toLatin1();
+    return methodPath.midRef(methodPath.lastIndexOf(QLatin1Char('.')) + 1).toLatin1();
 }
 
 QJsonRpcMessage QJsonRpcService::dispatch(const QJsonRpcMessage &request)
@@ -379,12 +379,12 @@ QJsonRpcMessage QJsonRpcService::dispatch(const QJsonRpcMessage &request)
     Q_D(QJsonRpcService);
     if (request.type() != QJsonRpcMessage::Request &&
         request.type() != QJsonRpcMessage::Notification) {
-        return request.createErrorResponse(QJsonRpc::InvalidRequest, "invalid request");
+        return request.createErrorResponse(QJsonRpc::InvalidRequest, QStringLiteral("invalid request"));
     }
 
     const QByteArray &method(methodName(request));
     if (!d->invokableMethodHash.contains(method)) {
-        return request.createErrorResponse(QJsonRpc::MethodNotFound, "invalid method called");
+        return request.createErrorResponse(QJsonRpc::MethodNotFound, QStringLiteral("invalid method called"));
     }
 
     int idx = -1;
@@ -424,8 +424,8 @@ QJsonRpcMessage QJsonRpcService::dispatch(const QJsonRpcMessage &request)
                 QVariant argument = convertArgument(incomingArgument, parameterInfo);
                 if (!argument.isValid()) {
                     QString message = incomingArgument.isUndefined() ?
-                        QString("failed to construct default object for '%1'").arg(parameterInfo.name) :
-                        QString("failed to convert from JSON for '%1'").arg(parameterInfo.name);
+                        QStringLiteral("failed to construct default object for '%1'").arg(parameterInfo.name) :
+                        QStringLiteral("failed to convert from JSON for '%1'").arg(parameterInfo.name);
                     return request.createErrorResponse(QJsonRpc::InvalidParams, message);
                 }
 
@@ -438,7 +438,7 @@ QJsonRpcMessage QJsonRpcService::dispatch(const QJsonRpcMessage &request)
     }
 
     if (idx == -1) {
-        return request.createErrorResponse(QJsonRpc::InvalidParams, "invalid parameters");
+        return request.createErrorResponse(QJsonRpc::InvalidParams, QStringLiteral("invalid parameters"));
     }
 
     QJsonRpcServicePrivate::MethodInfo &info = d->methodInfoHash[idx];
@@ -457,7 +457,7 @@ QJsonRpcMessage QJsonRpcService::dispatch(const QJsonRpcMessage &request)
                                               PASS_ARG(8),
                                               PASS_ARG(9) );
     if (!success) {
-        QString message = QString("dispatch for method '%1' failed").arg(method.constData());
+        QString message = QStringLiteral("dispatch for method '%1' failed").arg(QString::fromUtf8(method));
         return request.createErrorResponse(QJsonRpc::InvalidRequest, message);
     }
 

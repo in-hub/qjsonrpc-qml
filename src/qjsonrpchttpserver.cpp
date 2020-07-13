@@ -94,9 +94,9 @@ qint64 QJsonRpcHttpServerSocket::writeData(const char *data, qint64 maxSize)
         QByteArray responseHeader;
         responseHeader += "HTTP/1.1 " + QByteArray::number(statusCode) +" " + statusMessageForCode(statusCode) + "\r\n";
 
-        if(m_requestHeaders.contains("origin")) {
-          QString origin = m_requestHeaders["origin"];
-          responseHeader += "Access-Control-Allow-Origin: " + origin + "\r\n";
+        if(m_requestHeaders.contains(QStringLiteral("origin"))) {
+          QString origin = m_requestHeaders[QStringLiteral("origin")];
+          responseHeader += "Access-Control-Allow-Origin: " + origin.toUtf8() + "\r\n";
         }
 
         responseHeader += "Content-Type: application/json-rpc\r\n";
@@ -122,18 +122,18 @@ void QJsonRpcHttpServerSocket::sendOptionsResponse(int statusCode)
 
     responseHeader += "HTTP/1.1 " + QByteArray::number(statusCode) +" " + statusMessageForCode(statusCode) + "\r\n";
     
-    if(m_requestHeaders.contains("origin")) {
-      QByteArray origin = m_requestHeaders["origin"].toLatin1();
+    if(m_requestHeaders.contains(QStringLiteral("origin"))) {
+      QByteArray origin = m_requestHeaders[QStringLiteral("origin")].toLatin1();
       responseHeader += "Access-Control-Allow-Origin: " + origin + "\r\n";
     }
 
-    if(m_requestHeaders.contains("access-control-request-method")) {
-      QByteArray allowed_method = m_requestHeaders["access-control-request-method"].toLatin1();
+    if(m_requestHeaders.contains(QStringLiteral("access-control-request-method"))) {
+      QByteArray allowed_method = m_requestHeaders[QStringLiteral("access-control-request-method")].toLatin1();
       responseHeader += "Access-Control-Allow-Methods: " + allowed_method + "\r\n";
     }
 
-    if(m_requestHeaders.contains("access-control-request-headers")) {
-      QByteArray allowed_headers = m_requestHeaders["access-control-request-headers"].toLatin1();
+    if(m_requestHeaders.contains(QStringLiteral("access-control-request-headers"))) {
+      QByteArray allowed_headers = m_requestHeaders[QStringLiteral("access-control-request-headers")].toLatin1();
       responseHeader += "Access-Control-Allow-Headers: " + allowed_headers + "\r\n";
     }
 
@@ -206,8 +206,7 @@ int QJsonRpcHttpServerSocket::onHeadersComplete(http_parser *parser)
 
     // check headers
     // see: http://www.jsonrpc.org/historical/json-rpc-over-http.html#http-header
-    QStringList requiredHeaders =
-        QStringList() << "content-type" << "content-length" << "accept";
+    QStringList requiredHeaders{ QStringLiteral("content-type"), QStringLiteral("content-length"), QStringLiteral("accept") };
     foreach (QString requiredHeader, requiredHeaders) {
         if (!request->m_requestHeaders.contains(requiredHeader)) {
             qJsonRpcDebug() << Q_FUNC_INFO << "error: " << request->m_requestHeaders;
@@ -216,9 +215,8 @@ int QJsonRpcHttpServerSocket::onHeadersComplete(http_parser *parser)
         }
     }
 
-    QStringList supportedContentTypes =
-        QStringList() << "application/json-rpc" << "application/json" << "application/jsonrequest";
-    QString contentType = request->m_requestHeaders.value("content-type");
+    QStringList supportedContentTypes = { QStringLiteral("application/json-rpc"), QStringLiteral("application/json"), QStringLiteral("application/jsonrequest") };
+    QString contentType = request->m_requestHeaders.value(QStringLiteral("content-type"));
     bool foundSupportedContentType = false;
     foreach (QString supportedContentType, supportedContentTypes) {
         if (contentType.contains(supportedContentType)) {
@@ -229,7 +227,7 @@ int QJsonRpcHttpServerSocket::onHeadersComplete(http_parser *parser)
 
     auto supportedAcceptTypes = supportedContentTypes;
 
-    QString acceptType = request->m_requestHeaders.value("accept");
+    QString acceptType = request->m_requestHeaders.value(QStringLiteral("accept"));
     bool foundSupportedAcceptType = false;
     for (const auto & supportedAcceptType : supportedAcceptTypes) {
         if (acceptType.contains(supportedAcceptType)) {
