@@ -407,7 +407,7 @@ void QJsonRpcSocketPrivate::_q_processIncomingData()
                     QPointer<QJsonRpcServiceReply> reply = replies.take(message.id());
                     if (!reply.isNull()) {
                         reply->d_func()->response = message;
-                        reply->finished();
+                        Q_EMIT reply->finished();
                     }
                 }
             } else {
