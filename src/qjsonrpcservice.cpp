@@ -281,10 +281,10 @@ static inline QVariant convertArgument(const QJsonValue &argument,
                                        const QJsonRpcServicePrivate::ParameterInfo &info)
 {
     if (argument.isUndefined())
-#if QT_VERSION >= 0x050000
-        return QVariant(info.type, Q_NULLPTR);
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+        return QVariant(QMetaType(info.type), nullptr);
 #else
-        return QVariant(info.type, (const void *) NULL);
+        return QVariant(info.type, nullptr);
 #endif
 
 #if QT_VERSION >= 0x050200
@@ -343,7 +343,7 @@ QJsonValue QJsonRpcServicePrivate::convertReturnValue(QVariant &returnValue)
     else if (static_cast<int>(returnValue.userType()) == qMetaTypeId<QJSValue>())
         return returnValue.value<QJSValue>().toVariant().toJsonValue();
 
-    switch (returnValue.type()) {
+    switch (returnValue.userType()) {
     case QMetaType::Bool:
     case QMetaType::Int:
     case QMetaType::Double:
@@ -371,7 +371,11 @@ QJsonValue QJsonRpcServicePrivate::convertReturnValue(QVariant &returnValue)
 static inline QByteArray methodName(const QJsonRpcMessage &request)
 {
     const QString &methodPath(request.method());
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    return QStringView(methodPath).mid(methodPath.lastIndexOf(QLatin1Char('.')) + 1).toLatin1();
+#else
     return methodPath.midRef(methodPath.lastIndexOf(QLatin1Char('.')) + 1).toLatin1();
+#endif
 }
 
 QJsonRpcMessage QJsonRpcService::dispatch(const QJsonRpcMessage &request)
@@ -406,12 +410,12 @@ QJsonRpcMessage QJsonRpcService::dispatch(const QJsonRpcMessage &request)
             idx = methodIndex;
             arguments.reserve(info.parameters.size());
             returnType = static_cast<QMetaType::Type>(info.returnType);
-#if QT_VERSION >= 0x050000
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
             returnValue = (returnType == QMetaType::Void) ?
-                QVariant() : QVariant(returnType, Q_NULLPTR);
+                QVariant() : QVariant(QMetaType(returnType), nullptr);
 #else
             returnValue = (returnType == QMetaType::Void) ?
-                QVariant() : QVariant(returnType, (const void *) NULL);
+                QVariant() : QVariant(returnType, nullptr);
 #endif
             parameters.reserve(info.parameters.size());
 
