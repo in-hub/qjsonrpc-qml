@@ -14,6 +14,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  */
+#include <QAuthenticator>
 #include <QEventLoop>
 #include <QTimer>
 #include <QDebug>
@@ -45,9 +46,12 @@ public:
         Q_D(QJsonRpcHttpReply);
         d->request = request;
         d->reply = reply;
-        connect(d->reply, SIGNAL(finished()), this, SLOT(networkReplyFinished()));
-        connect(d->reply, SIGNAL(error(QNetworkReply::NetworkError)),
-                    this, SLOT(networkReplyError(QNetworkReply::NetworkError)));
+        connect(d->reply, &QNetworkReply::finished, this, &QJsonRpcHttpReply::networkReplyFinished);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
+        connect(d->reply, &QNetworkReply::errorOccurred, this, &QJsonRpcHttpReply::networkReplyError);
+#else
+        connect(d->reply, qOverload<QNetworkReply::NetworkError>(&QNetworkReply::error), this, &QJsonRpcHttpReply::networkReplyError);
+#endif
     }
 
     virtual ~QJsonRpcHttpReply() {}
@@ -129,11 +133,11 @@ class QJsonRpcHttpClientPrivate : public QJsonRpcAbstractSocketPrivate
 {
 public:
     void initializeNetworkAccessManager(QJsonRpcHttpClient *client) {
-        QObject::connect(networkAccessManager, SIGNAL(authenticationRequired(QNetworkReply*,QAuthenticator*)),
-                client, SLOT(handleAuthenticationRequired(QNetworkReply*,QAuthenticator*)));
+        QObject::connect(networkAccessManager, &QNetworkAccessManager::authenticationRequired,
+                         client, &QJsonRpcHttpClient::handleAuthenticationRequired);
 #ifndef QT_NO_SSL
-        QObject::connect(networkAccessManager, SIGNAL(sslErrors(QNetworkReply*,QList<QSslError>)),
-                client, SLOT(handleSslErrors(QNetworkReply*,QList<QSslError>)));
+        QObject::connect(networkAccessManager, &QNetworkAccessManager::sslErrors,
+                         client, &QJsonRpcHttpClient::handleSslErrors);
 #endif
     }
 
@@ -240,11 +244,15 @@ void QJsonRpcHttpClient::notify(const QJsonRpcMessage &message)
     }
 
     QNetworkReply *reply = d->writeMessage(message);
-    connect(reply, SIGNAL(finished()), reply, SLOT(deleteLater()));
+    connect(reply, &QNetworkReply::finished, reply, &QNetworkReply::deleteLater);
 
     // NOTE: we might want to connect this to a local slot to track errors
     //       for debugging later?
-    connect(reply, SIGNAL(error(QNetworkReply::NetworkError)), reply, SLOT(deleteLater()));
+#if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
+    connect(reply, &QNetworkReply::errorOccurred, reply, &QNetworkReply::deleteLater);
+#else
+    connect(reply, qOverload<QNetworkReply::NetworkError>(&QNetworkReply::error), reply, &QNetworkReply::deleteLater);
+#endif
 }
 
 QJsonRpcServiceReply *QJsonRpcHttpClient::sendMessage(const QJsonRpcMessage &message)
@@ -257,8 +265,8 @@ QJsonRpcServiceReply *QJsonRpcHttpClient::sendMessage(const QJsonRpcMessage &mes
 
     QNetworkReply *reply = d->writeMessage(message);
     QJsonRpcHttpReply *serviceReply = new QJsonRpcHttpReply(message, reply);
-    connect(serviceReply, SIGNAL(messageReceived(QJsonRpcMessage)),
-                    this, SIGNAL(messageReceived(QJsonRpcMessage)));
+    connect(serviceReply, &QJsonRpcHttpReply::messageReceived,
+                    this, &QJsonRpcHttpClient::messageReceived);
 
     return serviceReply;
 }
@@ -269,8 +277,8 @@ QJsonRpcMessage QJsonRpcHttpClient::sendMessageBlocking(const QJsonRpcMessage &m
     QScopedPointer<QJsonRpcServiceReply> replyPtr(reply);
 
     QEventLoop responseLoop;
-    connect(reply, SIGNAL(finished()), &responseLoop, SLOT(quit()));
-    QTimer::singleShot(msecs, &responseLoop, SLOT(quit()));
+    connect(reply, &QJsonRpcServiceReply::finished, &responseLoop, &QEventLoop::quit);
+    QTimer::singleShot(msecs, &responseLoop, &QEventLoop::quit);
     responseLoop.exec();
 
     if (!reply->response().isValid())

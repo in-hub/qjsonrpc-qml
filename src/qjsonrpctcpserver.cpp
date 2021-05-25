@@ -40,10 +40,10 @@ bool QJsonRpcTcpServer::addService(QJsonRpcService *service)
     if (!QJsonRpcServiceProvider::addService(service))
         return false;
 
-    connect(service, SIGNAL(notifyConnectedClients(QJsonRpcMessage)),
-               this, SLOT(notifyConnectedClients(QJsonRpcMessage)));
-    connect(service, SIGNAL(notifyConnectedClients(QString,QJsonArray)),
-               this, SLOT(notifyConnectedClients(QString,QJsonArray)));
+    connect(service, qOverload<const QJsonRpcMessage&>(&QJsonRpcService::notifyConnectedClients),
+            this, qOverload<const QJsonRpcMessage&>(&QJsonRpcTcpServer::notifyConnectedClients));
+    connect(service, qOverload<const QString&, const QJsonArray&>(&QJsonRpcService::notifyConnectedClients),
+            this, qOverload<const QString&, const QJsonArray&>(&QJsonRpcTcpServer::notifyConnectedClients));
     return true;
 }
 
@@ -52,10 +52,10 @@ bool QJsonRpcTcpServer::removeService(QJsonRpcService *service)
     if (!QJsonRpcServiceProvider::removeService(service))
         return false;
 
-    disconnect(service, SIGNAL(notifyConnectedClients(QJsonRpcMessage)),
-                  this, SLOT(notifyConnectedClients(QJsonRpcMessage)));
-    disconnect(service, SIGNAL(notifyConnectedClients(QString,QJsonArray)),
-                  this, SLOT(notifyConnectedClients(QString,QJsonArray)));
+    disconnect(service, qOverload<const QJsonRpcMessage&>(&QJsonRpcService::notifyConnectedClients),
+               this, qOverload<const QJsonRpcMessage&>(&QJsonRpcTcpServer::notifyConnectedClients));
+    disconnect(service, qOverload<const QString&, const QJsonArray&>(&QJsonRpcService::notifyConnectedClients),
+               this, qOverload<const QString&, const QJsonArray&>(&QJsonRpcTcpServer::notifyConnectedClients));
     return true;
 }
 

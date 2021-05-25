@@ -28,7 +28,7 @@ QJsonRpcHttpServerSocket::QJsonRpcHttpServerSocket(QObject *parent)
     m_requestParserSettings.on_message_complete = onMessageComplete;
     m_requestParser->data = this;
 
-    connect(this, SIGNAL(readyRead()), this, SLOT(readIncomingData()));
+    connect(this, &QJsonRpcHttpServerSocket::readyRead, this, &QJsonRpcHttpServerSocket::readIncomingData);
 }
 
 QJsonRpcHttpServerSocket::~QJsonRpcHttpServerSocket()
@@ -332,12 +332,12 @@ void QJsonRpcHttpServer::incomingConnection(int socketDescriptor)
         // connect ssl error signals etc
 
         // NOTE: unsafe
-        connect(socket, SIGNAL(sslErrors(QList<QSslError>)), socket, SLOT(ignoreSslErrors()));
+        connect(socket, qOverload<const QList<QSslError>&>(&QSslSocket::sslErrors), socket, qOverload<>(&QSslSocket::ignoreSslErrors));
     }
 
     connect(socket, SIGNAL(disconnected()), this, SLOT(_q_socketDisconnected()));
-    connect(socket, SIGNAL(messageReceived(QJsonRpcMessage)),
-              this, SLOT(processIncomingMessage(QJsonRpcMessage)));
+    connect(socket, &QJsonRpcHttpServerSocket::messageReceived,
+              this, &QJsonRpcHttpServer::processIncomingMessage);
     QJsonRpcHttpServerRpcSocket *rpcSocket = new QJsonRpcHttpServerRpcSocket(socket, this);
     d->requestSocketLookup.insert(socket, rpcSocket);
 }

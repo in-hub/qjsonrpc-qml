@@ -256,8 +256,8 @@ QJsonRpcMessage QJsonRpcSocket::sendMessageBlocking(const QJsonRpcMessage &messa
     QScopedPointer<QJsonRpcServiceReply> replyPtr(reply);
 
     QEventLoop responseLoop;
-    connect(reply, SIGNAL(finished()), &responseLoop, SLOT(quit()));
-    QTimer::singleShot(msecs, &responseLoop, SLOT(quit()));
+    connect(reply, &QJsonRpcServiceReply::finished, &responseLoop, &QEventLoop::quit);
+    QTimer::singleShot(msecs, &responseLoop, &QEventLoop::quit);
     responseLoop.exec();
 
     if (!reply->response().isValid()) {
@@ -294,7 +294,7 @@ void QJsonRpcSocket::notify(const QJsonRpcMessage &message)
     // disconnect the result message if we need to
     QJsonRpcService *service = qobject_cast<QJsonRpcService*>(sender());
     if (service)
-        disconnect(service, SIGNAL(result(QJsonRpcMessage)), this, SLOT(notify(QJsonRpcMessage)));
+        disconnect(service, &QJsonRpcService::result, this, &QJsonRpcSocket::notify);
 
     d->writeData(message);
 }
