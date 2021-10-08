@@ -29,6 +29,7 @@ public:
     ~QJsonRpcServiceProvider();
     virtual bool addService(QJsonRpcService *service);
     virtual bool removeService(QJsonRpcService *service);
+    virtual void removeAllServices();
 
 protected:
     QJsonRpcServiceProvider();

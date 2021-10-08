@@ -75,6 +75,14 @@ bool QJsonRpcServiceProvider::removeService(QJsonRpcService *service)
     return true;
 }
 
+void QJsonRpcServiceProvider::removeAllServices()
+{
+    for (auto service : d->services) {
+        d->cleanupHandler.remove(service);
+    }
+    d->services.clear();
+}
+
 void QJsonRpcServiceProvider::processMessage(QJsonRpcAbstractSocket *socket, const QJsonRpcMessage &message)
 {
     switch (message.type()) {
