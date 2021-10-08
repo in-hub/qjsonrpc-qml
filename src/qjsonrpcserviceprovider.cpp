@@ -29,6 +29,9 @@ QJsonRpcServiceProvider::~QJsonRpcServiceProvider()
 
 QByteArray QJsonRpcServiceProviderPrivate::serviceName(QJsonRpcService *service)
 {
+    if (!service->property("serviceName").isNull()) {
+        return service->property("serviceName").toByteArray();
+    }
     const QMetaObject *mo = service->metaObject();
     for (int i = 0; i < mo->classInfoCount(); i++) {
         const QMetaClassInfo mci = mo->classInfo(i);
