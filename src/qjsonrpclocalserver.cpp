@@ -25,13 +25,13 @@ QJsonRpcLocalServer::QJsonRpcLocalServer(QObject *parent)
 QJsonRpcLocalServer::~QJsonRpcLocalServer()
 {
     Q_D(QJsonRpcLocalServer);
-    foreach (QLocalSocket *socket, d->socketLookup.keys()) {
+    for (auto *socket : d->socketLookup.keys()) {
         socket->flush();
         socket->deleteLater();
     }
     d->socketLookup.clear();
 
-    foreach (QJsonRpcSocket *client, d->clients)
+    for (auto *client : d->clients)
         client->deleteLater();
     d->clients.clear();
 }

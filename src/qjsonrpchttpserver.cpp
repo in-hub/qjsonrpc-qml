@@ -206,8 +206,8 @@ int QJsonRpcHttpServerSocket::onHeadersComplete(http_parser *parser)
 
     // check headers
     // see: http://www.jsonrpc.org/historical/json-rpc-over-http.html#http-header
-    QStringList requiredHeaders{ QStringLiteral("content-type"), QStringLiteral("content-length"), QStringLiteral("accept") };
-    foreach (QString requiredHeader, requiredHeaders) {
+    static const QStringList requiredHeaders{ QStringLiteral("content-type"), QStringLiteral("content-length"), QStringLiteral("accept") };
+    for (const auto& requiredHeader : requiredHeaders) {
         if (!request->m_requestHeaders.contains(requiredHeader)) {
             qJsonRpcDebug() << Q_FUNC_INFO << "error: " << request->m_requestHeaders;
             request->sendErrorResponse(400);
@@ -215,10 +215,10 @@ int QJsonRpcHttpServerSocket::onHeadersComplete(http_parser *parser)
         }
     }
 
-    QStringList supportedContentTypes = { QStringLiteral("application/json-rpc"), QStringLiteral("application/json"), QStringLiteral("application/jsonrequest") };
+    static const QStringList supportedContentTypes = { QStringLiteral("application/json-rpc"), QStringLiteral("application/json"), QStringLiteral("application/jsonrequest") };
     QString contentType = request->m_requestHeaders.value(QStringLiteral("content-type"));
     bool foundSupportedContentType = false;
-    foreach (QString supportedContentType, supportedContentTypes) {
+    for (const auto& supportedContentType : supportedContentTypes) {
         if (contentType.contains(supportedContentType)) {
             foundSupportedContentType = true;
             break;

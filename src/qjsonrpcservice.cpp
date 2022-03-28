@@ -400,7 +400,7 @@ QJsonRpcMessage QJsonRpcService::dispatch(const QJsonRpcMessage &request)
     QMetaType::Type returnType = QMetaType::Void;
 
     bool usingNamedParameters = params.isObject();
-    foreach (int methodIndex, indexes) {
+    for (const int methodIndex : indexes) {
         QJsonRpcServicePrivate::MethodInfo &info = d->methodInfoHash[methodIndex];
         bool methodMatch = usingNamedParameters ?
             jsParameterCompare(params.toObject(), info) :
