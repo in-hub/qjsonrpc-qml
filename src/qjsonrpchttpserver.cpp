@@ -1,5 +1,6 @@
 #include <QStringList>
 #include <QDateTime>
+#include <QLocalSocket>
 
 #if QT_VERSION >= 0x050000
 #include <QJsonDocument>
@@ -11,11 +12,15 @@
 #include "qjsonrpcmessage.h"
 #include "qjsonrpchttpserver_p.h"
 #include "qjsonrpchttpserver.h"
+#include "qjsonrpcserver.h"
 
-QJsonRpcHttpServerSocket::QJsonRpcHttpServerSocket(QObject *parent)
-    : QSslSocket(parent),
+QJsonRpcHttpServerSocket::QJsonRpcHttpServerSocket(QIODevice *device, QObject *parent)
+    : QIODevice(parent),
+      m_device(device),
       m_requestParser(0)
 {
+    open(QIODevice::ReadWrite);
+
     // initialize request parser
     m_requestParser = (http_parser*)malloc(sizeof(http_parser));
     http_parser_init(m_requestParser, HTTP_REQUEST);
@@ -28,7 +33,8 @@ QJsonRpcHttpServerSocket::QJsonRpcHttpServerSocket(QObject *parent)
     m_requestParserSettings.on_message_complete = onMessageComplete;
     m_requestParser->data = this;
 
-    connect(this, &QJsonRpcHttpServerSocket::readyRead, this, &QJsonRpcHttpServerSocket::readIncomingData);
+    connect(m_device, &QIODevice::readyRead, this, &QJsonRpcHttpServerSocket::readIncomingData);
+    connect(m_device, &QIODevice::aboutToClose, this, &QJsonRpcHttpServerSocket::close, Qt::QueuedConnection);
 }
 
 QJsonRpcHttpServerSocket::~QJsonRpcHttpServerSocket()
@@ -105,8 +111,8 @@ qint64 QJsonRpcHttpServerSocket::writeData(const char *data, qint64 maxSize)
 
         // body
         m_responseBuffer.prepend(responseHeader);
-        qint64 bytesWritten = QSslSocket::writeData(m_responseBuffer.constData(), m_responseBuffer.size());
-        close();
+        qint64 bytesWritten = m_device->write(m_responseBuffer);
+        m_device->close();
 
         // then clear the buffer
         m_responseBuffer.clear();
@@ -141,8 +147,18 @@ void QJsonRpcHttpServerSocket::sendOptionsResponse(int statusCode)
     responseHeader += "Connection: keep-alive\r\n";
     responseHeader += "\r\n";
 
-    QSslSocket::writeData(responseHeader.constData(), responseHeader.size());
-    close();
+    m_device->write(responseHeader);
+    m_device->close();
+}
+
+qint64 QJsonRpcHttpServerSocket::bytesAvailable() const
+{
+    return m_device->bytesAvailable();
+}
+
+qint64 QJsonRpcHttpServerSocket::readData(char* data, qint64 maxSize)
+{
+    return m_device->read(data, maxSize);
 }
 
 void QJsonRpcHttpServerSocket::sendErrorResponse(int statusCode)
@@ -151,13 +167,13 @@ void QJsonRpcHttpServerSocket::sendErrorResponse(int statusCode)
     responseHeader += "HTTP/1.1 " + QByteArray::number(statusCode) +" " + statusMessageForCode(statusCode) + "\r\n";
     responseHeader += "\r\n";
 
-    QSslSocket::writeData(responseHeader.constData(), responseHeader.size());
-    close();
+    m_device->write(responseHeader);
+    m_device->close();
 }
 
 void QJsonRpcHttpServerSocket::readIncomingData()
 {
-    QByteArray requestBuffer = readAll();
+    QByteArray requestBuffer = m_device->readAll();
     qJsonRpcDebug() << Q_FUNC_INFO << requestBuffer.size() << "bytes";
     http_parser_execute(m_requestParser, &m_requestParserSettings,
                         requestBuffer.constData(), requestBuffer.size());
@@ -291,13 +307,45 @@ QJsonRpcHttpServerRpcSocket::QJsonRpcHttpServerRpcSocket(QIODevice *device, QObj
 }
 
 QJsonRpcHttpServer::QJsonRpcHttpServer(QObject *parent)
-    : QTcpServer(parent),
+    : QObject(parent),
       d_ptr(new QJsonRpcHttpServerPrivate(this))
 {
 }
 
 QJsonRpcHttpServer::~QJsonRpcHttpServer()
 {
+    close();
+}
+
+void QJsonRpcHttpServer::listen(const QString& name)
+{
+    close();
+
+    Q_D(QJsonRpcHttpServer);
+    d->localServer = new QJsonRpcLocalServer(this);
+    connect(d->localServer, &QJsonRpcLocalServer::newIncomingConnection, this, &QJsonRpcHttpServer::processIncomingConnection);
+    d->localServer->setSocketOptions(QLocalServer::WorldAccessOption);
+    d->localServer->listen(name);
+}
+
+
+void QJsonRpcHttpServer::listen(const QHostAddress &address, quint16 port)
+{
+    close();
+
+    Q_D(QJsonRpcHttpServer);
+    d->tcpServer = new QJsonRpcTcpServer(this);
+    connect(d->tcpServer, &QJsonRpcTcpServer::newIncomingConnection, this, &QJsonRpcHttpServer::processIncomingConnection);
+    d->tcpServer->listen(address, port);
+}
+
+void QJsonRpcHttpServer::close()
+{
+    Q_D(QJsonRpcHttpServer);
+    delete d->tcpServer;
+    d->tcpServer = nullptr;
+    delete d->localServer;
+    d->localServer = nullptr;
 }
 
 QSslConfiguration QJsonRpcHttpServer::sslConfiguration() const
@@ -312,34 +360,53 @@ void QJsonRpcHttpServer::setSslConfiguration(const QSslConfiguration &config)
     d->sslConfiguration = config;
 }
 
-#if QT_VERSION >= 0x050000
-void QJsonRpcHttpServer::incomingConnection(qintptr socketDescriptor)
-#else
-void QJsonRpcHttpServer::incomingConnection(int socketDescriptor)
-#endif
+void QJsonRpcHttpServer::processIncomingConnection(qintptr socketDescriptor)
 {
     Q_D(QJsonRpcHttpServer);
-    QJsonRpcHttpServerSocket *socket = new QJsonRpcHttpServerSocket(this);
-    if (!socket->setSocketDescriptor(socketDescriptor)) {
-        qJsonRpcDebug() << Q_FUNC_INFO << "unable to set socket descriptor";
-        socket->deleteLater();
-        return;
+    QJsonRpcHttpServerSocket *serverSocket = nullptr;
+
+    if (d->tcpServer)
+    {
+        auto socket = new QSslSocket(d->tcpServer);
+        if (!socket->setSocketDescriptor(socketDescriptor))
+        {
+            qJsonRpcDebug() << Q_FUNC_INFO << "unable to set socket descriptor";
+            socket->deleteLater();
+            return;
+        }
+
+        if (!d->sslConfiguration.isNull()) {
+            socket->setSslConfiguration(d->sslConfiguration);
+            socket->startServerEncryption();
+            // connect ssl error signals etc
+
+            // NOTE: unsafe
+            connect(socket, qOverload<const QList<QSslError>&>(&QSslSocket::sslErrors), socket, qOverload<>(&QSslSocket::ignoreSslErrors));
+        }
+
+        serverSocket = new QJsonRpcHttpServerSocket(socket, this);
+        connect(socket, &QSslSocket::disconnected, serverSocket, &QJsonRpcHttpServerSocket::disconnected);
     }
 
-    if (!d->sslConfiguration.isNull()) {
-        socket->setSslConfiguration(d->sslConfiguration);
-        socket->startServerEncryption();
-        // connect ssl error signals etc
+    if (d->localServer)
+    {
+        auto socket = new QLocalSocket(d->localServer);
+        if (!socket->setSocketDescriptor(socketDescriptor))
+        {
+            qJsonRpcDebug() << Q_FUNC_INFO << "unable to set socket descriptor";
+            socket->deleteLater();
+            return;
+        }
 
-        // NOTE: unsafe
-        connect(socket, qOverload<const QList<QSslError>&>(&QSslSocket::sslErrors), socket, qOverload<>(&QSslSocket::ignoreSslErrors));
+        serverSocket = new QJsonRpcHttpServerSocket(socket, this);
+        connect(socket, &QLocalSocket::disconnected, serverSocket, &QJsonRpcHttpServerSocket::disconnected);
     }
 
-    connect(socket, SIGNAL(disconnected()), this, SLOT(_q_socketDisconnected()));
-    connect(socket, &QJsonRpcHttpServerSocket::messageReceived,
+    connect(serverSocket, SIGNAL(disconnected()), this, SLOT(_q_socketDisconnected()));
+    connect(serverSocket, &QJsonRpcHttpServerSocket::messageReceived,
               this, &QJsonRpcHttpServer::processIncomingMessage);
-    QJsonRpcHttpServerRpcSocket *rpcSocket = new QJsonRpcHttpServerRpcSocket(socket, this);
-    d->requestSocketLookup.insert(socket, rpcSocket);
+    QJsonRpcHttpServerRpcSocket *rpcSocket = new QJsonRpcHttpServerRpcSocket(serverSocket, this);
+    d->requestSocketLookup.insert(serverSocket, rpcSocket);
 }
 
 void QJsonRpcHttpServer::processIncomingMessage(const QJsonRpcMessage &message)

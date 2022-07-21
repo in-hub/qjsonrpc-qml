@@ -25,6 +25,7 @@ set(qjsonrpc_PUBLIC_HEADERS
 	src/qjsonrpcservicereply.h
 	src/qjsonrpchttpclient.h
 	src/qjsonrpchttpserver.h
+	src/qjsonrpcserver.h
 	src/qjsonrpcmetatype.h
 )
 

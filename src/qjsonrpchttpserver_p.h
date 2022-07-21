@@ -11,6 +11,9 @@
 
 #include "http_parser.h"
 
+class QJsonRpcTcpServer;
+class QJsonRpcLocalServer;
+
 class QJsonRpcHttpServerRpcSocket : public QJsonRpcSocket
 {
 public:
@@ -18,20 +21,24 @@ public:
 };
 
 class QAbstractSocket;
-class QJsonRpcHttpServerSocket : public QSslSocket
+class QJsonRpcHttpServerSocket : public QIODevice
 {
     Q_OBJECT
 public:
-    explicit QJsonRpcHttpServerSocket(QObject *parent = 0);
+    explicit QJsonRpcHttpServerSocket(QIODevice *device, QObject *parent = 0);
     ~QJsonRpcHttpServerSocket();
 
     void sendErrorResponse(int statusCode);
     void sendOptionsResponse(int statusCode);
+
 Q_SIGNALS:
     void messageReceived(const QJsonRpcMessage &message);
+    void disconnected();
 
 protected:
-    virtual qint64 writeData(const char *data, qint64 maxSize);
+    qint64 bytesAvailable() const override;
+    qint64 readData(char *data, qint64 maxSize) override;
+    qint64 writeData(const char *data, qint64 maxSize) override;
 
 private Q_SLOTS:
     void readIncomingData();
@@ -47,6 +54,8 @@ private:
 
 private:
     Q_DISABLE_COPY(QJsonRpcHttpServerSocket)
+
+    QIODevice *m_device;
 
     // request
     QByteArray m_requestPayload;
@@ -74,6 +83,9 @@ public:
 
     // slots
     void _q_socketDisconnected();
+
+    QJsonRpcTcpServer *tcpServer{nullptr};
+    QJsonRpcLocalServer *localServer{nullptr};
 
     QHash<QJsonRpcHttpServerSocket*, QJsonRpcHttpServerRpcSocket*> requestSocketLookup;
     QSslConfiguration sslConfiguration;

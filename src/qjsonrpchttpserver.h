@@ -9,35 +9,34 @@
 #include "qjsonrpcglobal.h"
 
 class QJsonRpcHttpServerPrivate;
-class QJSONRPC_EXPORT QJsonRpcHttpServer : public QTcpServer,
-                                           public QJsonRpcAbstractServer
+
+class QJSONRPC_EXPORT QJsonRpcHttpServer : public QObject, public QJsonRpcAbstractServer
 {
     Q_OBJECT
 public:
     QJsonRpcHttpServer(QObject *parent = 0);
     ~QJsonRpcHttpServer();
 
+    void listen(const QString& name);
+    void listen(const QHostAddress &address = QHostAddress::Any, quint16 port = 0);
+
+    void close();
+
     QSslConfiguration sslConfiguration() const;
     void setSslConfiguration(const QSslConfiguration &config);
 
-    virtual int connectedClientCount() const;
+    int connectedClientCount() const override;
 
 Q_SIGNALS:
-    void clientConnected();
-    void clientDisconnected();
+    void clientConnected() override;
+    void clientDisconnected() override;
 
 public Q_SLOTS:
-    virtual void notifyConnectedClients(const QJsonRpcMessage &message);
-    virtual void notifyConnectedClients(const QString &method, const QJsonArray &params);
-
-protected:
-#if QT_VERSION >= 0x050000
-    virtual void incomingConnection(qintptr socketDescriptor);
-#else
-    virtual void incomingConnection(int socketDescriptor);
-#endif
+    void notifyConnectedClients(const QJsonRpcMessage &message) override;
+    void notifyConnectedClients(const QString &method, const QJsonArray &params) override;
 
 private Q_SLOTS:
+    void processIncomingConnection(qintptr socketDescriptor);
     void processIncomingMessage(const QJsonRpcMessage &message);
 
 private:
