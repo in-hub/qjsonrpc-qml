@@ -447,9 +447,9 @@ QJsonRpcMessage QJsonRpcService::dispatch(const QJsonRpcMessage &request)
 
     QJsonRpcServicePrivate::MethodInfo &info = d->methodInfoHash[idx];
 
-#define PASS_ARG(index) parameters.count() > index ? Q_ARG(QVariant, parameters[index]) : QGenericArgument()
+#define PASS_ARG(index) index < parameters.count() ? QGenericArgument("QVariant", &parameters[index]) : QGenericArgument()
 
-    bool success = QMetaObject::invokeMethod( this, method.constData(), Q_RETURN_ARG(QVariant, returnValue),
+    bool success = QMetaObject::invokeMethod( this, method.constData(), QGenericReturnArgument("QVariant", &returnValue),
                                               PASS_ARG(0),
                                               PASS_ARG(1),
                                               PASS_ARG(2),
