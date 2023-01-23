@@ -1,8 +1,4 @@
-if(WITH_QT6)
-	find_package(Qt6 COMPONENTS Core Network Qml REQUIRED)
-else()
-	find_package(Qt5 COMPONENTS Core Network Qml REQUIRED)
-endif()
+find_package(Qt${QT_MAJOR_VERSION} COMPONENTS Core Network Qml REQUIRED)
 
 set(CMAKE_AUTOMOC TRUE)
 
@@ -44,11 +40,7 @@ add_library(qjsonrpc SHARED
 	${qjsonrpc_PUBLIC_HEADERS}
 )
 
-if(WITH_QT6)
-	target_link_libraries(qjsonrpc Qt6::Core Qt6::Network Qt6::Qml)
-else()
-	target_link_libraries(qjsonrpc Qt5::Core Qt5::Network Qt5::Qml)
-endif()
+target_link_libraries(qjsonrpc PRIVATE Qt::Core Qt::Network Qt::Qml)
 
 target_compile_definitions(qjsonrpc PRIVATE
 	QJSONRPC_BUILD
