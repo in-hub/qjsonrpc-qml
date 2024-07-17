@@ -401,7 +401,7 @@ QJsonRpcMessage QJsonRpcService::dispatch(const QJsonRpcMessage &request)
 
     bool usingNamedParameters = params.isObject();
     for (const int methodIndex : indexes) {
-        const QJsonRpcServicePrivate::MethodInfo &info = qAsConst(d->methodInfoHash)[methodIndex];
+        const QJsonRpcServicePrivate::MethodInfo &info = std::as_const(d->methodInfoHash)[methodIndex];
         bool methodMatch = usingNamedParameters ?
             jsParameterCompare(params.toObject(), info) :
             jsParameterCompare(params.toArray(), info);
